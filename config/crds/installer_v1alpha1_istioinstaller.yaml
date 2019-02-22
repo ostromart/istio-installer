@@ -1,0 +1,77 @@
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  creationTimestamp: null
+  labels:
+    controller-tools.k8s.io: "1.0"
+  name: istioinstallers.installer.istio.io
+spec:
+  group: installer.istio.io
+  names:
+    kind: IstioInstaller
+    plural: istioinstallers
+  scope: Namespaced
+  validation:
+    openAPIV3Schema:
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          properties:
+            EgressNamespace:
+              type: boolean
+            IngressNamespace:
+              type: boolean
+            PolicyNamespace:
+              type: boolean
+            ProxyNamespace:
+              type: boolean
+            TelemetryNamespace:
+              type: boolean
+            chartPath:
+              type: string
+            installEgress:
+              type: boolean
+            installIngress:
+              type: boolean
+            installPolicy:
+              type: boolean
+            installProxy:
+              type: boolean
+            installTelemetry:
+              type: boolean
+            namespace:
+              type: string
+            version:
+              type: string
+          type: object
+        status:
+          properties:
+            controlStatus:
+              type: string
+            egressStatus:
+              type: string
+            ingressStatus:
+              type: string
+            policyStatus:
+              type: string
+            telemetryStatus:
+              type: string
+          type: object
+  version: v1alpha1
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []

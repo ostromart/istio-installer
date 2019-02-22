@@ -1,0 +1,18 @@
+{
+    "kind": "ConfigMap",
+    "apiVersion": "v1",
+    "metadata": {
+        "name": "istio-sidecar-injector",
+        "creationTimestamp": null,
+        "labels": {
+            "app": "istio",
+            "chart": "istio-1.1.0",
+            "heritage": "Tiller",
+            "istio": "sidecar-injector",
+            "release": "istio"
+        }
+    },
+    "data": {
+        "config": "template: |-\n  initContainers:\n  - name: istio-init\n    image: \"gcr.io/istio-release/proxy_init:master-latest-daily\"\n    args:\n    - \"-p\"\n    - [[ .MeshConfig.ProxyListenPort ]]\n    - \"-u\"\n    - 1337\n    - \"-m\"\n    - [[ annotation .ObjectMeta `sidecar.istio.io/interceptionMode` .ProxyConfig.InterceptionMode ]]\n    - \"-i\"\n    - \"[[ annotation .ObjectMeta `traffic.sidecar.istio.io/includeOutboundIPRanges`  \"*\"  ]]\"\n    - \"-x\"\n    - \"[[ annotation .ObjectMeta `traffic.sidecar.istio.io/excludeOutboundIPRanges`  \"\"  ]]\"\n    - \"-b\"\n    - \"[[ annotation .ObjectMeta `traffic.sidecar.istio.io/includeInboundPorts` (includeInboundPorts .Spec.Containers) ]]\"\n    - \"-d\"\n    - \"[[ excludeInboundPort (annotation .ObjectMeta `status.sidecar.istio.io/port`  15020 ) (annotation .ObjectMeta `traffic.sidecar.istio.io/excludeInboundPorts`  \"\" ) ]]\"\n    imagePullPolicy: IfNotPresent\n    resources:\n      requests:\n        cpu: 100m\n        memory: 10Gi\n      limits:\n        cpu: 100m\n        memory: 10Gi"
+    }
+}

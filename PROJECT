@@ -1,0 +1,3 @@
+version: "1"
+domain: istio.io
+repo: github.com/ostromart/istio-installer/pkg

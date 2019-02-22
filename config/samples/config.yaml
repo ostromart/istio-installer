@@ -1,0 +1,46 @@
+apiVersion: installer.istio.io/v1alpha1
+kind: IstioInstaller
+metadata:
+  labels:
+    controller-tools.k8s.io: "1.0"
+  name: istioinstaller-default
+spec:
+  installProxyControl:
+    enabled: true
+    namespace: istio-system-pilot
+  valuesOverride:
+    autoscaleMax: 1234
+  resourceOverride:
+    - apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: istio-sidecar-injector
+      data:
+        config: |-
+          template: |-
+            initContainers:
+            - name: istio-init
+              image: "gcr.io/istio-release/proxy_init:master-latest-daily"
+              args:
+              - "-p"
+              - [[ .MeshConfig.ProxyListenPort ]]
+              - "-u"
+              - 1337
+              - "-m"
+              - [[ annotation .ObjectMeta `sidecar.istio.io/interceptionMode` .ProxyConfig.InterceptionMode ]]
+              - "-i"
+              - "[[ annotation .ObjectMeta `traffic.sidecar.istio.io/includeOutboundIPRanges`  "*"  ]]"
+              - "-x"
+              - "[[ annotation .ObjectMeta `traffic.sidecar.istio.io/excludeOutboundIPRanges`  ""  ]]"
+              - "-b"
+              - "[[ annotation .ObjectMeta `traffic.sidecar.istio.io/includeInboundPorts` (includeInboundPorts .Spec.Containers) ]]"
+              - "-d"
+              - "[[ excludeInboundPort (annotation .ObjectMeta `status.sidecar.istio.io/port`  15020 ) (annotation .ObjectMeta `traffic.sidecar.istio.io/excludeInboundPorts`  "" ) ]]"
+              imagePullPolicy: IfNotPresent
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 10Gi
+                limits:
+                  cpu: 100m
+                  memory: 10Gi
