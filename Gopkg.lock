@@ -222,18 +222,6 @@
   version = "v1.1.5"
 
 [[projects]]
-  name = "github.com/kr/pretty"
-  packages = ["."]
-  revision = "73f6ac0b30a98e433b289500d779f50c1a6f0712"
-  version = "v0.1.0"
-
-[[projects]]
-  name = "github.com/kr/text"
-  packages = ["."]
-  revision = "e2ffdb16a802fe2bb95e2e35ff34f0e53aeef34f"
-  version = "v0.1.0"
-
-[[projects]]
   branch = "master"
   name = "github.com/mattbaird/jsonpatch"
   packages = ["."]
@@ -871,6 +859,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "fc010a91162846fa6a630976d2fccc150952e0c00c5ac73fd40e84d1a55fa401"
+  inputs-digest = "cf2f668a458dd9bb0f36e58639c311b510596f919e6b2796fe5ef2f26efd5124"
   solver-name = "gps-cdcl"
   solver-version = 1

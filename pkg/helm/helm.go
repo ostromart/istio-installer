@@ -92,12 +92,12 @@ func (h *HelmTemplateRenderer) Run() error {
 	return nil
 }
 
-// RenderToDir renders the current helm templates with the current values and returns the resulting YAML manifest string.
+// Render renders the current helm templates with the current values and returns the resulting YAML manifest string.
 func (h *HelmTemplateRenderer) Render() (string, error) {
 	return Render(h.namespace, h.curValuesYAML, h.chart)
 }
 
-// RenderToDir renders the given chart with the given values and returns the resulting YAML manifest string.
+// Render renders the given chart with the given values and returns the resulting YAML manifest string.
 func Render(namespace, values string, chrt *chart.Chart) (string, error) {
 	config := &chart.Config{Raw: values, Values: map[string]*chart.Value{}}
 	options := chartutil.ReleaseOptions{
