@@ -89,7 +89,7 @@ message TrafficManagementConfig {
 
     // When set to true, auto injection is controlled by namespace label and pod annotation.
     // When set to false, auto injection is completely disabled.
-    bool autoInjection = 3;
+    bool auto_injection = 3;
 
     // Component specific config.
     PilotConfig pilot_config = 4;
@@ -105,7 +105,7 @@ message PilotConfig {
     bool sidecar = 2;
 
     // Trace sampling percentage.
-    float traceSampling = 3;
+    float trace_sampling = 3;
 
     // Passthrough to corresponding k8s settings.
     k8s.io.api.core.v1.ResourceRequirements resources = 50;
@@ -148,7 +148,7 @@ message ProxyConfig {
     bool privileged = 2;
 
     // Enables coredump in proxy container.
-    bool enableCoredump = 3;
+    bool enable_coredump = 3;
 
     InterceptionMode interception_mode = 4;
 
@@ -156,14 +156,14 @@ message ProxyConfig {
     // as a ConfigMap containing a second template, it's probably too difficult to override fields in the k8s
     // ConfigMap.
     uint32 status_port = 5;
-    string imagePullPolicy = 6;
+    string image_pull_policy = 6;
     string proxy_init_image = 7;
 
     // Address and port filtering.
-    string includeIPRanges = 8;
-    string excludeIPRanges = 9;
-    string includeInboundPorts = 10;
-    string excludeInboundPorts = 11;
+    string include_ip_ranges = 8;
+    string exclude_ip_ranges = 9;
+    string include_inbound_ports = 10;
+    string exclude_inbound_ports = 11;
 
     // Envoy specific timer settings.
     string connect_timeout = 12;
@@ -173,7 +173,7 @@ message ProxyConfig {
     uint32 concurrency = 15;
 
     string cluster_domain = 16;
-    string podDNSSearchNamespaces = 17;
+    string pod_dns_search_namespaces = 17;
 
     // Tracer options
     LightstepConfig lightstep = 30;
@@ -183,7 +183,7 @@ message ProxyConfig {
     SdsConfig sds = 40;
 
     // Passthrough to k8s resources.
-    k8s.io.api.core.v1.Probe readinessProbe = 50;
+    k8s.io.api.core.v1.Probe readiness_probe = 50;
     k8s.io.api.core.v1.ResourceRequirements resources = 51;
 
     // Additional arguments passed to Envoy.
@@ -235,7 +235,7 @@ message Object {
 // FIXME: this should be moved out
 message SdsConfig {
     bool enabled = 1;
-    string udsPath = 2;
-    bool useTrustworthyJwt = 3;
-    bool useNormalJwt = 4;
+    string uds_path = 2;
+    bool use_trustworthy_jwt = 3;
+    bool use_normal_jwt = 4;
 }
