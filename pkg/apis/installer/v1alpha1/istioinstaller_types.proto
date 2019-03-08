@@ -223,8 +223,8 @@ message OperatorConfig {
 }
 
 message IstioInstaller {
-    InstallerSpec spec = 1;
-    InstallerStatus status = 2;
+    InstallerSpec spec = 3;
+    InstallerStatus status = 4;
 }
 
 message Object {

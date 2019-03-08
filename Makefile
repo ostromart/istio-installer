@@ -50,3 +50,7 @@ docker-build: test
 # Push the docker image
 docker-push:
 	docker push ${IMG}
+
+proto:
+	protoc -I./vendor --proto_path=pkg/apis/installer/v1alpha1/ --go_out=pkg/apis/installer/v1alpha1/ pkg/apis/installer/v1alpha1/istioinstaller_types.proto
+	go run ~/go/src/k8s.io/code-generator/cmd/deepcopy-gen/main.go -O zz_generated.deepcopy -i ./pkg/apis/installer/v1alpha1/...

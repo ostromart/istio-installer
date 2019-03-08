@@ -95,11 +95,11 @@ func main() {
 	}
 
 	var baseValues map[string]interface{}
-	var installConfig *installerv1alpha1.IstioInstallerSpec
+	var installConfig *installerv1alpha1.InstallerSpec
 	if !reconcile {
 		log.Infof("Reading install config from %s and baseValues from %s", installConfigFilePath, valuesFilePath)
 		var err error
-		installConfig, err = readConfigFile(installConfigFilePath)
+		installConfig, err = readConfigCRFromFile(installConfigFilePath)
 		if err != nil {
 			log.Errora(err)
 			os.Exit(1)
@@ -195,7 +195,7 @@ func setupKube() (*rest.Config, *kubernetes.Clientset, manager.Manager, client.C
 	return kubeconfig, clientset, mgr, kubeclient, nil
 }
 
-func readConfigFile(path string) (*installerv1alpha1.IstioInstallerSpec, error) {
+func readConfigCRFromFile(path string) (*installerv1alpha1.InstallerSpec, error) {
 	installerCR := &installerv1alpha1.IstioInstaller{}
 	b, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -204,7 +204,7 @@ func readConfigFile(path string) (*installerv1alpha1.IstioInstallerSpec, error) 
 	if err := yaml.Unmarshal(b, installerCR); err != nil {
 		return nil, fmt.Errorf("Cannot unmarshal config file %s: %s", path, err)
 	}
-	return &installerCR.Spec, nil
+	return installerCR.Spec, nil
 }
 
 func readValuesFile(path string) (map[string]interface{}, error) {

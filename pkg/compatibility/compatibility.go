@@ -33,23 +33,23 @@ func defaultTranslationFunc(t *Translation, root util.Tree, value string) error 
 }
 
 // ProtoToValues traverses the supplied InstallerSpec and returns a values.yaml translation from it.
-func ProtoToValues(ii *v1alpha1.InstallerSpec) (string, []error) {
+func ProtoToValues(ii *v1alpha1.InstallerSpec) (string, error) {
 	root := make(util.Tree)
 
 	errs := protoToValues(*ii, root, nil)
 
 	y, err := yaml.Marshal(root)
 	if err != nil {
-		return "", util.AppendErr(errs, err)
+		return "", util.AppendErr(errs, err).ToError()
 	}
-	return string(y), errs
+	return string(y), errs.ToError()
 }
 
 // protoToValues takes an interface which must be a struct and recursively iterates through all its fields.
 // For each leaf, if looks for a mapping from the struct data path to the corresponding YAML path and if one is
 // found, it calls the associated mapping function if one is defined to populate the values YAML path.
 // If no mapping function is defined, it uses the default mapping function.
-func protoToValues(structVal interface{}, root util.Tree, path util.Path) (errs []error) {
+func protoToValues(structVal interface{}, root util.Tree, path util.Path) (errs util.Errors) {
 	if reflect.TypeOf(structVal).Kind() != reflect.Struct {
 		return util.NewErrs(fmt.Errorf("protoToValues path %s, value: %v, expected struct, got %T", path, structVal, structVal))
 	}

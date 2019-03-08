@@ -1,5 +1,7 @@
 package util
 
+import "fmt"
+
 // Errors is a slice of error.
 type Errors []error
 
@@ -11,6 +13,11 @@ func (e Errors) Error() string {
 // String implements the stringer#String method.
 func (e Errors) String() string {
 	return e.Error()
+}
+
+// ToError returns an error from Errors.
+func (e Errors) ToError() error {
+	return fmt.Errorf("%s", e)
 }
 
 // NewErrs returns a slice of error with a single element err.

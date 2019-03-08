@@ -23,8 +23,10 @@ import (
 	"github.com/ostromart/istio-installer/pkg/helm"
 	"github.com/ostromart/istio-installer/pkg/kube"
 	"github.com/ostromart/istio-installer/pkg/kubectlcmd"
+	"github.com/ostromart/istio-installer/pkg/compatibility"
 	"github.com/ostromart/istio-installer/pkg/manifest"
 	"github.com/ostromart/istio-installer/pkg/util"
+	"github.com/ostromart/istio-installer/pkg/apis/installer/v1alpha1"
 	"istio.io/istio/pkg/log"
 	"github.com/ghodss/yaml"
 	"github.com/evanphx/json-patch"
@@ -250,8 +252,8 @@ func (d *DeploymentComponent) RunApplyLoop(ctx context.Context) error {
 }
 
 // ApplyOnce renders and applies the manifest and returns.
-func (d *DeploymentComponent) ApplyOnce(ctx context.Context, valuesOverride []byte, resourceOverride []*unstructured.Unstructured) error {
-	mstr, err := d.Render(valuesOverride, resourceOverride)
+func (d *DeploymentComponent) ApplyOnce(ctx context.Context, is *v1alpha1.InstallerSpec) error {
+	mstr, err := d.Render(is)
 	if err != nil {
 		return err
 	}
@@ -259,7 +261,7 @@ func (d *DeploymentComponent) ApplyOnce(ctx context.Context, valuesOverride []by
 }
 
 // RenderToDir returns the rendered manifest.
-func (d *DeploymentComponent) Render(valuesOverride []byte, resourceOverride []*unstructured.Unstructured) (string, error) {
+func (d *DeploymentComponent) Render(is *v1alpha1.InstallerSpec) (string, error) {
 	d.waitDeps()
 	globalValues, err := getHelmValues(d.helmChartBaseDirPath)
 	if err != nil {
@@ -279,7 +281,7 @@ func (d *DeploymentComponent) Render(valuesOverride []byte, resourceOverride []*
 		if err != nil {
 			return "", err
 		}
-		values, err = patchYAMLElement(bytes.Join([][]byte{globalValues, values}, nil), valuesOverride)
+		values, err = patchValues(bytes.Join([][]byte{globalValues, values}, nil), is)
 	}
 	//	log.Infof("values: \n%s\n", values)
 
@@ -289,8 +291,7 @@ func (d *DeploymentComponent) Render(valuesOverride []byte, resourceOverride []*
 		return "", err
 	}
 
-	//fmt.Println(baseYAML)
-	return patchYAMLManifest(baseYAML, resourceOverride)
+	return baseYAML, err
 }
 
 func patchYAMLManifest(baseYAML string, resourceOverride []*unstructured.Unstructured) (string, error) {
@@ -354,12 +355,18 @@ func patchYAMLManifest(baseYAML string, resourceOverride []*unstructured.Unstruc
 	return ret.String(), nil
 }
 
-func patchYAMLElement(baseYAML, overrideYAML []byte) ([]byte, error) {
+
+func patchValues(baseYAML []byte, is *v1alpha1.InstallerSpec) ([]byte, error) {
 	baseValuesJSON, err := yaml.YAMLToJSON([]byte(baseYAML))
 	if err != nil {
 		return nil, fmt.Errorf("cannot unmarshal baseYAML to JSON: %s", err)
 	}
-	overrideValuesJSON, err := yaml.YAMLToJSON([]byte(overrideYAML))
+
+	crValues, err := compatibility.ProtoToValues(is)
+	if err != nil {
+		return nil, err
+	}
+	overrideValuesJSON, err := yaml.YAMLToJSON([]byte(crValues))
 	if err != nil {
 		return nil, fmt.Errorf("cannot unmarshal baseYAML to JSON: %s", err)
 	}

@@ -114,7 +114,7 @@ func (r *ReconcileIstioInstaller) Reconcile(request reconcile.Request) (reconcil
 	// For the time being, throw away all the old controllers and create a new batch.
 	// TODO: check performance and optimize if needed.
 	i := istioInstallationInitializer()
-	i.Build(&istioInstaller.Spec)
+	i.Build(istioInstaller.Spec)
 
 	istioInstallations[nsName] = i
 	i.RunApplyLoop(context.Background())
