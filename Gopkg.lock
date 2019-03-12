@@ -223,6 +223,15 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/kylelemons/godebug"
+  packages = [
+    "diff",
+    "pretty"
+  ]
+  revision = "d65d576e9348f5982d7f6d83682b694e731a45c6"
+
+[[projects]]
+  branch = "master"
   name = "github.com/mattbaird/jsonpatch"
   packages = ["."]
   revision = "81af80346b1a01caae0cbc27fd3c1ba5b11e189f"
@@ -296,6 +305,12 @@
   ]
   revision = "65fb64232476ad9046e57c26cd0bff3d3a8dc6cd"
   version = "v1.4.3"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/openconfig/gnmi"
+  packages = ["errdiff"]
+  revision = "33a1865c302903e7a2e06f35960e6bc31e84b9f6"
 
 [[projects]]
   name = "github.com/pborman/uuid"
@@ -859,6 +874,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "cf2f668a458dd9bb0f36e58639c311b510596f919e6b2796fe5ef2f26efd5124"
+  inputs-digest = "f0fdbd9b4a4af34d3ea3c3e18c55b5b0398d2089649376e5b8b37ad0dbaca41b"
   solver-name = "gps-cdcl"
   solver-version = 1

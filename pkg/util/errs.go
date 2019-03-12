@@ -17,6 +17,9 @@ func (e Errors) String() string {
 
 // ToError returns an error from Errors.
 func (e Errors) ToError() error {
+	if len(e) == 0 {
+		return nil
+	}
 	return fmt.Errorf("%s", e)
 }
 

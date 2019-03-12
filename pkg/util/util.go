@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 	"math/rand"
+	"reflect"
 	"time"
 )
 
@@ -55,3 +56,20 @@ func PrettyJSON(b []byte) []byte {
 	return out.Bytes()
 }
 
+// IsValueNil returns true if either value is nil, or has dynamic type {ptr,
+// map, slice} with value nil.
+func IsValueNil(value interface{}) bool {
+	if value == nil {
+		return true
+	}
+	switch reflect.TypeOf(value).Kind() {
+	case reflect.Slice, reflect.Ptr, reflect.Map:
+		return reflect.ValueOf(value).IsNil()
+	}
+	return false
+}
+
+// IsNilOrInvalidValue reports whether v is nil or reflect.Zero.
+func IsNilOrInvalidValue(v reflect.Value) bool {
+	return !v.IsValid() || (v.Kind() == reflect.Ptr && v.IsNil()) || IsValueNil(v.Interface())
+}

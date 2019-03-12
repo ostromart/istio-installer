@@ -1,4 +1,4 @@
-syntax = "proto3";
+syntax = "proto2";
 
 package v1alpha1;
 
@@ -15,32 +15,32 @@ message InstallerSpec {
     //   http://github.com/istio/istio/releases/install/lts
     //   file://tmp/istio-installer/nightly
     // Optional. Uses compiled in install package by default.
-    string install_package_path = 1;
+    optional string install_package_path = 1;
 
     // controller_name binds the CR to the install controller
     // that should listen to it. Used when multiple versions of controllers
     // coexist in a cluster and to prevent old versions of controller from
     // consuming new version of config.
-    string controller_name = 2;
+    optional string controller_name = 2;
 
     // hub is the root for docker images e.g. docker.io/istio-release.
-    string hub = 3;
+    optional string hub = 3;
     // tag is the version tag for docker images e.g. 1.0.6
-    string tag = 4;
+    optional string tag = 4;
 
     // default_namespace is the default namespace for components if their
     // namespace is not explicitly set. Required.
-    string default_namespace = 5;
+    optional string default_namespace = 5;
 
     // remote_cluster_config configures the cluster as a remote cluster.
-    RemoteClusterConfig remote_cluster_config = 10;
+    optional RemoteClusterConfig remote_cluster_config = 10;
 
     // Selection and configuration of core Istio features.
-    TrafficManagementConfig traffic_management = 20;
-    PolicyConfig policy = 21;
-    TelemetryConfig telemetry = 22;
-    SecurityConfig security = 23;
-    ConfigManagementConfig config_management = 24;
+    optional TrafficManagementConfig traffic_management = 20;
+    optional PolicyConfig policy = 21;
+    optional TelemetryConfig telemetry = 22;
+    optional SecurityConfig security = 23;
+    optional ConfigManagementConfig config_management = 24;
 
     // Ingress/egress gateway installation and configuration.
     repeated IngressGatewayConfig ingress_gateway = 30;
@@ -58,18 +58,18 @@ message InstallerSpec {
 // InstallerStatus defines the observed state of IstioInstaller.
 // TODO: this needs more work. What do we want to observe?
 message InstallerStatus {
-    string proxy_control = 1;
-    string sidecar_injector = 2;
+    optional string proxy_control = 1;
+    optional string sidecar_injector = 2;
     // etc.
 }
 
 // RemoteClusterConfig defines configuration options for remote clusters.
 message RemoteClusterConfig {
     // Enabled selects whether the cluster is configured as remote.
-    bool enabled = 1;
+    optional bool enabled = 1;
 
     // Namespace that all components for this feature are installed into.
-    string namespace = 2;
+    optional string namespace = 2;
 
     // resource_override is a kustomize style overlay to kubernetes resources
     // in the manifests rendered from the chart templates using included
@@ -82,36 +82,36 @@ message RemoteClusterConfig {
 // TrafficManagementConfig defines configuration options for proxy control and injection.
 message TrafficManagementConfig {
     // Selects whether traffic management is installed.
-    bool enabled = 1;
+    optional bool enabled = 1;
 
     // Namespace that all components for this feature are installed into.
-    string namespace = 2;
+    optional string namespace = 2;
 
     // When set to true, auto injection is controlled by namespace label and pod annotation.
     // When set to false, auto injection is completely disabled.
-    bool auto_injection = 3;
+    optional bool auto_injection = 3;
 
     // Component specific config.
-    PilotConfig pilot_config = 4;
-    ProxyConfig proxy_config = 5;
+    optional PilotConfig pilot_config = 4;
+    optional ProxyConfig proxy_config = 5;
 }
 
 // PilotConfig defines the configuration options for pilot.
 message PilotConfig {
     // Enables debug in pilot.
-    bool debug = 1;
+    optional bool debug = 1;
 
     // Enables sidecar in the pilot pod.
-    bool sidecar = 2;
+    optional bool sidecar = 2;
 
     // Trace sampling percentage.
-    float trace_sampling = 3;
+    optional float trace_sampling = 3;
 
     // Passthrough to corresponding k8s settings.
-    k8s.io.api.core.v1.ResourceRequirements resources = 50;
-    k8s.io.api.autoscaling.v1.HorizontalPodAutoscalerSpec hpa_spec = 51;
-    k8s.io.api.policy.v1beta1.PodDisruptionBudget pod_disruption_budget = 52;
-    k8s.io.api.core.v1.NodeSelector nodeSelector = 53;
+    optional k8s.io.api.core.v1.ResourceRequirements resources = 50;
+    optional k8s.io.api.autoscaling.v1.HorizontalPodAutoscalerSpec hpa_spec = 51;
+    optional k8s.io.api.policy.v1beta1.PodDisruptionBudget pod_disruption_budget = 52;
+    optional k8s.io.api.core.v1.NodeSelector nodeSelector = 53;
 
     // Additional arguments passed to pilot discovery.
     map<string, string> additional_args = 60;
@@ -132,59 +132,59 @@ message ProxyConfig {
 
     // Tracer config options.
     message LightstepConfig {
-        string address = 1;
-        string access_token = 2;
-        string ca_cert_path = 3;
-        bool secure = 4;
+        optional string address = 1;
+        optional string access_token = 2;
+        optional string ca_cert_path = 3;
+        optional bool secure = 4;
     }
     message ZipkinConfig {
-        string address = 1;
+        optional string address = 1;
     }
 
     // Enables debug in the proxy.
-    bool debug = 1;
+    optional bool debug = 1;
 
     // TBD: is privileged ever set in isolation?
-    bool privileged = 2;
+    optional bool privileged = 2;
 
     // Enables coredump in proxy container.
-    bool enable_coredump = 3;
+    optional bool enable_coredump = 3;
 
-    InterceptionMode interception_mode = 4;
+    optional InterceptionMode interception_mode = 4;
 
     // Below settings would otherwise be implemented as a k8s overlay but because the proxy resources are defined
     // as a ConfigMap containing a second template, it's probably too difficult to override fields in the k8s
     // ConfigMap.
-    uint32 status_port = 5;
-    string image_pull_policy = 6;
-    string proxy_init_image = 7;
+    optional uint32 status_port = 5;
+    optional string image_pull_policy = 6;
+    optional string proxy_init_image = 7;
 
     // Address and port filtering.
-    string include_ip_ranges = 8;
-    string exclude_ip_ranges = 9;
-    string include_inbound_ports = 10;
-    string exclude_inbound_ports = 11;
+    optional string include_ip_ranges = 8;
+    optional string exclude_ip_ranges = 9;
+    optional string include_inbound_ports = 10;
+    optional string exclude_inbound_ports = 11;
 
     // Envoy specific timer settings.
-    string connect_timeout = 12;
-    string drain_duration = 13;
-    string parent_shutdown_duration = 14;
+    optional string connect_timeout = 12;
+    optional string drain_duration = 13;
+    optional string parent_shutdown_duration = 14;
 
-    uint32 concurrency = 15;
+    optional uint32 concurrency = 15;
 
-    string cluster_domain = 16;
-    string pod_dns_search_namespaces = 17;
+    optional string cluster_domain = 16;
+    optional string pod_dns_search_namespaces = 17;
 
     // Tracer options
-    LightstepConfig lightstep = 30;
-    ZipkinConfig zipkin = 31;
+    optional LightstepConfig lightstep = 30;
+    optional ZipkinConfig zipkin = 31;
 
     // SDS settings
-    SdsConfig sds = 40;
+    optional SdsConfig sds = 40;
 
     // Passthrough to k8s resources.
-    k8s.io.api.core.v1.Probe readiness_probe = 50;
-    k8s.io.api.core.v1.ResourceRequirements resources = 51;
+    optional k8s.io.api.core.v1.Probe readiness_probe = 50;
+    optional k8s.io.api.core.v1.ResourceRequirements resources = 51;
 
     // Additional arguments passed to Envoy.
     map<string, string> additional_args = 60;
@@ -213,29 +213,29 @@ message EgressGatewayConfig {
 // OperatorConfig defines a config used to install an external operator.
 message OperatorConfig {
     // manifest_path is the URL for the operator install manifest.
-    string manifest_path = 1;
+    optional string manifest_path = 1;
 
     // namespace is the namespace the operator manifest and CR are installed into.
-    string namespace = 2;
+    optional string namespace = 2;
 
     // spec is the initial CR for the operator.
-    Object spec = 3;
+    optional Object spec = 3;
 }
 
 message IstioInstaller {
-    InstallerSpec spec = 3;
-    InstallerStatus status = 4;
+    optional InstallerSpec spec = 3;
+    optional InstallerStatus status = 4;
 }
 
 message Object {
-    k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1;
-    k8s.io.apimachinery.pkg.runtime.RawExtension data = 2;
+    optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1;
+    optional k8s.io.apimachinery.pkg.runtime.RawExtension data = 2;
 }
 
 // FIXME: this should be moved out
 message SdsConfig {
-    bool enabled = 1;
-    string uds_path = 2;
-    bool use_trustworthy_jwt = 3;
-    bool use_normal_jwt = 4;
+    optional bool enabled = 1;
+    optional string uds_path = 2;
+    optional bool use_trustworthy_jwt = 3;
+    optional bool use_normal_jwt = 4;
 }
