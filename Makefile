@@ -52,5 +52,9 @@ docker-push:
 	docker push ${IMG}
 
 proto:
-	protoc -I./vendor --proto_path=pkg/apis/installer/v1alpha1/ --go_out=pkg/apis/installer/v1alpha1/ pkg/apis/installer/v1alpha1/istioinstaller_types.proto
+	protoc -I./vendor --proto_path=pkg/apis/installer/v1alpha1/ --gofast_out=pkg/apis/installer/v1alpha1/ pkg/apis/installer/v1alpha1/istioinstaller_types.proto
 	go run ~/go/src/k8s.io/code-generator/cmd/deepcopy-gen/main.go -O zz_generated.deepcopy -i ./pkg/apis/installer/v1alpha1/...
+	patch pkg/apis/installer/v1alpha1/istioinstaller_types.pb.go < pkg/apis/installer/v1alpha1/fixup_go_structs.patch
+
+# cp pkg/apis/installer/v1alpha1/istioinstaller_types.pb.go pkg/apis/installer/v1alpha1/istioinstaller_types.pb.go.old
+# diff -u pkg/apis/installer/v1alpha1/istioinstaller_types.pb.go.old pkg/apis/installer/v1alpha1/istioinstaller_types.pb.go > pkg/apis/installer/v1alpha1/fixup_go_structs.patch

@@ -3,10 +3,8 @@ syntax = "proto2";
 package v1alpha1;
 
 import "k8s.io/api/core/v1/generated.proto";
-import "k8s.io/api/policy/v1beta1/generated.proto";
 import "k8s.io/api/autoscaling/v1/generated.proto";
 import "k8s.io/apimachinery/pkg/apis/meta/v1/generated.proto";
-import "k8s.io/apimachinery/pkg/runtime/generated.proto";
 
 // InstallerSpec defines the desired state of IstioInstaller.
 message InstallerSpec {
@@ -28,9 +26,8 @@ message InstallerSpec {
     // tag is the version tag for docker images e.g. 1.0.6
     optional string tag = 4;
 
-    // default_namespace is the default namespace for components if their
-    // namespace is not explicitly set. Required.
-    optional string default_namespace = 5;
+    // default_namespace_prefix is the prefix added to all namespaces for any installed component. Required.
+    optional string default_namespace_prefix = 5;
 
     // remote_cluster_config configures the cluster as a remote cluster.
     optional RemoteClusterConfig remote_cluster_config = 10;
@@ -67,16 +64,7 @@ message InstallerStatus {
 message RemoteClusterConfig {
     // Enabled selects whether the cluster is configured as remote.
     optional bool enabled = 1;
-
-    // Namespace that all components for this feature are installed into.
-    optional string namespace = 2;
-
-    // resource_override is a kustomize style overlay to kubernetes resources
-    // in the manifests rendered from the chart templates using included
-    // values.yaml with ValuesOverride above.
-    repeated Object resource_override = 3;
-
-    // TBD, see sheet.
+    // Other parameters TBD, see sheet.
 }
 
 // TrafficManagementConfig defines configuration options for proxy control and injection.
@@ -102,25 +90,30 @@ message PilotConfig {
     optional bool debug = 1;
 
     // Enables sidecar in the pilot pod.
-    optional bool sidecar = 2;
-
+    optional bool sidecar = 10;
     // Trace sampling percentage.
-    optional float trace_sampling = 3;
+    optional float trace_sampling = 11;
 
-    // Passthrough to corresponding k8s settings.
-    optional k8s.io.api.core.v1.ResourceRequirements resources = 50;
-    optional k8s.io.api.autoscaling.v1.HorizontalPodAutoscalerSpec hpa_spec = 51;
-    optional k8s.io.api.policy.v1beta1.PodDisruptionBudget pod_disruption_budget = 52;
-    optional k8s.io.api.core.v1.NodeSelector nodeSelector = 53;
+    optional string keepaliveMaxServerConnectionAge = 12;
 
     // Additional arguments passed to pilot discovery.
-    map<string, string> additional_args = 60;
-
+    map<string, string> additional_args = 50;
     // Additional environment variables for the discovery container.
-    map<string, string> env = 70;
+    map<string, string> env = 60;
+
+    // Passthrough to corresponding k8s settings.
+    optional ResourceRequirements resources = 80;
+    
+    // k8s scaling settings.
+    optional uint32 replica_count = 85;
+    optional k8s.io.api.autoscaling.v1.HorizontalPodAutoscalerSpec hpa_spec = 86;
+    optional PodDisruptionBudgetSpec pod_disruption_budget = 87;
+
+    // Annotations and selectors.
+    map<string, string> node_selector = 92;
 
     // Kustomize style overrides for k8s resources in rendered manifests.
-    repeated Object resource_override = 100;
+    repeated ResourceOverride resource_override = 100;
 }
 
 // ProxyConfig defines the configuration options for the injected Envoy proxy.
@@ -145,35 +138,32 @@ message ProxyConfig {
     optional bool debug = 1;
 
     // TBD: is privileged ever set in isolation?
-    optional bool privileged = 2;
-
+    optional bool privileged = 10;
     // Enables coredump in proxy container.
-    optional bool enable_coredump = 3;
-
-    optional InterceptionMode interception_mode = 4;
-
+    optional bool enable_coredump = 11;
+    optional InterceptionMode interception_mode = 12;
     // Below settings would otherwise be implemented as a k8s overlay but because the proxy resources are defined
     // as a ConfigMap containing a second template, it's probably too difficult to override fields in the k8s
     // ConfigMap.
-    optional uint32 status_port = 5;
-    optional string image_pull_policy = 6;
-    optional string proxy_init_image = 7;
+    optional uint32 status_port = 13;
+    optional string image_pull_policy = 14;
+    optional string proxy_init_image = 15;
 
     // Address and port filtering.
-    optional string include_ip_ranges = 8;
-    optional string exclude_ip_ranges = 9;
-    optional string include_inbound_ports = 10;
-    optional string exclude_inbound_ports = 11;
+    optional string include_ip_ranges = 16;
+    optional string exclude_ip_ranges = 17;
+    optional string include_inbound_ports = 18;
+    optional string exclude_inbound_ports = 19;
 
     // Envoy specific timer settings.
-    optional string connect_timeout = 12;
-    optional string drain_duration = 13;
-    optional string parent_shutdown_duration = 14;
+    optional string connect_timeout = 20;
+    optional string drain_duration = 21;
+    optional string parent_shutdown_duration = 22;
 
-    optional uint32 concurrency = 15;
+    optional uint32 concurrency = 23;
 
-    optional string cluster_domain = 16;
-    optional string pod_dns_search_namespaces = 17;
+    optional string cluster_domain = 24;
+    optional string pod_dns_search_namespaces = 25;
 
     // Tracer options
     optional LightstepConfig lightstep = 30;
@@ -182,32 +172,186 @@ message ProxyConfig {
     // SDS settings
     optional SdsConfig sds = 40;
 
-    // Passthrough to k8s resources.
-    optional k8s.io.api.core.v1.Probe readiness_probe = 50;
-    optional k8s.io.api.core.v1.ResourceRequirements resources = 51;
-
     // Additional arguments passed to Envoy.
-    map<string, string> additional_args = 60;
-
+    map<string, string> additional_args = 50;
     // Additional environment variables for the container.
-    map<string, string> env = 70;
+    map<string, string> env = 60;
+
+    // Passthrough to k8s resources.
+    optional ResourceRequirements resources = 80;
+    optional k8s.io.api.core.v1.Probe readiness_probe = 81;
 
     // Kustomize style overrides for k8s resources in rendered manifests.
-    repeated Object resource_override = 100;
+    repeated ResourceOverride resource_override = 100;
 }
 
 message PolicyConfig {
+    // Selects whether policy enforcement is installed.
+    optional bool enabled = 1;
+
+    // Namespace that all components for this feature are installed into.
+    optional string namespace = 2;
+
+    // Additional environment variables for the container.
+    map<string, string> env = 60;
+
+    // Passthrough to k8s resources.
+    optional ResourceRequirements resources = 80;
+
+    // k8s scaling settings.
+    optional uint32 replica_count = 85;
+    optional k8s.io.api.autoscaling.v1.HorizontalPodAutoscalerSpec hpa_spec = 86;
+    optional PodDisruptionBudgetSpec pod_disruption_budget = 87;
+
+    // Kustomize style overrides for k8s resources in rendered manifests.
+    repeated ResourceOverride resource_override = 100;
 }
+
 message TelemetryConfig {
+    enum LoadSheddingMode {
+        ENFORCE = 0;
+        LOGONLY = 1;
+        DISABLED = 2;
+    }
+    message Adapters {
+        message KubernetesEnv {
+            optional bool enabled = 1;
+        }
+        message Stdio {
+            optional bool enabled = 1;
+            optional bool output_as_json = 2;
+        }
+        message Prometheus {
+            optional bool enabled = 1;
+            optional string metrics_expiry_duration = 2;
+        }
+
+        optional bool use_adapter_CRDs = 1;
+
+        optional KubernetesEnv kubernetes_env_config = 2;
+        optional Stdio stdio = 3;
+        optional Prometheus prometheus = 4;
+    }
+    // Selects whether policy enforcement is installed.
+    optional bool enabled = 1;
+
+    // Namespace that all components for this feature are installed into.
+    optional string namespace = 2;
+
+    optional bool session_affinity_enabled = 10;
+    // Load shedding mode defines mixer behavior under load. If response time threshold is exceeded, the chosen
+    // load shedding behavior will occur.
+    optional LoadSheddingMode load_shedding_mode = 11;
+    // If the response time exceeds the threshold, the chosen load shedding behavior will take effect.
+    optional string load_shedding_latency_threshold = 12;
+
+    // k8s scaling settings.
+    optional uint32 replica_count = 80;
+
+    // Annotations and selectors.
+    map<string, string> pod_annotations = 90;
+    map<string, string> node_selector = 92;
+
+    // Kustomize style overrides for k8s resources in rendered manifests.
+    repeated ResourceOverride resource_override = 100;
 }
+
 message SecurityConfig {
+    message CertManager {
+        // Selects whether cert manager is installed.
+        optional bool enabled = 1;
+        // Namespace that all components for this feature are installed into.
+        optional string namespace = 2;
+
+        // hub is the path for docker images e.g. quay.io/jetstack
+        // TODO: clarify if image name default exists.
+        optional string hub = 3;
+        // tag is the version tag for docker images e.g. 1.0.6
+        optional string tag = 4;
+
+        // Passthrough to k8s resources.
+        optional ResourceRequirements resources = 82;
+    }
+    // Selects whether policy enforcement is installed.
+    optional bool enabled = 1;
+
+    // Namespace that all components for this feature are installed into.
+    optional string namespace = 2;
+
+    optional string image = 10;
+
+    optional bool self_signed = 11;
+
+    optional bool create_mesh_policy = 12;
+
+    // k8s scaling settings.
+    optional uint32 replica_count = 80;
+
+    // Annotations and selectors.
+    map<string, string> node_selector = 92;
+
+    // Kustomize style overrides for k8s resources in rendered manifests.
+    repeated ResourceOverride resource_override = 100;
 }
+
 message ConfigManagementConfig {
+    // Selects whether config management is installed.
+    optional bool enabled = 1;
+
+    // Namespace that all components for this feature are installed into.
+    optional string namespace = 2;
+
+    optional string image = 10;
+
+    // k8s scaling settings.
+    optional uint32 replica_count = 80;
+    
+    // Kustomize style overrides for k8s resources in rendered manifests.
+    repeated ResourceOverride resource_override = 100;
 }
 
 message IngressGatewayConfig {
+    message Sds {
+        // Selects whether config management is installed.
+        optional bool enabled = 1;
+        optional string image = 10;
+    }
+
+    optional string load_balancer_iP = 11;
+    repeated string load_balancer_source_ranges = 12;
+    repeated string external_iPs = 13;
 }
+
 message EgressGatewayConfig {
+    optional GatewayConfig gateway = 10;
+}
+
+message IlbGatewayConfig {
+    optional GatewayConfig gateway = 10;
+    optional string load_balancer_iP = 11;
+}
+
+message GatewayConfig {
+    message Labels {
+        optional string app = 1;
+        optional string istio = 2;
+    }
+    // NodePort, ClusterIP or LoadBalancer.
+    optional string type = 10;
+
+    // Additional environment variables for the container.
+    map<string, string> env = 60;
+
+    // k8s scaling settings.
+    optional k8s.io.api.autoscaling.v1.HorizontalPodAutoscalerSpec hpa_spec = 86;
+
+    // Annotations and selectors.
+    map<string, string> pod_annotations = 90;
+    map<string, string> service_annotations = 91;
+    map<string, string> node_selector = 92;
+
+    // Kustomize style overrides for k8s resources in rendered manifests.
+    repeated ResourceOverride resource_override = 100;
 }
 
 // OperatorConfig defines a config used to install an external operator.
@@ -219,7 +363,7 @@ message OperatorConfig {
     optional string namespace = 2;
 
     // spec is the initial CR for the operator.
-    optional Object spec = 3;
+    optional ResourceOverride spec = 100;
 }
 
 message IstioInstaller {
@@ -227,9 +371,49 @@ message IstioInstaller {
     optional InstallerStatus status = 4;
 }
 
-message Object {
-    optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1;
-    optional k8s.io.apimachinery.pkg.runtime.RawExtension data = 2;
+// ResourceRequirements describes the compute resource requirements.
+// Mirrors k8s.io.api.core.v1.ResourceRequirements for Unmarshaling.
+message ResourceRequirements {
+    map<string, string> limits = 1;
+    map<string, string> requests = 2;
+}
+
+// PodDisruptionBudgetSpec is a description of a PodDisruptionBudget.
+// Mirrors k8s.io.api.policy.v1beta1.PodDisruptionBudget for Unmarshaling.
+message PodDisruptionBudgetSpec {
+    optional uint32 min_available = 1;
+    optional k8s.io.apimachinery.pkg.apis.meta.v1.LabelSelector selector = 2;
+    optional uint32 max_unavailable = 3;
+}
+
+// ResourceOverride specifies a patch for an existing k8s resource.
+message ResourceOverride {
+    enum PatchType {
+        STRATEGIC = 0;
+        JSON = 1;
+    }
+    enum Op {
+        ADD = 0;
+        DELETE = 1;
+        PATCH = 2;
+    }
+
+    optional PatchType patch_type = 1;
+    optional Op op = 2;
+
+    // From k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta.TypeMeta
+    optional string kind = 3;
+    optional string api_version = 4;
+
+    optional ObjectMeta metadata = 5;
+
+    // Data map[string]interface{} `protobuf:"bytes,6,opt,name=data" json:"data,omitempty"`
+}
+
+message ObjectMeta {
+    // From k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta
+    optional string name = 5;
+    optional string namespace = 6;
 }
 
 // FIXME: this should be moved out
@@ -239,3 +423,17 @@ message SdsConfig {
     optional bool use_trustworthy_jwt = 3;
     optional bool use_normal_jwt = 4;
 }
+
+// TestKube are for testing that k8s resources unmarshal correctly.
+message TestKube {
+    optional ResourceRequirements resources = 80;
+    optional k8s.io.api.core.v1.Probe readiness_probe = 81;
+
+    optional k8s.io.api.autoscaling.v1.HorizontalPodAutoscalerSpec hpa_spec = 51;
+    optional PodDisruptionBudgetSpec pod_disruption_budget = 52;
+
+    // Kustomize style overrides for k8s resources in rendered manifests.
+    repeated ResourceOverride resource_override = 100;
+}
+
+

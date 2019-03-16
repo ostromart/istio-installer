@@ -362,7 +362,7 @@ func patchValues(baseYAML []byte, is *v1alpha1.InstallerSpec) ([]byte, error) {
 		return nil, fmt.Errorf("cannot unmarshal baseYAML to JSON: %s", err)
 	}
 
-	crValues, err := compatibility.ProtoToValues(is)
+	crValues, err := translate.ProtoToValues(is)
 	if err != nil {
 		return nil, err
 	}
