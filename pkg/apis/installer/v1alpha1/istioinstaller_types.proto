@@ -90,6 +90,9 @@ message InstallerSpec {
 
 // Observed state of IstioInstaller.
 // TODO: this needs more work. What do we want to observe?
+// change to bool/structured type.
+// In place upgrade system upgrade status.
+// Could add a version field to signal an upgrade.
 message InstallerStatus {
     string traffic_management = 1;
     string security = 2;
@@ -388,6 +391,7 @@ message CommonComponentConfig {
     // Namespace that all resources for this feature are installed into.
     string namespace = 2;
 
+    // TODO: remove this
     // hub is the path for docker images e.g. quay.io/jetstack which will override the
     // top level default if set.
     string hub = 3;
@@ -439,11 +443,12 @@ message IngressGatewayConfig {
     // Sets the IP address for the load balancer.
     // If unset, IP address will be allocated automatically if the provider
     // platform supports auto allocation.
-    string load_balancer_iP = 13;
+    // TODO: check for iP elsewhere
+    string load_balancer_ip = 13;
     // ???
     repeated string load_balancer_source_ranges = 14;
     // ???
-    repeated string external_iPs = 15;
+    repeated string external_ips = 15;
     // If true, ingress gateway fetches credentials from SDS server to handle TLS connections.
     bool sds_enabled = 16;
 
@@ -472,7 +477,9 @@ message LoadBalancingGatewayConfig {
     // Sets the IP address for the load balancer.
     // If unset, IP address will be allocated automatically if the provider
     // platform supports auto allocation.
-    string load_balancer_iP = 11;
+    // TODO: create IP type here and elsewhere.
+    // TODO: look into tagging these
+    string load_balancer_ip = 11;
 }
 
 // Common config for all gateway types.
