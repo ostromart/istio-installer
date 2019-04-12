@@ -278,38 +278,38 @@ trafficManagement:
       args:
         b: b
         c: d
-      resources:
-        requests:
-          memory: "64Mi"
-          cpu: "250m"
-        limits:
-          memory: "128Mi"
-          cpu: "500m"
-      readinessProbe:
-        initialDelaySeconds: 11
-        periodSeconds: 22
-        successThreshold: 33
-        failureThreshold: 44
-      hpaSpec:
-        scaleTargetRef:
-          apiVersion: apps/v1
-          kind: Deployment
-          name: php-apache
-        minReplicas: 1
-        maxReplicas: 10
-        targetCPUUtilizationPercentage: 80
-      nodeSelector:
-        disktype: ssd
+      k8s:
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "250m"
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        readinessProbe:
+          initialDelaySeconds: 11
+          periodSeconds: 22
+          successThreshold: 33
+          failureThreshold: 44
+        hpaSpec:
+          scaleTargetRef:
+            apiVersion: apps/v1
+            kind: Deployment
+            name: php-apache
+          minReplicas: 1
+          maxReplicas: 10
+          targetCPUUtilizationPercentage: 80
+        nodeSelector:
+          disktype: ssd
 `,
 			want: `
 global:
-  proxy:
+  proxy: 
     additionalArgs:
       b: b
       c: d
     clusterDomain: my.domain
     concurrency: 5
-    connectTimeout: 11s
     debug: true
     drainDuration: 22s
     enableCoredump: true
@@ -322,11 +322,6 @@ global:
     includeInboundPorts: 111,222
     includeIpRanges: 1.1.0.0/16,2.2.0.0/16
     interceptionMode: 1
-    lightstep:
-      accessToken: abc
-      address: 5.5.5.5
-      caCertPath: a/b/c
-      secure: true
     parentShutdownDuration: 33s
     podDnsSearchNamespaces: my-namespace
     privileged: true
@@ -344,13 +339,7 @@ global:
       requests:
         cpu: 250m
         memory: 64Mi
-    sds:
-      enabled: true
-      udsPath: a/b/c
-      useNormalJwt: true
-      useTrustworthyJwt: true
-    zipkin:
-      address: 6.6.6.6
+
 `,
 		},
 	}

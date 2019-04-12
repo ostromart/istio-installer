@@ -3,10 +3,10 @@ package translate
 
 import (
 	"fmt"
-	"reflect"
 	"github.com/ostromart/istio-installer/pkg/apis/installer/v1alpha1"
 	"github.com/ostromart/istio-installer/pkg/util"
 	"gopkg.in/yaml.v2"
+	"reflect"
 	//	"github.com/godebug/pretty"
 	"path/filepath"
 	"strings"
@@ -25,14 +25,16 @@ type Translation struct {
 
 var (
 	defaultMappings = map[string]*Translation{
-		"TrafficManagement/ProxyConfig/StatusPort": { "global/monitoringPort", "", nil },
-		"TrafficManagement/ProxyConfig": { "global/proxy", "", nil },
+		"TrafficManagement/Proxy": { "global/proxy", "", nil },
+		"TrafficManagement/Proxy/Common": { "global/proxy", "", nil },
+		"TrafficManagement/Proxy/Common/K8s": { "global/proxy", "", nil },
 
-		"TrafficManagement/PilotConfig/HpaSpec/MinReplicas": { "global/pilot/autoscaleMin", "", nil	},
-		"TrafficManagement/PilotConfig/HpaSpec/MaxReplicas": { "global/pilot/autoscaleMax", "", nil	},
-		"TrafficManagement/PilotConfig/HpaSpec": { "", "HorizontalPodAutoscaler/istio-pilot/spec", nil	},
-		"TrafficManagement/PilotConfig/NodeSelector": { "", "Deployment/istio-pilot/spec/template/spec", nil	},
-		"TrafficManagement/PilotConfig": {"global/pilot", "", nil},
+		"TrafficManagement/Pilot/Sidecar/Value": { "global/pilot/sidecar", "", nil	},
+		"TrafficManagement/Pilot/HpaSpec/MinReplicas": { "global/pilot/autoscaleMin", "", nil	},
+		"TrafficManagement/Pilot/HpaSpec/MaxReplicas": { "global/pilot/autoscaleMax", "", nil	},
+		"TrafficManagement/Pilot/HpaSpec": { "", "HorizontalPodAutoscaler/istio-pilot/spec", nil	},
+		"TrafficManagement/Pilot/NodeSelector": { "", "Deployment/istio-pilot/spec/template/spec", nil	},
+		"TrafficManagement/Pilot": {"global/pilot", "", nil},
 	}
 )
 

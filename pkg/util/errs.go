@@ -74,3 +74,21 @@ func ToString(errors []error) string {
 	}
 	return out
 }
+
+// EqualErrors reports whether a and b are equal, regardless of ordering.
+func EqualErrors(a, b Errors) bool {
+	if len(a) != len(b) {
+		fmt.Printf("%d != %d\n", len(a), len(b))
+		return false
+	}
+	m := make(map[string]bool)
+	for _, e := range b {
+		m[e.Error()] = true
+	}
+	for _, ea := range a {
+		if !m[ea.Error()] {
+			return false
+		}
+	}
+	return true
+}

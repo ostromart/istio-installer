@@ -13,6 +13,11 @@ import "github.com/gogo/protobuf/protobuf/google/protobuf/wrappers.proto";
 
 // 	protobuf "github.com/gogo/protobuf/types"
 
+message IstioInstaller {
+    InstallerSpec spec = 3;
+    InstallerStatus status = 4;
+}
+
 // InstallerSpec defines the desired state of IstioInstaller.
 message InstallerSpec {
     // URL for the install package. e.g.
@@ -50,49 +55,15 @@ message InstallerSpec {
     KubernetesResourcesConfig k8s_defaults = 80;
 }
 
-// Observed state of IstioInstaller.
-message InstallerStatus {
-    enum Status {
-        NONE = 0;
-        INSTALLING = 1;
-        HEALTHY = 2;
-        ERROR = 3;
-    }
-    message VersionStatus {
-        string version = 1;
-        Status status = 2;
-    }
-
-    VersionStatus traffic_management = 1;
-    VersionStatus policy_telemetry = 2;
-    VersionStatus security = 3;
-    VersionStatus config_management = 4;
-
-    repeated VersionStatus ingress_gateway = 5;
-    repeated VersionStatus egress_gateway = 6;
-}
-
 // Configuration options for traffic management.
 message TrafficManagementConfig {
     // Selects whether traffic management is installed.
     // Must be enabled to enable any sub-component.
-    // +k8s:deepcopy-gen=false
     google.protobuf.BoolValue enabled = 1;
     // Namespace that all traffic management components are installed into.
     string namespace = 2;
 
-    // Istio egress capture whitelist.
-    // e.g. includeIPRanges: "172.30.0.0/16,172.20.0.0/16"
-    // would only capture egress traffic on those two IP Ranges,
-    // all other outbound traffic would # be allowed by the sidecar.
-    // https://istio.io/docs/tasks/traffic-management/egress.html#calling-external-services-directly
-    string include_ip_ranges = 16;
-    string exclude_ip_ranges = 17;
-    string include_inbound_ports = 18;
-    string exclude_inbound_ports = 19;
-
     string cluster_domain = 24;
-    string pod_dns_search_namespaces = 25;
 
     // Selects whether auto-injection is enabled.
     google.protobuf.BoolValue enable_auto_injection = 26;
@@ -159,33 +130,6 @@ message PilotComponentConfig {
 // Configuration options for the proxy.
 message ProxyComponentConfig {
     CommonComponentConfig common = 1;
-
-    // Selects interception mode for the proxy.
-    // The mode used to redirect inbound connections to Envoy. This setting
-    // has no effect on outbound traffic: iptables REDIRECT is always used for
-    // outbound connections.
-    // If "REDIRECT", use iptables REDIRECT to NAT and redirect to Envoy.
-    // The "REDIRECT" mode loses source addresses during redirection.
-    // If "TPROXY", use iptables TPROXY to redirect to Envoy.
-    // The "TPROXY" mode preserves both the source and destination IP
-    // addresses and ports, so that they can be used for advanced filtering
-    // and manipulation.
-    // The "TPROXY" mode also configures the sidecar to run with the
-    // CAP_NET_ADMIN capability, which is required to use TPROXY.
-    enum InterceptionMode {
-        REDIRECT = 0;
-        TPROXY = 1;
-    }
-    InterceptionMode interception_mode = 12;
-
-    // Envoy specific timer settings.
-    string connect_timeout = 20;
-    string drain_duration = 21;
-    string parent_shutdown_duration = 22;
-
-    // Controls number of Proxy worker threads.
-    // If set to 0 (default), starts worker thread for each CPU thread/core.
-    uint32 concurrency = 23;
 }
 
 // Configuration options for the sidecar injector component.
@@ -229,7 +173,6 @@ message ConfigManagementConfig {
 message CommonComponentConfig {
     // Selects whether policy enforcement is installed.
     // Q. is this enough to cover both mixer.policy.enabled and disablePolicyChecks?
-    // +k8s:deepcopy-gen=false
     google.protobuf.BoolValue enabled = 1;
     // Namespace that all resources for this feature are installed into.
     string namespace = 2;
@@ -379,11 +322,6 @@ message OperatorConfig {
     k8sObjectOverride spec = 100;
 }
 
-message IstioInstaller {
-    InstallerSpec spec = 3;
-    InstallerStatus status = 4;
-}
-
 // Patch for an existing k8s resource.
 message k8sObjectOverride {
     enum PatchType {
@@ -406,4 +344,26 @@ message k8sObjectOverride {
     ObjectMeta metadata = 5;
     // google.protobuf.Struct Data = 6;
     // Data map[string]interface{} `protobuf:"bytes,6,opt,name=data" json:"data,omitempty"`
+}
+
+// Observed state of IstioInstaller.
+message InstallerStatus {
+    enum Status {
+        NONE = 0;
+        UPDATING = 1;
+        HEALTHY = 2;
+        ERROR = 3;
+    }
+    message VersionStatus {
+        string version = 1;
+        Status status = 2;
+    }
+
+    VersionStatus traffic_management = 1;
+    VersionStatus policy_telemetry = 2;
+    VersionStatus security = 3;
+    VersionStatus config_management = 4;
+
+    repeated VersionStatus ingress_gateway = 5;
+    repeated VersionStatus egress_gateway = 6;
 }
