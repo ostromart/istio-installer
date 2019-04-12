@@ -53,7 +53,7 @@ docker-push:
 
 proto:
 	protoc -I./vendor -I./vendor/github.com/gogo/protobuf/protobuf --proto_path=pkg/apis/installer/v1alpha1/ --gofast_out=pkg/apis/installer/v1alpha1/ pkg/apis/installer/v1alpha1/istioinstaller_types.proto
-    sed -i -e 's|github.com/gogo/protobuf/protobuf/google/protobuf|github.com/gogo/protobuf/types|g' pkg/apis/installer/v1alpha1/istioinstaller_types.pb.go
+	sed -i -e 's|github.com/gogo/protobuf/protobuf/google/protobuf|github.com/gogo/protobuf/types|g' pkg/apis/installer/v1alpha1/istioinstaller_types.pb.go
 	go run ~/go/src/k8s.io/code-generator/cmd/deepcopy-gen/main.go -O zz_generated.deepcopy -i ./pkg/apis/installer/v1alpha1/...
 	patch pkg/apis/installer/v1alpha1/istioinstaller_types.pb.go < pkg/apis/installer/v1alpha1/fixup_go_structs.patch
 

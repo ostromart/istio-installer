@@ -11,12 +11,11 @@ import (
 	"github.com/ostromart/istio-installer/pkg/apis/installer/v1alpha1"
 )
 
-
 func TestValidate(t *testing.T) {
 	tests := []struct {
-		desc string
-		yamlStr  string
-		wantErr  string
+		desc    string
+		yamlStr string
+		wantErr string
 	}{
 		{
 			desc: "nil success",
@@ -91,12 +90,43 @@ trafficManagement:
 `,
 		},
 		{
-			desc: "BadIP",
+			desc: "BadIPRange",
 			yamlStr: `
 trafficManagement:
   includeIpRanges: "1.1.0.256/16,2.2.0.257/16"
   excludeIpRanges: "3.3.0.0/33,4.4.0.0/34"
 `,
+			wantErr: "TrafficManagement/IncludeIpRanges invalid CIDR address: 1.1.0.256/16, " +
+				"TrafficManagement/IncludeIpRanges invalid CIDR address: 2.2.0.257/16, " +
+				"TrafficManagement/ExcludeIpRanges invalid CIDR address: 3.3.0.0/33, "+
+				"TrafficManagement/ExcludeIpRanges invalid CIDR address: 4.4.0.0/34",
+		},
+		{
+			desc: "BadIPMalformed",
+			yamlStr: `
+trafficManagement:
+  includeIpRanges: "1.2.3/16,1.2.3.x/16"
+`,
+			wantErr: "TrafficManagement/IncludeIpRanges invalid CIDR address: 1.2.3/16, " +
+				"TrafficManagement/IncludeIpRanges invalid CIDR address: 1.2.3.x/16",
+		},
+		{
+			desc: "BadPortRange",
+			yamlStr: `
+trafficManagement:
+  includeInboundPorts: "111,65536"
+  excludeInboundPorts: "-1,444"
+`,
+			wantErr: "value TrafficManagement/IncludeInboundPorts:65536 falls outside range [0, 65535], "+
+				"value TrafficManagement/ExcludeInboundPorts:-1 falls outside range [0, 65535]",
+		},
+		{
+			desc: "BadPortMalformed",
+			yamlStr: `
+trafficManagement:
+  includeInboundPorts: "111,222x"
+`,
+			wantErr: `TrafficManagement/IncludeInboundPorts : strconv.ParseInt: parsing "222x": invalid syntax`,
 		},
 	}
 
@@ -115,7 +145,6 @@ trafficManagement:
 		})
 	}
 }
-
 
 func unmarshalWithJSONPB(y string, out proto.Message) error {
 	jb, err := yaml.YAMLToJSON([]byte(y))

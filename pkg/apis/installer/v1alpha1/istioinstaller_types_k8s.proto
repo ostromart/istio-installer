@@ -1,0 +1,47 @@
+// TODO:
+// - Add pod (anti)affinity for all components.
+// - Debug level functionality (add to API, comment that it’s binary for now)
+
+syntax = "proto3";
+
+package v1alpha1;
+
+import "k8s.io/api/core/v1/generated.proto";
+import "k8s.io/api/autoscaling/v1/generated.proto";
+import "k8s.io/apimachinery/pkg/apis/meta/v1/generated.proto";
+import "github.com/gogo/protobuf/protobuf/google/protobuf/wrappers.proto";
+
+// Mirrors k8s.io.api.core.v1.ResourceRequirements for unmarshaling.
+message Resources {
+    map<string, string> limits = 1;
+    map<string, string> requests = 2;
+}
+
+// Mirrors k8s.io.api.policy.v1beta1.PodDisruptionBudget for unmarshaling.
+message PodDisruptionBudgetSpec {
+    uint32 min_available = 1;
+    k8s.io.apimachinery.pkg.apis.meta.v1.LabelSelector selector = 2;
+    uint32 max_unavailable = 3;
+}
+
+message ObjectMeta {
+    // From k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta
+    string name = 5;
+    string namespace = 6;
+}
+
+// TESTING ONLY
+message TestKube {
+    map<string, string> env = 60;
+
+    Resources resources = 80;
+    k8s.io.api.core.v1.Probe readiness_probe = 81;
+    k8s.io.api.autoscaling.v1.HorizontalPodAutoscalerSpec hpa_spec = 86;
+    PodDisruptionBudgetSpec pod_disruption_budget = 87;
+
+    map<string, string> pod_annotations = 90;
+    map<string, string> node_selector = 92;
+
+    // Kustomize style overrides for k8s resources in rendered manifests.
+    repeated k8sObjectOverride k8s_object_override = 100;
+}

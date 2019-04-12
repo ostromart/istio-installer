@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/ostromart/istio-installer/pkg/apis/installer/v1alpha1"
@@ -11,15 +12,19 @@ import (
 )
 
 // ValidateFunc validates a value.
-type ValidateFunc func(i interface{}) error
+type ValidateFunc func(path util.Path, i interface{}) error
 
 var (
 	// defaultValidations maps a data path to a validation function.
 	defaultValidations = map[string]ValidateFunc{
 		"TrafficManagement/IncludeIpRanges":  validateStringList(validateCIDR),
 		"TrafficManagement/ExcludeIpRanges":  validateStringList(validateCIDR),
-		"TrafficManagement/IncludeInboundPorts":  validateStringList(validatePortNumber),
-		"TrafficManagement/IncludeOutboundPorts":  validateStringList(validatePortNumber),
+		"TrafficManagement/IncludeInboundPorts":  validateStringList(validatePortNumberString),
+		"TrafficManagement/ExcludeInboundPorts":  validateStringList(validatePortNumberString),
+	}
+
+	// requiredValues lists all the values that must be non-empty.
+	requiredValues = map[string]bool {
 	}
 )
 
@@ -95,68 +100,87 @@ func validate(validations map[string]ValidateFunc, structPtr interface{}, path u
 }
 
 func validateLeaf(validations map[string]ValidateFunc, path util.Path, val interface{}) error {
-	fmt.Printf("validate %s:%v(%T) ", path.String(), val, val)
-	if util.IsValueNil(val) {
+	pstr := path.String()
+	fmt.Printf("validate %s:%v(%T) ", pstr, val, val)
+	if !requiredValues[pstr] && (util.IsValueNil(val) || util.IsEmptyString(val)) {
 		// TODO(mostrowski): handle required fields.
-		fmt.Printf("validate %s: OK (nil value)\n", path.String())
+		fmt.Printf("validate %s: OK (empty value)\n", pstr)
 		return nil
 	}
-	vf, ok := validations[path.String()]
+
+	vf, ok := validations[pstr]
 	if !ok {
-		fmt.Printf("validate %s: OK (no validation)\n", path.String())
+		fmt.Printf("validate %s: OK (no validation)\n", pstr)
 		// No validation defined.
 		return nil
 	}
-	return vf(val)
+	return vf(path, val)
 }
 
-func validatePortNumber(val interface{}) error {
-	return validateIntRange(val, 0, 65535)
+func validatePortNumberString(path util.Path, val interface{}) error {
+	fmt.Printf("validatePortNumberString %v: ", val)
+	if !isString(val) {
+		return fmt.Errorf("validatePortNumberString(%s) bad type %T, want string", path, val)
+	}
+	intV, err := strconv.ParseInt(val.(string), 10, 32);
+	if err != nil {
+		return fmt.Errorf("%s : %s", path, err)
+	}
+	return validatePortNumber(path, intV)
 }
 
-func validateIntRange(val interface{}, min, max int64) error {
-	fmt.Printf("validateIntRange %v in [%d, %d]?: ", val, min, max)
+func validatePortNumber(path util.Path, val interface{}) error {
+	return validateIntRange(path, val, 0, 65535)
+}
+
+func validateIntRange(path util.Path, val interface{}, min, max int64) error {
+	fmt.Printf("validateIntRange %s:%v in [%d, %d]?: ", path, val, min, max)
 	k := reflect.TypeOf(val).Kind()
 	var err error
 	switch {
 	case isIntKind(k):
 		v := reflect.ValueOf(val).Int()
 		if v < min || v > max {
-			err = fmt.Errorf("value %v falls out side range [%v, %v]", v, min, max)
+			err = fmt.Errorf("value %s:%v falls outside range [%v, %v]", path, v, min, max)
 		}
 	case isUintKind(k):
 		v := reflect.ValueOf(val).Uint()
 		if int64(v) < min || int64(v) > max {
-			err = fmt.Errorf("value %v falls out side range [%v, %v]", v, min, max)
+			err = fmt.Errorf("value %s:%v falls out side range [%v, %v]", path, v, min, max)
 		}
+	default:
+		err = fmt.Errorf("validateIntRange %s unexpected type %T, want int type", path, val)
 	}
 	printError(err)
 	return err
 }
 
-func validateCIDR(val interface{}) error {
+func validateCIDR(path util.Path, val interface{}) error {
 	fmt.Printf("validateCIDR (%s): ", val)
 	var err error
 	if reflect.TypeOf(val).Kind() != reflect.String {
-		err = fmt.Errorf("validateCIDR got %T, want string", val)
+		err = fmt.Errorf("validateCIDR %s got %T, want string", path, val)
 	} else {
 		_, _, err = net.ParseCIDR(val.(string))
+		if err != nil {
+			err = fmt.Errorf("%s %s", path, err)
+		}
 	}
 	printError(err)
 	return err
 }
 
 func validateStringList(vf ValidateFunc) ValidateFunc {
-	return func(val interface{}) error {
+	return func(path util.Path, val interface{}) error {
 		fmt.Printf("validateStringList(\n")
 		if reflect.TypeOf(val).Kind() != reflect.String {
-			err := fmt.Errorf("validateStringList got %T, want string", val)
+			err := fmt.Errorf("validateStringList %s got %T, want string", path, val)
 			printError(err)
 			return err
 		}
 		var errs util.Errors
 		for _, s := range strings.Split(val.(string), ",") {
-			errs = util.AppendErr(errs, vf(strings.TrimSpace(s)))
+			errs = util.AppendErr(errs, vf(path, strings.TrimSpace(s)))
 		}
 		err := errs.ToError()
 		fmt.Print("):")
@@ -179,6 +203,10 @@ func isUintKind(k reflect.Kind) bool {
 		return true
 	}
 	return false
+}
+
+func isString(val interface{}) bool {
+	return reflect.TypeOf(val).Kind() == reflect.String
 }
 
 func printError(err error) {

@@ -69,6 +69,18 @@ func IsValueNil(value interface{}) bool {
 	return false
 }
 
+// IsEmptyString returns true if value is an empty string.
+func IsEmptyString(value interface{}) bool {
+	if value == nil {
+		return true
+	}
+	switch reflect.TypeOf(value).Kind() {
+	case reflect.String:
+		return value.(string) == ""
+	}
+	return false
+}
+
 // IsNilOrInvalidValue reports whether v is nil or reflect.Zero.
 func IsNilOrInvalidValue(v reflect.Value) bool {
 	return !v.IsValid() || (v.Kind() == reflect.Ptr && v.IsNil()) || IsValueNil(v.Interface())

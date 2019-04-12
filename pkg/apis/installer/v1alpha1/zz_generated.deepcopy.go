@@ -685,6 +685,11 @@ func (in *PilotComponentConfig) DeepCopyInto(out *PilotComponentConfig) {
 		*out = new(CommonComponentConfig)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.Sidecar != nil {
+		in, out := &in.Sidecar, &out.Sidecar
+		*out = new(types.BoolValue)
+		(*in).DeepCopyInto(*out)
+	}
 	out.XXX_NoUnkeyedLiteral = in.XXX_NoUnkeyedLiteral
 	if in.XXX_unrecognized != nil {
 		in, out := &in.XXX_unrecognized, &out.XXX_unrecognized
@@ -863,6 +868,16 @@ func (in *SecurityConfig) DeepCopyInto(out *SecurityConfig) {
 	*out = *in
 	if in.Enabled != nil {
 		in, out := &in.Enabled, &out.Enabled
+		*out = new(types.BoolValue)
+		(*in).DeepCopyInto(*out)
+	}
+	if in.ControlPlaneMtls != nil {
+		in, out := &in.ControlPlaneMtls, &out.ControlPlaneMtls
+		*out = new(types.BoolValue)
+		(*in).DeepCopyInto(*out)
+	}
+	if in.DataPlaneMtls != nil {
+		in, out := &in.DataPlaneMtls, &out.DataPlaneMtls
 		*out = new(types.BoolValue)
 		(*in).DeepCopyInto(*out)
 	}
