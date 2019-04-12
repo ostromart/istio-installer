@@ -120,11 +120,13 @@
 [[projects]]
   name = "github.com/golang/protobuf"
   packages = [
+    "jsonpb",
     "proto",
     "protoc-gen-go/descriptor",
     "ptypes",
     "ptypes/any",
     "ptypes/duration",
+    "ptypes/struct",
     "ptypes/timestamp"
   ]
   revision = "aa810b61a9c79d51363740d207bb46cf8e620ed5"
@@ -222,12 +224,21 @@
   version = "v1.1.5"
 
 [[projects]]
+  name = "github.com/kr/pretty"
+  packages = ["."]
+  revision = "73f6ac0b30a98e433b289500d779f50c1a6f0712"
+  version = "v0.1.0"
+
+[[projects]]
+  name = "github.com/kr/text"
+  packages = ["."]
+  revision = "e2ffdb16a802fe2bb95e2e35ff34f0e53aeef34f"
+  version = "v0.1.0"
+
+[[projects]]
   branch = "master"
   name = "github.com/kylelemons/godebug"
-  packages = [
-    "diff",
-    "pretty"
-  ]
+  packages = ["diff"]
   revision = "d65d576e9348f5982d7f6d83682b694e731a45c6"
 
 [[projects]]
@@ -305,12 +316,6 @@
   ]
   revision = "65fb64232476ad9046e57c26cd0bff3d3a8dc6cd"
   version = "v1.4.3"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/openconfig/gnmi"
-  packages = ["errdiff"]
-  revision = "33a1865c302903e7a2e06f35960e6bc31e84b9f6"
 
 [[projects]]
   name = "github.com/pborman/uuid"
@@ -874,6 +879,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "f0fdbd9b4a4af34d3ea3c3e18c55b5b0398d2089649376e5b8b37ad0dbaca41b"
+  inputs-digest = "a80b29fbb7fd6af4d3c7447da8b1370d2a9b50956436e67efbe9a6a20a51c445"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -4,12 +4,12 @@
 package v1alpha1
 
 import (
-	encoding_binary "encoding/binary"
 	fmt "fmt"
+	protobuf "github.com/gogo/protobuf/protobuf/google/protobuf"
 	proto "github.com/golang/protobuf/proto"
 	io "io"
-	v1 "k8s.io/api/autoscaling/v1"
-	v11 "k8s.io/api/core/v1"
+	v11 "k8s.io/api/autoscaling/v1"
+	v1 "k8s.io/api/core/v1"
 	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	math "math"
 )
@@ -25,208 +25,284 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
-type ProxyConfig_InterceptionMode int32
+type InstallerStatus_Status int32
 
 const (
-	ProxyConfig_REDIRECT ProxyConfig_InterceptionMode = 0
-	ProxyConfig_TPROXY   ProxyConfig_InterceptionMode = 1
+	InstallerStatus_NONE       InstallerStatus_Status = 0
+	InstallerStatus_INSTALLING InstallerStatus_Status = 1
+	InstallerStatus_HEALTHY    InstallerStatus_Status = 2
+	InstallerStatus_ERROR      InstallerStatus_Status = 3
 )
 
-var ProxyConfig_InterceptionMode_name = map[int32]string{
+var InstallerStatus_Status_name = map[int32]string{
+	0: "NONE",
+	1: "INSTALLING",
+	2: "HEALTHY",
+	3: "ERROR",
+}
+
+var InstallerStatus_Status_value = map[string]int32{
+	"NONE":       0,
+	"INSTALLING": 1,
+	"HEALTHY":    2,
+	"ERROR":      3,
+}
+
+func (x InstallerStatus_Status) String() string {
+	return proto.EnumName(InstallerStatus_Status_name, int32(x))
+}
+
+func (InstallerStatus_Status) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_d0a1188b3d395975, []int{1, 0}
+}
+
+// Default behavior of the sidecar for handling outbound traffic from the application.
+type PolicyTelemetryConfig_OutboundPolicy int32
+
+const (
+	// Outbound traffic to unknown destinations will be allowed, in case there are no
+	// services or ServiceEntries for the destination port
+	PolicyTelemetryConfig_ALLOW_ANY PolicyTelemetryConfig_OutboundPolicy = 0
+	// Restrict outbound traffic to services defined in the service registry as well
+	// as those defined through ServiceEntries
+	PolicyTelemetryConfig_REGISTRY_ONLY PolicyTelemetryConfig_OutboundPolicy = 1
+)
+
+var PolicyTelemetryConfig_OutboundPolicy_name = map[int32]string{
+	0: "ALLOW_ANY",
+	1: "REGISTRY_ONLY",
+}
+
+var PolicyTelemetryConfig_OutboundPolicy_value = map[string]int32{
+	"ALLOW_ANY":     0,
+	"REGISTRY_ONLY": 1,
+}
+
+func (x PolicyTelemetryConfig_OutboundPolicy) String() string {
+	return proto.EnumName(PolicyTelemetryConfig_OutboundPolicy_name, int32(x))
+}
+
+func (PolicyTelemetryConfig_OutboundPolicy) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_d0a1188b3d395975, []int{3, 0}
+}
+
+// Selects interception mode for the proxy.
+// The mode used to redirect inbound connections to Envoy. This setting
+// has no effect on outbound traffic: iptables REDIRECT is always used for
+// outbound connections.
+// If "REDIRECT", use iptables REDIRECT to NAT and redirect to Envoy.
+// The "REDIRECT" mode loses source addresses during redirection.
+// If "TPROXY", use iptables TPROXY to redirect to Envoy.
+// The "TPROXY" mode preserves both the source and destination IP
+// addresses and ports, so that they can be used for advanced filtering
+// and manipulation.
+// The "TPROXY" mode also configures the sidecar to run with the
+// CAP_NET_ADMIN capability, which is required to use TPROXY.
+type ProxyComponentConfig_InterceptionMode int32
+
+const (
+	ProxyComponentConfig_REDIRECT ProxyComponentConfig_InterceptionMode = 0
+	ProxyComponentConfig_TPROXY   ProxyComponentConfig_InterceptionMode = 1
+)
+
+var ProxyComponentConfig_InterceptionMode_name = map[int32]string{
 	0: "REDIRECT",
 	1: "TPROXY",
 }
 
-var ProxyConfig_InterceptionMode_value = map[string]int32{
+var ProxyComponentConfig_InterceptionMode_value = map[string]int32{
 	"REDIRECT": 0,
 	"TPROXY":   1,
 }
 
-func (x ProxyConfig_InterceptionMode) Enum() *ProxyConfig_InterceptionMode {
-	p := new(ProxyConfig_InterceptionMode)
-	*p = x
-	return p
+func (x ProxyComponentConfig_InterceptionMode) String() string {
+	return proto.EnumName(ProxyComponentConfig_InterceptionMode_name, int32(x))
 }
 
-func (x ProxyConfig_InterceptionMode) String() string {
-	return proto.EnumName(ProxyConfig_InterceptionMode_name, int32(x))
+func (ProxyComponentConfig_InterceptionMode) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_d0a1188b3d395975, []int{6, 0}
 }
 
-func (x *ProxyConfig_InterceptionMode) UnmarshalJSON(data []byte) error {
-	value, err := proto.UnmarshalJSONEnum(ProxyConfig_InterceptionMode_value, data, "ProxyConfig_InterceptionMode")
-	if err != nil {
-		return err
-	}
-	*x = ProxyConfig_InterceptionMode(value)
-	return nil
-}
-
-func (ProxyConfig_InterceptionMode) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{5, 0}
-}
-
-type TelemetryConfig_LoadSheddingMode int32
+// LogLevel sets the component log level. Mappings to underlying log levels are not necessarily 1:1 and depend on
+// component support of these levels e.g. DEBUG or INFO may result in the same log verbosity.
+type CommonComponentConfig_LogLevel int32
 
 const (
-	TelemetryConfig_ENFORCE  TelemetryConfig_LoadSheddingMode = 0
-	TelemetryConfig_LOGONLY  TelemetryConfig_LoadSheddingMode = 1
-	TelemetryConfig_DISABLED TelemetryConfig_LoadSheddingMode = 2
+	CommonComponentConfig_NONE  CommonComponentConfig_LogLevel = 0
+	CommonComponentConfig_ERROR CommonComponentConfig_LogLevel = 1
+	CommonComponentConfig_WARN  CommonComponentConfig_LogLevel = 2
+	CommonComponentConfig_DEBUG CommonComponentConfig_LogLevel = 3
+	CommonComponentConfig_INFO  CommonComponentConfig_LogLevel = 4
 )
 
-var TelemetryConfig_LoadSheddingMode_name = map[int32]string{
-	0: "ENFORCE",
-	1: "LOGONLY",
-	2: "DISABLED",
+var CommonComponentConfig_LogLevel_name = map[int32]string{
+	0: "NONE",
+	1: "ERROR",
+	2: "WARN",
+	3: "DEBUG",
+	4: "INFO",
 }
 
-var TelemetryConfig_LoadSheddingMode_value = map[string]int32{
-	"ENFORCE":  0,
-	"LOGONLY":  1,
-	"DISABLED": 2,
+var CommonComponentConfig_LogLevel_value = map[string]int32{
+	"NONE":  0,
+	"ERROR": 1,
+	"WARN":  2,
+	"DEBUG": 3,
+	"INFO":  4,
 }
 
-func (x TelemetryConfig_LoadSheddingMode) Enum() *TelemetryConfig_LoadSheddingMode {
-	p := new(TelemetryConfig_LoadSheddingMode)
-	*p = x
-	return p
+func (x CommonComponentConfig_LogLevel) String() string {
+	return proto.EnumName(CommonComponentConfig_LogLevel_name, int32(x))
 }
 
-func (x TelemetryConfig_LoadSheddingMode) String() string {
-	return proto.EnumName(TelemetryConfig_LoadSheddingMode_name, int32(x))
+func (CommonComponentConfig_LogLevel) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_d0a1188b3d395975, []int{14, 0}
 }
 
-func (x *TelemetryConfig_LoadSheddingMode) UnmarshalJSON(data []byte) error {
-	value, err := proto.UnmarshalJSONEnum(TelemetryConfig_LoadSheddingMode_value, data, "TelemetryConfig_LoadSheddingMode")
-	if err != nil {
-		return err
-	}
-	*x = TelemetryConfig_LoadSheddingMode(value)
-	return nil
-}
-
-func (TelemetryConfig_LoadSheddingMode) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{7, 0}
-}
-
-type ResourceOverride_PatchType int32
+// Selects the type of ingress.
+// Ingress type.
+type IngressGatewayConfig_IngressType int32
 
 const (
-	ResourceOverride_STRATEGIC ResourceOverride_PatchType = 0
-	ResourceOverride_JSON      ResourceOverride_PatchType = 1
+	IngressGatewayConfig_ISTIO      IngressGatewayConfig_IngressType = 0
+	IngressGatewayConfig_KUBERNETES IngressGatewayConfig_IngressType = 1
 )
 
-var ResourceOverride_PatchType_name = map[int32]string{
+var IngressGatewayConfig_IngressType_name = map[int32]string{
+	0: "ISTIO",
+	1: "KUBERNETES",
+}
+
+var IngressGatewayConfig_IngressType_value = map[string]int32{
+	"ISTIO":      0,
+	"KUBERNETES": 1,
+}
+
+func (x IngressGatewayConfig_IngressType) String() string {
+	return proto.EnumName(IngressGatewayConfig_IngressType_name, int32(x))
+}
+
+func (IngressGatewayConfig_IngressType) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_d0a1188b3d395975, []int{16, 0}
+}
+
+// change to Local to preserve source IP or Cluster for default behaviour or leave commented out
+// ???
+// External traffic policy.
+type IngressGatewayConfig_ExternalTrafficPolicy int32
+
+const (
+	IngressGatewayConfig_NONE IngressGatewayConfig_ExternalTrafficPolicy = 0
+	// Preserves source IP.
+	IngressGatewayConfig_LOCAL   IngressGatewayConfig_ExternalTrafficPolicy = 1
+	IngressGatewayConfig_CLUSTER IngressGatewayConfig_ExternalTrafficPolicy = 2
+)
+
+var IngressGatewayConfig_ExternalTrafficPolicy_name = map[int32]string{
+	0: "NONE",
+	1: "LOCAL",
+	2: "CLUSTER",
+}
+
+var IngressGatewayConfig_ExternalTrafficPolicy_value = map[string]int32{
+	"NONE":    0,
+	"LOCAL":   1,
+	"CLUSTER": 2,
+}
+
+func (x IngressGatewayConfig_ExternalTrafficPolicy) String() string {
+	return proto.EnumName(IngressGatewayConfig_ExternalTrafficPolicy_name, int32(x))
+}
+
+func (IngressGatewayConfig_ExternalTrafficPolicy) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_d0a1188b3d395975, []int{16, 1}
+}
+
+type K8SObjectOverride_PatchType int32
+
+const (
+	K8SObjectOverride_STRATEGIC K8SObjectOverride_PatchType = 0
+	K8SObjectOverride_JSON      K8SObjectOverride_PatchType = 1
+)
+
+var K8SObjectOverride_PatchType_name = map[int32]string{
 	0: "STRATEGIC",
 	1: "JSON",
 }
 
-var ResourceOverride_PatchType_value = map[string]int32{
+var K8SObjectOverride_PatchType_value = map[string]int32{
 	"STRATEGIC": 0,
 	"JSON":      1,
 }
 
-func (x ResourceOverride_PatchType) Enum() *ResourceOverride_PatchType {
-	p := new(ResourceOverride_PatchType)
-	*p = x
-	return p
+func (x K8SObjectOverride_PatchType) String() string {
+	return proto.EnumName(K8SObjectOverride_PatchType_name, int32(x))
 }
 
-func (x ResourceOverride_PatchType) String() string {
-	return proto.EnumName(ResourceOverride_PatchType_name, int32(x))
+func (K8SObjectOverride_PatchType) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_d0a1188b3d395975, []int{24, 0}
 }
 
-func (x *ResourceOverride_PatchType) UnmarshalJSON(data []byte) error {
-	value, err := proto.UnmarshalJSONEnum(ResourceOverride_PatchType_value, data, "ResourceOverride_PatchType")
-	if err != nil {
-		return err
-	}
-	*x = ResourceOverride_PatchType(value)
-	return nil
-}
-
-func (ResourceOverride_PatchType) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{18, 0}
-}
-
-type ResourceOverride_Op int32
+type K8SObjectOverride_Op int32
 
 const (
-	ResourceOverride_ADD    ResourceOverride_Op = 0
-	ResourceOverride_DELETE ResourceOverride_Op = 1
-	ResourceOverride_PATCH  ResourceOverride_Op = 2
+	K8SObjectOverride_ADD    K8SObjectOverride_Op = 0
+	K8SObjectOverride_DELETE K8SObjectOverride_Op = 1
+	K8SObjectOverride_PATCH  K8SObjectOverride_Op = 2
 )
 
-var ResourceOverride_Op_name = map[int32]string{
+var K8SObjectOverride_Op_name = map[int32]string{
 	0: "ADD",
 	1: "DELETE",
 	2: "PATCH",
 }
 
-var ResourceOverride_Op_value = map[string]int32{
+var K8SObjectOverride_Op_value = map[string]int32{
 	"ADD":    0,
 	"DELETE": 1,
 	"PATCH":  2,
 }
 
-func (x ResourceOverride_Op) Enum() *ResourceOverride_Op {
-	p := new(ResourceOverride_Op)
-	*p = x
-	return p
+func (x K8SObjectOverride_Op) String() string {
+	return proto.EnumName(K8SObjectOverride_Op_name, int32(x))
 }
 
-func (x ResourceOverride_Op) String() string {
-	return proto.EnumName(ResourceOverride_Op_name, int32(x))
-}
-
-func (x *ResourceOverride_Op) UnmarshalJSON(data []byte) error {
-	value, err := proto.UnmarshalJSONEnum(ResourceOverride_Op_value, data, "ResourceOverride_Op")
-	if err != nil {
-		return err
-	}
-	*x = ResourceOverride_Op(value)
-	return nil
-}
-
-func (ResourceOverride_Op) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{18, 1}
+func (K8SObjectOverride_Op) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_d0a1188b3d395975, []int{24, 1}
 }
 
 // InstallerSpec defines the desired state of IstioInstaller.
 type InstallerSpec struct {
-	// install_package_path is the URL for the install package to install e.g.
+	// URL for the install package. e.g.
 	//   http://github.com/istio/istio/releases/install/1.1.2
 	//   http://github.com/istio/istio/releases/install/lts
 	//   file://tmp/istio-installer/nightly
-	// Optional. Uses compiled in install package by default.
-	InstallPackagePath *string `protobuf:"bytes,1,opt,name=install_package_path,json=installPackagePath" json:"install_package_path,omitempty"`
-	// controller_name binds the CR to the install controller
-	// that should listen to it. Used when multiple versions of controllers
-	// coexist in a cluster and to prevent old versions of controller from
-	// consuming new version of config.
-	ControllerName *string `protobuf:"bytes,2,opt,name=controller_name,json=controllerName" json:"controller_name,omitempty"`
-	// hub is the root for docker images e.g. docker.io/istio-release.
-	Hub *string `protobuf:"bytes,3,opt,name=hub" json:"hub,omitempty"`
-	// tag is the version tag for docker images e.g. 1.0.6
-	Tag *string `protobuf:"bytes,4,opt,name=tag" json:"tag,omitempty"`
-	// default_namespace_prefix is the prefix added to all namespaces for any installed component. Required.
-	DefaultNamespacePrefix *string `protobuf:"bytes,5,opt,name=default_namespace_prefix,json=defaultNamespacePrefix" json:"default_namespace_prefix,omitempty"`
-	// remote_cluster_config configures the cluster as a remote cluster.
-	RemoteClusterConfig *RemoteClusterConfig `protobuf:"bytes,10,opt,name=remote_cluster_config,json=remoteClusterConfig" json:"remote_cluster_config,omitempty"`
+	// Uses compiled in install package by default.
+	InstallPackagePath string `protobuf:"bytes,1,opt,name=install_package_path,json=installPackagePath,proto3" json:"install_package_path,omitempty"`
+	// Root for docker image paths e.g. docker.io/istio-release.
+	// Releases are published to docker hub under 'istio' project.
+	//  Daily builds from prow are on gcr.io, and nightly builds from circle on docker.io/istionightly
+	Hub string `protobuf:"bytes,3,opt,name=hub,proto3" json:"hub,omitempty"`
+	// Version tag for docker images e.g. 1.0.6
+	Tag string `protobuf:"bytes,4,opt,name=tag,proto3" json:"tag,omitempty"`
+	// Prefix added to all namespaces for any installed component.
+	DefaultNamespacePrefix string `protobuf:"bytes,5,opt,name=default_namespace_prefix,json=defaultNamespacePrefix,proto3" json:"default_namespace_prefix,omitempty"`
 	// Selection and configuration of core Istio features.
-	TrafficManagement *TrafficManagementConfig `protobuf:"bytes,20,opt,name=traffic_management,json=trafficManagement" json:"traffic_management,omitempty"`
-	Policy            *PolicyConfig            `protobuf:"bytes,21,opt,name=policy" json:"policy,omitempty"`
-	Telemetry         *TelemetryConfig         `protobuf:"bytes,22,opt,name=telemetry" json:"telemetry,omitempty"`
-	Security          *SecurityConfig          `protobuf:"bytes,23,opt,name=security" json:"security,omitempty"`
-	ConfigManagement  *ConfigManagementConfig  `protobuf:"bytes,24,opt,name=config_management,json=configManagement" json:"config_management,omitempty"`
+	TrafficManagement *TrafficManagementConfig `protobuf:"bytes,25,opt,name=traffic_management,json=trafficManagement,proto3" json:"traffic_management,omitempty"`
+	PolicyTelemetry   *PolicyTelemetryConfig   `protobuf:"bytes,26,opt,name=policy_telemetry,json=policyTelemetry,proto3" json:"policy_telemetry,omitempty"`
+	Security          *SecurityConfig          `protobuf:"bytes,28,opt,name=security,proto3" json:"security,omitempty"`
+	ConfigManagement  *ConfigManagementConfig  `protobuf:"bytes,29,opt,name=config_management,json=configManagement,proto3" json:"config_management,omitempty"`
 	// Ingress/egress gateway installation and configuration.
-	IngressGateway []*IngressGatewayConfig `protobuf:"bytes,30,rep,name=ingress_gateway,json=ingressGateway" json:"ingress_gateway,omitempty"`
-	EgressGateway  []*EgressGatewayConfig  `protobuf:"bytes,31,rep,name=egress_gateway,json=egressGateway" json:"egress_gateway,omitempty"`
-	// List of external operators that will be installed (but not managed by)
-	// IstioInstaller e.g. prometheus, grafana, kiali.
-	ExternalOperators    []*OperatorConfig `protobuf:"bytes,50,rep,name=external_operators,json=externalOperators" json:"external_operators,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}          `json:"-"`
-	XXX_unrecognized     []byte            `json:"-"`
-	XXX_sizecache        int32             `json:"-"`
+	IngressGateway []*IngressGatewayConfig `protobuf:"bytes,30,rep,name=ingress_gateway,json=ingressGateway,proto3" json:"ingress_gateway,omitempty"`
+	EgressGateway  []*EgressGatewayConfig  `protobuf:"bytes,31,rep,name=egress_gateway,json=egressGateway,proto3" json:"egress_gateway,omitempty"`
+	// List of external operators that will be installed (but not managed)
+	// by the IstioInstaller e.g. prometheus, grafana, kiali.
+	ExternalOperators []*OperatorConfig `protobuf:"bytes,50,rep,name=external_operators,json=externalOperators,proto3" json:"external_operators,omitempty"`
+	// Global k8s defaults. Can be overridden per component.
+	K8SDefaults          *KubernetesResourcesConfig `protobuf:"bytes,80,opt,name=k8s_defaults,json=k8sDefaults,proto3" json:"k8s_defaults,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}                   `json:"-"`
+	XXX_unrecognized     []byte                     `json:"-"`
+	XXX_sizecache        int32                      `json:"-"`
 }
 
 func (m *InstallerSpec) Reset()         { *m = InstallerSpec{} }
@@ -263,45 +339,31 @@ func (m *InstallerSpec) XXX_DiscardUnknown() {
 var xxx_messageInfo_InstallerSpec proto.InternalMessageInfo
 
 func (m *InstallerSpec) GetInstallPackagePath() string {
-	if m != nil && m.InstallPackagePath != nil {
-		return *m.InstallPackagePath
-	}
-	return ""
-}
-
-func (m *InstallerSpec) GetControllerName() string {
-	if m != nil && m.ControllerName != nil {
-		return *m.ControllerName
+	if m != nil {
+		return m.InstallPackagePath
 	}
 	return ""
 }
 
 func (m *InstallerSpec) GetHub() string {
-	if m != nil && m.Hub != nil {
-		return *m.Hub
+	if m != nil {
+		return m.Hub
 	}
 	return ""
 }
 
 func (m *InstallerSpec) GetTag() string {
-	if m != nil && m.Tag != nil {
-		return *m.Tag
+	if m != nil {
+		return m.Tag
 	}
 	return ""
 }
 
 func (m *InstallerSpec) GetDefaultNamespacePrefix() string {
-	if m != nil && m.DefaultNamespacePrefix != nil {
-		return *m.DefaultNamespacePrefix
+	if m != nil {
+		return m.DefaultNamespacePrefix
 	}
 	return ""
-}
-
-func (m *InstallerSpec) GetRemoteClusterConfig() *RemoteClusterConfig {
-	if m != nil {
-		return m.RemoteClusterConfig
-	}
-	return nil
 }
 
 func (m *InstallerSpec) GetTrafficManagement() *TrafficManagementConfig {
@@ -311,16 +373,9 @@ func (m *InstallerSpec) GetTrafficManagement() *TrafficManagementConfig {
 	return nil
 }
 
-func (m *InstallerSpec) GetPolicy() *PolicyConfig {
+func (m *InstallerSpec) GetPolicyTelemetry() *PolicyTelemetryConfig {
 	if m != nil {
-		return m.Policy
-	}
-	return nil
-}
-
-func (m *InstallerSpec) GetTelemetry() *TelemetryConfig {
-	if m != nil {
-		return m.Telemetry
+		return m.PolicyTelemetry
 	}
 	return nil
 }
@@ -360,14 +415,24 @@ func (m *InstallerSpec) GetExternalOperators() []*OperatorConfig {
 	return nil
 }
 
-// InstallerStatus defines the observed state of IstioInstaller.
-// TODO: this needs more work. What do we want to observe?
+func (m *InstallerSpec) GetK8SDefaults() *KubernetesResourcesConfig {
+	if m != nil {
+		return m.K8SDefaults
+	}
+	return nil
+}
+
+// Observed state of IstioInstaller.
 type InstallerStatus struct {
-	ProxyControl         *string  `protobuf:"bytes,1,opt,name=proxy_control,json=proxyControl" json:"proxy_control,omitempty"`
-	SidecarInjector      *string  `protobuf:"bytes,2,opt,name=sidecar_injector,json=sidecarInjector" json:"sidecar_injector,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	TrafficManagement    *InstallerStatus_VersionStatus   `protobuf:"bytes,1,opt,name=traffic_management,json=trafficManagement,proto3" json:"traffic_management,omitempty"`
+	PolicyTelemetry      *InstallerStatus_VersionStatus   `protobuf:"bytes,2,opt,name=policy_telemetry,json=policyTelemetry,proto3" json:"policy_telemetry,omitempty"`
+	Security             *InstallerStatus_VersionStatus   `protobuf:"bytes,3,opt,name=security,proto3" json:"security,omitempty"`
+	ConfigManagement     *InstallerStatus_VersionStatus   `protobuf:"bytes,4,opt,name=config_management,json=configManagement,proto3" json:"config_management,omitempty"`
+	IngressGateway       []*InstallerStatus_VersionStatus `protobuf:"bytes,5,rep,name=ingress_gateway,json=ingressGateway,proto3" json:"ingress_gateway,omitempty"`
+	EgressGateway        []*InstallerStatus_VersionStatus `protobuf:"bytes,6,rep,name=egress_gateway,json=egressGateway,proto3" json:"egress_gateway,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}                         `json:"-"`
+	XXX_unrecognized     []byte                           `json:"-"`
+	XXX_sizecache        int32                            `json:"-"`
 }
 
 func (m *InstallerStatus) Reset()         { *m = InstallerStatus{} }
@@ -403,41 +468,68 @@ func (m *InstallerStatus) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_InstallerStatus proto.InternalMessageInfo
 
-func (m *InstallerStatus) GetProxyControl() string {
-	if m != nil && m.ProxyControl != nil {
-		return *m.ProxyControl
+func (m *InstallerStatus) GetTrafficManagement() *InstallerStatus_VersionStatus {
+	if m != nil {
+		return m.TrafficManagement
 	}
-	return ""
+	return nil
 }
 
-func (m *InstallerStatus) GetSidecarInjector() string {
-	if m != nil && m.SidecarInjector != nil {
-		return *m.SidecarInjector
+func (m *InstallerStatus) GetPolicyTelemetry() *InstallerStatus_VersionStatus {
+	if m != nil {
+		return m.PolicyTelemetry
 	}
-	return ""
+	return nil
 }
 
-// RemoteClusterConfig defines configuration options for remote clusters.
-type RemoteClusterConfig struct {
-	// Enabled selects whether the cluster is configured as remote.
-	Enabled              *bool    `protobuf:"varint,1,opt,name=enabled" json:"enabled,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+func (m *InstallerStatus) GetSecurity() *InstallerStatus_VersionStatus {
+	if m != nil {
+		return m.Security
+	}
+	return nil
 }
 
-func (m *RemoteClusterConfig) Reset()         { *m = RemoteClusterConfig{} }
-func (m *RemoteClusterConfig) String() string { return proto.CompactTextString(m) }
-func (*RemoteClusterConfig) ProtoMessage()    {}
-func (*RemoteClusterConfig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{2}
+func (m *InstallerStatus) GetConfigManagement() *InstallerStatus_VersionStatus {
+	if m != nil {
+		return m.ConfigManagement
+	}
+	return nil
 }
-func (m *RemoteClusterConfig) XXX_Unmarshal(b []byte) error {
+
+func (m *InstallerStatus) GetIngressGateway() []*InstallerStatus_VersionStatus {
+	if m != nil {
+		return m.IngressGateway
+	}
+	return nil
+}
+
+func (m *InstallerStatus) GetEgressGateway() []*InstallerStatus_VersionStatus {
+	if m != nil {
+		return m.EgressGateway
+	}
+	return nil
+}
+
+type InstallerStatus_VersionStatus struct {
+	Version              string                 `protobuf:"bytes,1,opt,name=version,proto3" json:"version,omitempty"`
+	Status               InstallerStatus_Status `protobuf:"varint,2,opt,name=status,proto3,enum=v1alpha1.InstallerStatus_Status" json:"status,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}               `json:"-"`
+	XXX_unrecognized     []byte                 `json:"-"`
+	XXX_sizecache        int32                  `json:"-"`
+}
+
+func (m *InstallerStatus_VersionStatus) Reset()         { *m = InstallerStatus_VersionStatus{} }
+func (m *InstallerStatus_VersionStatus) String() string { return proto.CompactTextString(m) }
+func (*InstallerStatus_VersionStatus) ProtoMessage()    {}
+func (*InstallerStatus_VersionStatus) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d0a1188b3d395975, []int{1, 0}
+}
+func (m *InstallerStatus_VersionStatus) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *RemoteClusterConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *InstallerStatus_VersionStatus) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_RemoteClusterConfig.Marshal(b, m, deterministic)
+		return xxx_messageInfo_InstallerStatus_VersionStatus.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalTo(b)
@@ -447,47 +539,69 @@ func (m *RemoteClusterConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte,
 		return b[:n], nil
 	}
 }
-func (m *RemoteClusterConfig) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RemoteClusterConfig.Merge(m, src)
+func (m *InstallerStatus_VersionStatus) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_InstallerStatus_VersionStatus.Merge(m, src)
 }
-func (m *RemoteClusterConfig) XXX_Size() int {
+func (m *InstallerStatus_VersionStatus) XXX_Size() int {
 	return m.Size()
 }
-func (m *RemoteClusterConfig) XXX_DiscardUnknown() {
-	xxx_messageInfo_RemoteClusterConfig.DiscardUnknown(m)
+func (m *InstallerStatus_VersionStatus) XXX_DiscardUnknown() {
+	xxx_messageInfo_InstallerStatus_VersionStatus.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_RemoteClusterConfig proto.InternalMessageInfo
+var xxx_messageInfo_InstallerStatus_VersionStatus proto.InternalMessageInfo
 
-func (m *RemoteClusterConfig) GetEnabled() bool {
-	if m != nil && m.Enabled != nil {
-		return *m.Enabled
+func (m *InstallerStatus_VersionStatus) GetVersion() string {
+	if m != nil {
+		return m.Version
 	}
-	return false
+	return ""
 }
 
-// TrafficManagementConfig defines configuration options for proxy control and injection.
+func (m *InstallerStatus_VersionStatus) GetStatus() InstallerStatus_Status {
+	if m != nil {
+		return m.Status
+	}
+	return InstallerStatus_NONE
+}
+
+// Configuration options for traffic management.
 type TrafficManagementConfig struct {
 	// Selects whether traffic management is installed.
-	Enabled *bool `protobuf:"varint,1,opt,name=enabled" json:"enabled,omitempty"`
-	// Namespace that all components for this feature are installed into.
-	Namespace *string `protobuf:"bytes,2,opt,name=namespace" json:"namespace,omitempty"`
-	// When set to true, auto injection is controlled by namespace label and pod annotation.
-	// When set to false, auto injection is completely disabled.
-	AutoInjection *bool `protobuf:"varint,3,opt,name=auto_injection,json=autoInjection" json:"auto_injection,omitempty"`
+	// Must be enabled to enable any sub-component.
+	// +k8s:deepcopy-gen=false
+	Enabled *protobuf.BoolValue `protobuf:"bytes,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
+	// Namespace that all traffic management components are installed into.
+	Namespace string `protobuf:"bytes,2,opt,name=namespace,proto3" json:"namespace,omitempty"`
+	// Istio egress capture whitelist.
+	// e.g. includeIPRanges: "172.30.0.0/16,172.20.0.0/16"
+	// would only capture egress traffic on those two IP Ranges,
+	// all other outbound traffic would # be allowed by the sidecar.
+	// https://istio.io/docs/tasks/traffic-management/egress.html#calling-external-services-directly
+	IncludeIpRanges        string `protobuf:"bytes,16,opt,name=include_ip_ranges,json=includeIpRanges,proto3" json:"include_ip_ranges,omitempty"`
+	ExcludeIpRanges        string `protobuf:"bytes,17,opt,name=exclude_ip_ranges,json=excludeIpRanges,proto3" json:"exclude_ip_ranges,omitempty"`
+	IncludeInboundPorts    string `protobuf:"bytes,18,opt,name=include_inbound_ports,json=includeInboundPorts,proto3" json:"include_inbound_ports,omitempty"`
+	ExcludeInboundPorts    string `protobuf:"bytes,19,opt,name=exclude_inbound_ports,json=excludeInboundPorts,proto3" json:"exclude_inbound_ports,omitempty"`
+	ClusterDomain          string `protobuf:"bytes,24,opt,name=cluster_domain,json=clusterDomain,proto3" json:"cluster_domain,omitempty"`
+	PodDnsSearchNamespaces string `protobuf:"bytes,25,opt,name=pod_dns_search_namespaces,json=podDnsSearchNamespaces,proto3" json:"pod_dns_search_namespaces,omitempty"`
+	// Selects whether auto-injection is enabled.
+	EnableAutoInjection *protobuf.BoolValue `protobuf:"bytes,26,opt,name=enable_auto_injection,json=enableAutoInjection,proto3" json:"enable_auto_injection,omitempty"`
+	// Selects whether auto-injection is enabled in namespaces by default.
+	EnableNamespacesByDefault *protobuf.BoolValue `protobuf:"bytes,27,opt,name=enable_namespaces_by_default,json=enableNamespacesByDefault,proto3" json:"enable_namespaces_by_default,omitempty"`
 	// Component specific config.
-	PilotConfig          *PilotConfig `protobuf:"bytes,4,opt,name=pilot_config,json=pilotConfig" json:"pilot_config,omitempty"`
-	ProxyConfig          *ProxyConfig `protobuf:"bytes,5,opt,name=proxy_config,json=proxyConfig" json:"proxy_config,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}     `json:"-"`
-	XXX_unrecognized     []byte       `json:"-"`
-	XXX_sizecache        int32        `json:"-"`
+	Pilot                *PilotComponentConfig           `protobuf:"bytes,30,opt,name=pilot,proto3" json:"pilot,omitempty"`
+	Proxy                *ProxyComponentConfig           `protobuf:"bytes,31,opt,name=proxy,proto3" json:"proxy,omitempty"`
+	SidecarInjector      *SidecarInjectorComponentConfig `protobuf:"bytes,32,opt,name=sidecar_injector,json=sidecarInjector,proto3" json:"sidecar_injector,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}                        `json:"-"`
+	XXX_unrecognized     []byte                          `json:"-"`
+	XXX_sizecache        int32                           `json:"-"`
 }
 
 func (m *TrafficManagementConfig) Reset()         { *m = TrafficManagementConfig{} }
 func (m *TrafficManagementConfig) String() string { return proto.CompactTextString(m) }
 func (*TrafficManagementConfig) ProtoMessage()    {}
 func (*TrafficManagementConfig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{3}
+	return fileDescriptor_d0a1188b3d395975, []int{2}
 }
 func (m *TrafficManagementConfig) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -516,81 +630,122 @@ func (m *TrafficManagementConfig) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_TrafficManagementConfig proto.InternalMessageInfo
 
-func (m *TrafficManagementConfig) GetEnabled() bool {
-	if m != nil && m.Enabled != nil {
-		return *m.Enabled
+func (m *TrafficManagementConfig) GetEnabled() *protobuf.BoolValue {
+	if m != nil {
+		return m.Enabled
 	}
-	return false
+	return nil
 }
 
 func (m *TrafficManagementConfig) GetNamespace() string {
-	if m != nil && m.Namespace != nil {
-		return *m.Namespace
+	if m != nil {
+		return m.Namespace
 	}
 	return ""
 }
 
-func (m *TrafficManagementConfig) GetAutoInjection() bool {
-	if m != nil && m.AutoInjection != nil {
-		return *m.AutoInjection
+func (m *TrafficManagementConfig) GetIncludeIpRanges() string {
+	if m != nil {
+		return m.IncludeIpRanges
 	}
-	return false
+	return ""
 }
 
-func (m *TrafficManagementConfig) GetPilotConfig() *PilotConfig {
+func (m *TrafficManagementConfig) GetExcludeIpRanges() string {
 	if m != nil {
-		return m.PilotConfig
+		return m.ExcludeIpRanges
+	}
+	return ""
+}
+
+func (m *TrafficManagementConfig) GetIncludeInboundPorts() string {
+	if m != nil {
+		return m.IncludeInboundPorts
+	}
+	return ""
+}
+
+func (m *TrafficManagementConfig) GetExcludeInboundPorts() string {
+	if m != nil {
+		return m.ExcludeInboundPorts
+	}
+	return ""
+}
+
+func (m *TrafficManagementConfig) GetClusterDomain() string {
+	if m != nil {
+		return m.ClusterDomain
+	}
+	return ""
+}
+
+func (m *TrafficManagementConfig) GetPodDnsSearchNamespaces() string {
+	if m != nil {
+		return m.PodDnsSearchNamespaces
+	}
+	return ""
+}
+
+func (m *TrafficManagementConfig) GetEnableAutoInjection() *protobuf.BoolValue {
+	if m != nil {
+		return m.EnableAutoInjection
 	}
 	return nil
 }
 
-func (m *TrafficManagementConfig) GetProxyConfig() *ProxyConfig {
+func (m *TrafficManagementConfig) GetEnableNamespacesByDefault() *protobuf.BoolValue {
 	if m != nil {
-		return m.ProxyConfig
+		return m.EnableNamespacesByDefault
 	}
 	return nil
 }
 
-// PilotConfig defines the configuration options for pilot.
-type PilotConfig struct {
-	// Enables debug in pilot.
-	Debug *bool `protobuf:"varint,1,opt,name=debug" json:"debug,omitempty"`
-	// Enables sidecar in the pilot pod.
-	Sidecar *bool `protobuf:"varint,10,opt,name=sidecar" json:"sidecar,omitempty"`
-	// Trace sampling percentage.
-	TraceSampling                   *float32 `protobuf:"fixed32,11,opt,name=trace_sampling,json=traceSampling" json:"trace_sampling,omitempty"`
-	KeepaliveMaxServerConnectionAge *string  `protobuf:"bytes,12,opt,name=keepaliveMaxServerConnectionAge" json:"keepaliveMaxServerConnectionAge,omitempty"`
-	// Additional arguments passed to pilot discovery.
-	AdditionalArgs map[string]string `protobuf:"bytes,50,rep,name=additional_args,json=additionalArgs" json:"additional_args,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	// Additional environment variables for the discovery container.
-	Env map[string]string `protobuf:"bytes,60,rep,name=env" json:"env,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	// Passthrough to corresponding k8s settings.
-	Resources *ResourceRequirements `protobuf:"bytes,80,opt,name=resources" json:"resources,omitempty"`
-	// k8s scaling settings.
-	ReplicaCount        *uint32                         `protobuf:"varint,85,opt,name=replica_count,json=replicaCount" json:"replica_count,omitempty"`
-	HpaSpec             *v1.HorizontalPodAutoscalerSpec `protobuf:"bytes,86,opt,name=hpa_spec,json=hpaSpec" json:"hpa_spec,omitempty"`
-	PodDisruptionBudget *PodDisruptionBudgetSpec        `protobuf:"bytes,87,opt,name=pod_disruption_budget,json=podDisruptionBudget" json:"pod_disruption_budget,omitempty"`
-	// Annotations and selectors.
-	NodeSelector map[string]string `protobuf:"bytes,92,rep,name=node_selector,json=nodeSelector" json:"node_selector,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	// Kustomize style overrides for k8s resources in rendered manifests.
-	ResourceOverride     []*ResourceOverride `protobuf:"bytes,100,rep,name=resource_override,json=resourceOverride" json:"resource_override,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}            `json:"-"`
-	XXX_unrecognized     []byte              `json:"-"`
-	XXX_sizecache        int32               `json:"-"`
+func (m *TrafficManagementConfig) GetPilot() *PilotComponentConfig {
+	if m != nil {
+		return m.Pilot
+	}
+	return nil
 }
 
-func (m *PilotConfig) Reset()         { *m = PilotConfig{} }
-func (m *PilotConfig) String() string { return proto.CompactTextString(m) }
-func (*PilotConfig) ProtoMessage()    {}
-func (*PilotConfig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{4}
+func (m *TrafficManagementConfig) GetProxy() *ProxyComponentConfig {
+	if m != nil {
+		return m.Proxy
+	}
+	return nil
 }
-func (m *PilotConfig) XXX_Unmarshal(b []byte) error {
+
+func (m *TrafficManagementConfig) GetSidecarInjector() *SidecarInjectorComponentConfig {
+	if m != nil {
+		return m.SidecarInjector
+	}
+	return nil
+}
+
+// Configuration options for the policy and telemetry feature.
+type PolicyTelemetryConfig struct {
+	// If set, allows traffic in cases when the mixer policy service cannot be reached.
+	PolicyCheckFailOpen *protobuf.BoolValue `protobuf:"bytes,10,opt,name=policy_check_fail_open,json=policyCheckFailOpen,proto3" json:"policy_check_fail_open,omitempty"`
+	// Selects the outbound traffic policy mode.
+	OutboundTrafficPolicyMode PolicyTelemetryConfig_OutboundPolicy `protobuf:"varint,11,opt,name=outbound_traffic_policy_mode,json=outboundTrafficPolicyMode,proto3,enum=v1alpha1.PolicyTelemetryConfig_OutboundPolicy" json:"outbound_traffic_policy_mode,omitempty"`
+	Policy                    *PolicyComponentConfig               `protobuf:"bytes,50,opt,name=policy,proto3" json:"policy,omitempty"`
+	Telemetry                 *TelemetryComponentConfig            `protobuf:"bytes,51,opt,name=telemetry,proto3" json:"telemetry,omitempty"`
+	XXX_NoUnkeyedLiteral      struct{}                             `json:"-"`
+	XXX_unrecognized          []byte                               `json:"-"`
+	XXX_sizecache             int32                                `json:"-"`
+}
+
+func (m *PolicyTelemetryConfig) Reset()         { *m = PolicyTelemetryConfig{} }
+func (m *PolicyTelemetryConfig) String() string { return proto.CompactTextString(m) }
+func (*PolicyTelemetryConfig) ProtoMessage()    {}
+func (*PolicyTelemetryConfig) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d0a1188b3d395975, []int{3}
+}
+func (m *PolicyTelemetryConfig) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *PilotConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *PolicyTelemetryConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_PilotConfig.Marshal(b, m, deterministic)
+		return xxx_messageInfo_PolicyTelemetryConfig.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalTo(b)
@@ -600,957 +755,71 @@ func (m *PilotConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) 
 		return b[:n], nil
 	}
 }
-func (m *PilotConfig) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PilotConfig.Merge(m, src)
+func (m *PolicyTelemetryConfig) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PolicyTelemetryConfig.Merge(m, src)
 }
-func (m *PilotConfig) XXX_Size() int {
+func (m *PolicyTelemetryConfig) XXX_Size() int {
 	return m.Size()
 }
-func (m *PilotConfig) XXX_DiscardUnknown() {
-	xxx_messageInfo_PilotConfig.DiscardUnknown(m)
+func (m *PolicyTelemetryConfig) XXX_DiscardUnknown() {
+	xxx_messageInfo_PolicyTelemetryConfig.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_PilotConfig proto.InternalMessageInfo
+var xxx_messageInfo_PolicyTelemetryConfig proto.InternalMessageInfo
 
-func (m *PilotConfig) GetDebug() bool {
-	if m != nil && m.Debug != nil {
-		return *m.Debug
-	}
-	return false
-}
-
-func (m *PilotConfig) GetSidecar() bool {
-	if m != nil && m.Sidecar != nil {
-		return *m.Sidecar
-	}
-	return false
-}
-
-func (m *PilotConfig) GetTraceSampling() float32 {
-	if m != nil && m.TraceSampling != nil {
-		return *m.TraceSampling
-	}
-	return 0
-}
-
-func (m *PilotConfig) GetKeepaliveMaxServerConnectionAge() string {
-	if m != nil && m.KeepaliveMaxServerConnectionAge != nil {
-		return *m.KeepaliveMaxServerConnectionAge
-	}
-	return ""
-}
-
-func (m *PilotConfig) GetAdditionalArgs() map[string]string {
+func (m *PolicyTelemetryConfig) GetPolicyCheckFailOpen() *protobuf.BoolValue {
 	if m != nil {
-		return m.AdditionalArgs
+		return m.PolicyCheckFailOpen
 	}
 	return nil
 }
 
-func (m *PilotConfig) GetEnv() map[string]string {
+func (m *PolicyTelemetryConfig) GetOutboundTrafficPolicyMode() PolicyTelemetryConfig_OutboundPolicy {
 	if m != nil {
-		return m.Env
+		return m.OutboundTrafficPolicyMode
+	}
+	return PolicyTelemetryConfig_ALLOW_ANY
+}
+
+func (m *PolicyTelemetryConfig) GetPolicy() *PolicyComponentConfig {
+	if m != nil {
+		return m.Policy
 	}
 	return nil
 }
 
-func (m *PilotConfig) GetResources() *ResourceRequirements {
+func (m *PolicyTelemetryConfig) GetTelemetry() *TelemetryComponentConfig {
 	if m != nil {
-		return m.Resources
+		return m.Telemetry
 	}
 	return nil
 }
 
-func (m *PilotConfig) GetReplicaCount() uint32 {
-	if m != nil && m.ReplicaCount != nil {
-		return *m.ReplicaCount
-	}
-	return 0
-}
-
-func (m *PilotConfig) GetHpaSpec() *v1.HorizontalPodAutoscalerSpec {
-	if m != nil {
-		return m.HpaSpec
-	}
-	return nil
-}
-
-func (m *PilotConfig) GetPodDisruptionBudget() *PodDisruptionBudgetSpec {
-	if m != nil {
-		return m.PodDisruptionBudget
-	}
-	return nil
-}
-
-func (m *PilotConfig) GetNodeSelector() map[string]string {
-	if m != nil {
-		return m.NodeSelector
-	}
-	return nil
-}
-
-func (m *PilotConfig) GetResourceOverride() []*ResourceOverride {
-	if m != nil {
-		return m.ResourceOverride
-	}
-	return nil
-}
-
-// ProxyConfig defines the configuration options for the injected Envoy proxy.
-type ProxyConfig struct {
-	// Enables debug in the proxy.
-	Debug *bool `protobuf:"varint,1,opt,name=debug" json:"debug,omitempty"`
-	// TBD: is privileged ever set in isolation?
-	Privileged *bool `protobuf:"varint,10,opt,name=privileged" json:"privileged,omitempty"`
-	// Enables coredump in proxy container.
-	EnableCoredump   *bool                         `protobuf:"varint,11,opt,name=enable_coredump,json=enableCoredump" json:"enable_coredump,omitempty"`
-	InterceptionMode *ProxyConfig_InterceptionMode `protobuf:"varint,12,opt,name=interception_mode,json=interceptionMode,enum=v1alpha1.ProxyConfig_InterceptionMode" json:"interception_mode,omitempty"`
-	// Below settings would otherwise be implemented as a k8s overlay but because the proxy resources are defined
-	// as a ConfigMap containing a second template, it's probably too difficult to override fields in the k8s
-	// ConfigMap.
-	StatusPort      *uint32 `protobuf:"varint,13,opt,name=status_port,json=statusPort" json:"status_port,omitempty"`
-	ImagePullPolicy *string `protobuf:"bytes,14,opt,name=image_pull_policy,json=imagePullPolicy" json:"image_pull_policy,omitempty"`
-	ProxyInitImage  *string `protobuf:"bytes,15,opt,name=proxy_init_image,json=proxyInitImage" json:"proxy_init_image,omitempty"`
-	// Address and port filtering.
-	IncludeIpRanges     *string `protobuf:"bytes,16,opt,name=include_ip_ranges,json=includeIpRanges" json:"include_ip_ranges,omitempty"`
-	ExcludeIpRanges     *string `protobuf:"bytes,17,opt,name=exclude_ip_ranges,json=excludeIpRanges" json:"exclude_ip_ranges,omitempty"`
-	IncludeInboundPorts *string `protobuf:"bytes,18,opt,name=include_inbound_ports,json=includeInboundPorts" json:"include_inbound_ports,omitempty"`
-	ExcludeInboundPorts *string `protobuf:"bytes,19,opt,name=exclude_inbound_ports,json=excludeInboundPorts" json:"exclude_inbound_ports,omitempty"`
-	// Envoy specific timer settings.
-	ConnectTimeout         *string `protobuf:"bytes,20,opt,name=connect_timeout,json=connectTimeout" json:"connect_timeout,omitempty"`
-	DrainDuration          *string `protobuf:"bytes,21,opt,name=drain_duration,json=drainDuration" json:"drain_duration,omitempty"`
-	ParentShutdownDuration *string `protobuf:"bytes,22,opt,name=parent_shutdown_duration,json=parentShutdownDuration" json:"parent_shutdown_duration,omitempty"`
-	Concurrency            *uint32 `protobuf:"varint,23,opt,name=concurrency" json:"concurrency,omitempty"`
-	ClusterDomain          *string `protobuf:"bytes,24,opt,name=cluster_domain,json=clusterDomain" json:"cluster_domain,omitempty"`
-	PodDnsSearchNamespaces *string `protobuf:"bytes,25,opt,name=pod_dns_search_namespaces,json=podDnsSearchNamespaces" json:"pod_dns_search_namespaces,omitempty"`
-	// Tracer options
-	Lightstep *ProxyConfig_LightstepConfig `protobuf:"bytes,30,opt,name=lightstep" json:"lightstep,omitempty"`
-	Zipkin    *ProxyConfig_ZipkinConfig    `protobuf:"bytes,31,opt,name=zipkin" json:"zipkin,omitempty"`
-	// SDS settings
-	Sds *SdsConfig `protobuf:"bytes,40,opt,name=sds" json:"sds,omitempty"`
-	// Additional arguments passed to Envoy.
-	AdditionalArgs map[string]string `protobuf:"bytes,50,rep,name=additional_args,json=additionalArgs" json:"additional_args,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	// Additional environment variables for the container.
-	Env map[string]string `protobuf:"bytes,60,rep,name=env" json:"env,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	// Passthrough to k8s resources.
-	Resources      *ResourceRequirements `protobuf:"bytes,80,opt,name=resources" json:"resources,omitempty"`
-	ReadinessProbe *v11.Probe            `protobuf:"bytes,81,opt,name=readiness_probe,json=readinessProbe" json:"readiness_probe,omitempty"`
-	// Kustomize style overrides for k8s resources in rendered manifests.
-	ResourceOverride     []*ResourceOverride `protobuf:"bytes,100,rep,name=resource_override,json=resourceOverride" json:"resource_override,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}            `json:"-"`
-	XXX_unrecognized     []byte              `json:"-"`
-	XXX_sizecache        int32               `json:"-"`
-}
-
-func (m *ProxyConfig) Reset()         { *m = ProxyConfig{} }
-func (m *ProxyConfig) String() string { return proto.CompactTextString(m) }
-func (*ProxyConfig) ProtoMessage()    {}
-func (*ProxyConfig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{5}
-}
-func (m *ProxyConfig) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *ProxyConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_ProxyConfig.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *ProxyConfig) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ProxyConfig.Merge(m, src)
-}
-func (m *ProxyConfig) XXX_Size() int {
-	return m.Size()
-}
-func (m *ProxyConfig) XXX_DiscardUnknown() {
-	xxx_messageInfo_ProxyConfig.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ProxyConfig proto.InternalMessageInfo
-
-func (m *ProxyConfig) GetDebug() bool {
-	if m != nil && m.Debug != nil {
-		return *m.Debug
-	}
-	return false
-}
-
-func (m *ProxyConfig) GetPrivileged() bool {
-	if m != nil && m.Privileged != nil {
-		return *m.Privileged
-	}
-	return false
-}
-
-func (m *ProxyConfig) GetEnableCoredump() bool {
-	if m != nil && m.EnableCoredump != nil {
-		return *m.EnableCoredump
-	}
-	return false
-}
-
-func (m *ProxyConfig) GetInterceptionMode() ProxyConfig_InterceptionMode {
-	if m != nil && m.InterceptionMode != nil {
-		return *m.InterceptionMode
-	}
-	return ProxyConfig_REDIRECT
-}
-
-func (m *ProxyConfig) GetStatusPort() uint32 {
-	if m != nil && m.StatusPort != nil {
-		return *m.StatusPort
-	}
-	return 0
-}
-
-func (m *ProxyConfig) GetImagePullPolicy() string {
-	if m != nil && m.ImagePullPolicy != nil {
-		return *m.ImagePullPolicy
-	}
-	return ""
-}
-
-func (m *ProxyConfig) GetProxyInitImage() string {
-	if m != nil && m.ProxyInitImage != nil {
-		return *m.ProxyInitImage
-	}
-	return ""
-}
-
-func (m *ProxyConfig) GetIncludeIpRanges() string {
-	if m != nil && m.IncludeIpRanges != nil {
-		return *m.IncludeIpRanges
-	}
-	return ""
-}
-
-func (m *ProxyConfig) GetExcludeIpRanges() string {
-	if m != nil && m.ExcludeIpRanges != nil {
-		return *m.ExcludeIpRanges
-	}
-	return ""
-}
-
-func (m *ProxyConfig) GetIncludeInboundPorts() string {
-	if m != nil && m.IncludeInboundPorts != nil {
-		return *m.IncludeInboundPorts
-	}
-	return ""
-}
-
-func (m *ProxyConfig) GetExcludeInboundPorts() string {
-	if m != nil && m.ExcludeInboundPorts != nil {
-		return *m.ExcludeInboundPorts
-	}
-	return ""
-}
-
-func (m *ProxyConfig) GetConnectTimeout() string {
-	if m != nil && m.ConnectTimeout != nil {
-		return *m.ConnectTimeout
-	}
-	return ""
-}
-
-func (m *ProxyConfig) GetDrainDuration() string {
-	if m != nil && m.DrainDuration != nil {
-		return *m.DrainDuration
-	}
-	return ""
-}
-
-func (m *ProxyConfig) GetParentShutdownDuration() string {
-	if m != nil && m.ParentShutdownDuration != nil {
-		return *m.ParentShutdownDuration
-	}
-	return ""
-}
-
-func (m *ProxyConfig) GetConcurrency() uint32 {
-	if m != nil && m.Concurrency != nil {
-		return *m.Concurrency
-	}
-	return 0
-}
-
-func (m *ProxyConfig) GetClusterDomain() string {
-	if m != nil && m.ClusterDomain != nil {
-		return *m.ClusterDomain
-	}
-	return ""
-}
-
-func (m *ProxyConfig) GetPodDnsSearchNamespaces() string {
-	if m != nil && m.PodDnsSearchNamespaces != nil {
-		return *m.PodDnsSearchNamespaces
-	}
-	return ""
-}
-
-func (m *ProxyConfig) GetLightstep() *ProxyConfig_LightstepConfig {
-	if m != nil {
-		return m.Lightstep
-	}
-	return nil
-}
-
-func (m *ProxyConfig) GetZipkin() *ProxyConfig_ZipkinConfig {
-	if m != nil {
-		return m.Zipkin
-	}
-	return nil
-}
-
-func (m *ProxyConfig) GetSds() *SdsConfig {
-	if m != nil {
-		return m.Sds
-	}
-	return nil
-}
-
-func (m *ProxyConfig) GetAdditionalArgs() map[string]string {
-	if m != nil {
-		return m.AdditionalArgs
-	}
-	return nil
-}
-
-func (m *ProxyConfig) GetEnv() map[string]string {
-	if m != nil {
-		return m.Env
-	}
-	return nil
-}
-
-func (m *ProxyConfig) GetResources() *ResourceRequirements {
-	if m != nil {
-		return m.Resources
-	}
-	return nil
-}
-
-func (m *ProxyConfig) GetReadinessProbe() *v11.Probe {
-	if m != nil {
-		return m.ReadinessProbe
-	}
-	return nil
-}
-
-func (m *ProxyConfig) GetResourceOverride() []*ResourceOverride {
-	if m != nil {
-		return m.ResourceOverride
-	}
-	return nil
-}
-
-// Tracer config options.
-type ProxyConfig_LightstepConfig struct {
-	Address              *string  `protobuf:"bytes,1,opt,name=address" json:"address,omitempty"`
-	AccessToken          *string  `protobuf:"bytes,2,opt,name=access_token,json=accessToken" json:"access_token,omitempty"`
-	CaCertPath           *string  `protobuf:"bytes,3,opt,name=ca_cert_path,json=caCertPath" json:"ca_cert_path,omitempty"`
-	Secure               *bool    `protobuf:"varint,4,opt,name=secure" json:"secure,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *ProxyConfig_LightstepConfig) Reset()         { *m = ProxyConfig_LightstepConfig{} }
-func (m *ProxyConfig_LightstepConfig) String() string { return proto.CompactTextString(m) }
-func (*ProxyConfig_LightstepConfig) ProtoMessage()    {}
-func (*ProxyConfig_LightstepConfig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{5, 0}
-}
-func (m *ProxyConfig_LightstepConfig) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *ProxyConfig_LightstepConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_ProxyConfig_LightstepConfig.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *ProxyConfig_LightstepConfig) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ProxyConfig_LightstepConfig.Merge(m, src)
-}
-func (m *ProxyConfig_LightstepConfig) XXX_Size() int {
-	return m.Size()
-}
-func (m *ProxyConfig_LightstepConfig) XXX_DiscardUnknown() {
-	xxx_messageInfo_ProxyConfig_LightstepConfig.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ProxyConfig_LightstepConfig proto.InternalMessageInfo
-
-func (m *ProxyConfig_LightstepConfig) GetAddress() string {
-	if m != nil && m.Address != nil {
-		return *m.Address
-	}
-	return ""
-}
-
-func (m *ProxyConfig_LightstepConfig) GetAccessToken() string {
-	if m != nil && m.AccessToken != nil {
-		return *m.AccessToken
-	}
-	return ""
-}
-
-func (m *ProxyConfig_LightstepConfig) GetCaCertPath() string {
-	if m != nil && m.CaCertPath != nil {
-		return *m.CaCertPath
-	}
-	return ""
-}
-
-func (m *ProxyConfig_LightstepConfig) GetSecure() bool {
-	if m != nil && m.Secure != nil {
-		return *m.Secure
-	}
-	return false
-}
-
-type ProxyConfig_ZipkinConfig struct {
-	Address              *string  `protobuf:"bytes,1,opt,name=address" json:"address,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *ProxyConfig_ZipkinConfig) Reset()         { *m = ProxyConfig_ZipkinConfig{} }
-func (m *ProxyConfig_ZipkinConfig) String() string { return proto.CompactTextString(m) }
-func (*ProxyConfig_ZipkinConfig) ProtoMessage()    {}
-func (*ProxyConfig_ZipkinConfig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{5, 1}
-}
-func (m *ProxyConfig_ZipkinConfig) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *ProxyConfig_ZipkinConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_ProxyConfig_ZipkinConfig.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *ProxyConfig_ZipkinConfig) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ProxyConfig_ZipkinConfig.Merge(m, src)
-}
-func (m *ProxyConfig_ZipkinConfig) XXX_Size() int {
-	return m.Size()
-}
-func (m *ProxyConfig_ZipkinConfig) XXX_DiscardUnknown() {
-	xxx_messageInfo_ProxyConfig_ZipkinConfig.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ProxyConfig_ZipkinConfig proto.InternalMessageInfo
-
-func (m *ProxyConfig_ZipkinConfig) GetAddress() string {
-	if m != nil && m.Address != nil {
-		return *m.Address
-	}
-	return ""
-}
-
-type PolicyConfig struct {
-	// Selects whether policy enforcement is installed.
-	Enabled *bool `protobuf:"varint,1,opt,name=enabled" json:"enabled,omitempty"`
-	// Namespace that all components for this feature are installed into.
-	Namespace *string `protobuf:"bytes,2,opt,name=namespace" json:"namespace,omitempty"`
-	// Additional environment variables for the container.
-	Env map[string]string `protobuf:"bytes,60,rep,name=env" json:"env,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	// Passthrough to k8s resources.
-	Resources *ResourceRequirements `protobuf:"bytes,80,opt,name=resources" json:"resources,omitempty"`
-	// k8s scaling settings.
-	ReplicaCount        *uint32                         `protobuf:"varint,85,opt,name=replica_count,json=replicaCount" json:"replica_count,omitempty"`
-	HpaSpec             *v1.HorizontalPodAutoscalerSpec `protobuf:"bytes,86,opt,name=hpa_spec,json=hpaSpec" json:"hpa_spec,omitempty"`
-	PodDisruptionBudget *PodDisruptionBudgetSpec        `protobuf:"bytes,87,opt,name=pod_disruption_budget,json=podDisruptionBudget" json:"pod_disruption_budget,omitempty"`
-	// Kustomize style overrides for k8s resources in rendered manifests.
-	ResourceOverride     []*ResourceOverride `protobuf:"bytes,100,rep,name=resource_override,json=resourceOverride" json:"resource_override,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}            `json:"-"`
-	XXX_unrecognized     []byte              `json:"-"`
-	XXX_sizecache        int32               `json:"-"`
-}
-
-func (m *PolicyConfig) Reset()         { *m = PolicyConfig{} }
-func (m *PolicyConfig) String() string { return proto.CompactTextString(m) }
-func (*PolicyConfig) ProtoMessage()    {}
-func (*PolicyConfig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{6}
-}
-func (m *PolicyConfig) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *PolicyConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_PolicyConfig.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *PolicyConfig) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PolicyConfig.Merge(m, src)
-}
-func (m *PolicyConfig) XXX_Size() int {
-	return m.Size()
-}
-func (m *PolicyConfig) XXX_DiscardUnknown() {
-	xxx_messageInfo_PolicyConfig.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_PolicyConfig proto.InternalMessageInfo
-
-func (m *PolicyConfig) GetEnabled() bool {
-	if m != nil && m.Enabled != nil {
-		return *m.Enabled
-	}
-	return false
-}
-
-func (m *PolicyConfig) GetNamespace() string {
-	if m != nil && m.Namespace != nil {
-		return *m.Namespace
-	}
-	return ""
-}
-
-func (m *PolicyConfig) GetEnv() map[string]string {
-	if m != nil {
-		return m.Env
-	}
-	return nil
-}
-
-func (m *PolicyConfig) GetResources() *ResourceRequirements {
-	if m != nil {
-		return m.Resources
-	}
-	return nil
-}
-
-func (m *PolicyConfig) GetReplicaCount() uint32 {
-	if m != nil && m.ReplicaCount != nil {
-		return *m.ReplicaCount
-	}
-	return 0
-}
-
-func (m *PolicyConfig) GetHpaSpec() *v1.HorizontalPodAutoscalerSpec {
-	if m != nil {
-		return m.HpaSpec
-	}
-	return nil
-}
-
-func (m *PolicyConfig) GetPodDisruptionBudget() *PodDisruptionBudgetSpec {
-	if m != nil {
-		return m.PodDisruptionBudget
-	}
-	return nil
-}
-
-func (m *PolicyConfig) GetResourceOverride() []*ResourceOverride {
-	if m != nil {
-		return m.ResourceOverride
-	}
-	return nil
-}
-
-type TelemetryConfig struct {
-	// Selects whether policy enforcement is installed.
-	Enabled *bool `protobuf:"varint,1,opt,name=enabled" json:"enabled,omitempty"`
-	// Namespace that all components for this feature are installed into.
-	Namespace              *string `protobuf:"bytes,2,opt,name=namespace" json:"namespace,omitempty"`
-	SessionAffinityEnabled *bool   `protobuf:"varint,10,opt,name=session_affinity_enabled,json=sessionAffinityEnabled" json:"session_affinity_enabled,omitempty"`
-	// Load shedding mode defines mixer behavior under load. If response time threshold is exceeded, the chosen
-	// load shedding behavior will occur.
-	LoadSheddingMode *TelemetryConfig_LoadSheddingMode `protobuf:"varint,11,opt,name=load_shedding_mode,json=loadSheddingMode,enum=v1alpha1.TelemetryConfig_LoadSheddingMode" json:"load_shedding_mode,omitempty"`
-	// If the response time exceeds the threshold, the chosen load shedding behavior will take effect.
-	LoadSheddingLatencyThreshold *string `protobuf:"bytes,12,opt,name=load_shedding_latency_threshold,json=loadSheddingLatencyThreshold" json:"load_shedding_latency_threshold,omitempty"`
-	// k8s scaling settings.
-	ReplicaCount *uint32 `protobuf:"varint,80,opt,name=replica_count,json=replicaCount" json:"replica_count,omitempty"`
-	// Annotations and selectors.
-	PodAnnotations map[string]string `protobuf:"bytes,90,rep,name=pod_annotations,json=podAnnotations" json:"pod_annotations,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	NodeSelector   map[string]string `protobuf:"bytes,92,rep,name=node_selector,json=nodeSelector" json:"node_selector,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	// Kustomize style overrides for k8s resources in rendered manifests.
-	ResourceOverride     []*ResourceOverride `protobuf:"bytes,100,rep,name=resource_override,json=resourceOverride" json:"resource_override,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}            `json:"-"`
-	XXX_unrecognized     []byte              `json:"-"`
-	XXX_sizecache        int32               `json:"-"`
-}
-
-func (m *TelemetryConfig) Reset()         { *m = TelemetryConfig{} }
-func (m *TelemetryConfig) String() string { return proto.CompactTextString(m) }
-func (*TelemetryConfig) ProtoMessage()    {}
-func (*TelemetryConfig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{7}
-}
-func (m *TelemetryConfig) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *TelemetryConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_TelemetryConfig.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *TelemetryConfig) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TelemetryConfig.Merge(m, src)
-}
-func (m *TelemetryConfig) XXX_Size() int {
-	return m.Size()
-}
-func (m *TelemetryConfig) XXX_DiscardUnknown() {
-	xxx_messageInfo_TelemetryConfig.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_TelemetryConfig proto.InternalMessageInfo
-
-func (m *TelemetryConfig) GetEnabled() bool {
-	if m != nil && m.Enabled != nil {
-		return *m.Enabled
-	}
-	return false
-}
-
-func (m *TelemetryConfig) GetNamespace() string {
-	if m != nil && m.Namespace != nil {
-		return *m.Namespace
-	}
-	return ""
-}
-
-func (m *TelemetryConfig) GetSessionAffinityEnabled() bool {
-	if m != nil && m.SessionAffinityEnabled != nil {
-		return *m.SessionAffinityEnabled
-	}
-	return false
-}
-
-func (m *TelemetryConfig) GetLoadSheddingMode() TelemetryConfig_LoadSheddingMode {
-	if m != nil && m.LoadSheddingMode != nil {
-		return *m.LoadSheddingMode
-	}
-	return TelemetryConfig_ENFORCE
-}
-
-func (m *TelemetryConfig) GetLoadSheddingLatencyThreshold() string {
-	if m != nil && m.LoadSheddingLatencyThreshold != nil {
-		return *m.LoadSheddingLatencyThreshold
-	}
-	return ""
-}
-
-func (m *TelemetryConfig) GetReplicaCount() uint32 {
-	if m != nil && m.ReplicaCount != nil {
-		return *m.ReplicaCount
-	}
-	return 0
-}
-
-func (m *TelemetryConfig) GetPodAnnotations() map[string]string {
-	if m != nil {
-		return m.PodAnnotations
-	}
-	return nil
-}
-
-func (m *TelemetryConfig) GetNodeSelector() map[string]string {
-	if m != nil {
-		return m.NodeSelector
-	}
-	return nil
-}
-
-func (m *TelemetryConfig) GetResourceOverride() []*ResourceOverride {
-	if m != nil {
-		return m.ResourceOverride
-	}
-	return nil
-}
-
-type TelemetryConfig_Adapters struct {
-	UseAdapter_CRDs      *bool                                   `protobuf:"varint,1,opt,name=use_adapter_CRDs,json=useAdapterCRDs" json:"use_adapter_CRDs,omitempty"`
-	KubernetesEnvConfig  *TelemetryConfig_Adapters_KubernetesEnv `protobuf:"bytes,2,opt,name=kubernetes_env_config,json=kubernetesEnvConfig" json:"kubernetes_env_config,omitempty"`
-	Stdio                *TelemetryConfig_Adapters_Stdio         `protobuf:"bytes,3,opt,name=stdio" json:"stdio,omitempty"`
-	Prometheus           *TelemetryConfig_Adapters_Prometheus    `protobuf:"bytes,4,opt,name=prometheus" json:"prometheus,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}                                `json:"-"`
-	XXX_unrecognized     []byte                                  `json:"-"`
-	XXX_sizecache        int32                                   `json:"-"`
-}
-
-func (m *TelemetryConfig_Adapters) Reset()         { *m = TelemetryConfig_Adapters{} }
-func (m *TelemetryConfig_Adapters) String() string { return proto.CompactTextString(m) }
-func (*TelemetryConfig_Adapters) ProtoMessage()    {}
-func (*TelemetryConfig_Adapters) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{7, 0}
-}
-func (m *TelemetryConfig_Adapters) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *TelemetryConfig_Adapters) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_TelemetryConfig_Adapters.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *TelemetryConfig_Adapters) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TelemetryConfig_Adapters.Merge(m, src)
-}
-func (m *TelemetryConfig_Adapters) XXX_Size() int {
-	return m.Size()
-}
-func (m *TelemetryConfig_Adapters) XXX_DiscardUnknown() {
-	xxx_messageInfo_TelemetryConfig_Adapters.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_TelemetryConfig_Adapters proto.InternalMessageInfo
-
-func (m *TelemetryConfig_Adapters) GetUseAdapter_CRDs() bool {
-	if m != nil && m.UseAdapter_CRDs != nil {
-		return *m.UseAdapter_CRDs
-	}
-	return false
-}
-
-func (m *TelemetryConfig_Adapters) GetKubernetesEnvConfig() *TelemetryConfig_Adapters_KubernetesEnv {
-	if m != nil {
-		return m.KubernetesEnvConfig
-	}
-	return nil
-}
-
-func (m *TelemetryConfig_Adapters) GetStdio() *TelemetryConfig_Adapters_Stdio {
-	if m != nil {
-		return m.Stdio
-	}
-	return nil
-}
-
-func (m *TelemetryConfig_Adapters) GetPrometheus() *TelemetryConfig_Adapters_Prometheus {
-	if m != nil {
-		return m.Prometheus
-	}
-	return nil
-}
-
-type TelemetryConfig_Adapters_KubernetesEnv struct {
-	Enabled              *bool    `protobuf:"varint,1,opt,name=enabled" json:"enabled,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *TelemetryConfig_Adapters_KubernetesEnv) Reset() {
-	*m = TelemetryConfig_Adapters_KubernetesEnv{}
-}
-func (m *TelemetryConfig_Adapters_KubernetesEnv) String() string { return proto.CompactTextString(m) }
-func (*TelemetryConfig_Adapters_KubernetesEnv) ProtoMessage()    {}
-func (*TelemetryConfig_Adapters_KubernetesEnv) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{7, 0, 0}
-}
-func (m *TelemetryConfig_Adapters_KubernetesEnv) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *TelemetryConfig_Adapters_KubernetesEnv) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_TelemetryConfig_Adapters_KubernetesEnv.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *TelemetryConfig_Adapters_KubernetesEnv) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TelemetryConfig_Adapters_KubernetesEnv.Merge(m, src)
-}
-func (m *TelemetryConfig_Adapters_KubernetesEnv) XXX_Size() int {
-	return m.Size()
-}
-func (m *TelemetryConfig_Adapters_KubernetesEnv) XXX_DiscardUnknown() {
-	xxx_messageInfo_TelemetryConfig_Adapters_KubernetesEnv.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_TelemetryConfig_Adapters_KubernetesEnv proto.InternalMessageInfo
-
-func (m *TelemetryConfig_Adapters_KubernetesEnv) GetEnabled() bool {
-	if m != nil && m.Enabled != nil {
-		return *m.Enabled
-	}
-	return false
-}
-
-type TelemetryConfig_Adapters_Stdio struct {
-	Enabled              *bool    `protobuf:"varint,1,opt,name=enabled" json:"enabled,omitempty"`
-	OutputAsJson         *bool    `protobuf:"varint,2,opt,name=output_as_json,json=outputAsJson" json:"output_as_json,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *TelemetryConfig_Adapters_Stdio) Reset()         { *m = TelemetryConfig_Adapters_Stdio{} }
-func (m *TelemetryConfig_Adapters_Stdio) String() string { return proto.CompactTextString(m) }
-func (*TelemetryConfig_Adapters_Stdio) ProtoMessage()    {}
-func (*TelemetryConfig_Adapters_Stdio) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{7, 0, 1}
-}
-func (m *TelemetryConfig_Adapters_Stdio) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *TelemetryConfig_Adapters_Stdio) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_TelemetryConfig_Adapters_Stdio.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *TelemetryConfig_Adapters_Stdio) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TelemetryConfig_Adapters_Stdio.Merge(m, src)
-}
-func (m *TelemetryConfig_Adapters_Stdio) XXX_Size() int {
-	return m.Size()
-}
-func (m *TelemetryConfig_Adapters_Stdio) XXX_DiscardUnknown() {
-	xxx_messageInfo_TelemetryConfig_Adapters_Stdio.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_TelemetryConfig_Adapters_Stdio proto.InternalMessageInfo
-
-func (m *TelemetryConfig_Adapters_Stdio) GetEnabled() bool {
-	if m != nil && m.Enabled != nil {
-		return *m.Enabled
-	}
-	return false
-}
-
-func (m *TelemetryConfig_Adapters_Stdio) GetOutputAsJson() bool {
-	if m != nil && m.OutputAsJson != nil {
-		return *m.OutputAsJson
-	}
-	return false
-}
-
-type TelemetryConfig_Adapters_Prometheus struct {
-	Enabled               *bool    `protobuf:"varint,1,opt,name=enabled" json:"enabled,omitempty"`
-	MetricsExpiryDuration *string  `protobuf:"bytes,2,opt,name=metrics_expiry_duration,json=metricsExpiryDuration" json:"metrics_expiry_duration,omitempty"`
-	XXX_NoUnkeyedLiteral  struct{} `json:"-"`
-	XXX_unrecognized      []byte   `json:"-"`
-	XXX_sizecache         int32    `json:"-"`
-}
-
-func (m *TelemetryConfig_Adapters_Prometheus) Reset()         { *m = TelemetryConfig_Adapters_Prometheus{} }
-func (m *TelemetryConfig_Adapters_Prometheus) String() string { return proto.CompactTextString(m) }
-func (*TelemetryConfig_Adapters_Prometheus) ProtoMessage()    {}
-func (*TelemetryConfig_Adapters_Prometheus) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{7, 0, 2}
-}
-func (m *TelemetryConfig_Adapters_Prometheus) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *TelemetryConfig_Adapters_Prometheus) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_TelemetryConfig_Adapters_Prometheus.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *TelemetryConfig_Adapters_Prometheus) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TelemetryConfig_Adapters_Prometheus.Merge(m, src)
-}
-func (m *TelemetryConfig_Adapters_Prometheus) XXX_Size() int {
-	return m.Size()
-}
-func (m *TelemetryConfig_Adapters_Prometheus) XXX_DiscardUnknown() {
-	xxx_messageInfo_TelemetryConfig_Adapters_Prometheus.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_TelemetryConfig_Adapters_Prometheus proto.InternalMessageInfo
-
-func (m *TelemetryConfig_Adapters_Prometheus) GetEnabled() bool {
-	if m != nil && m.Enabled != nil {
-		return *m.Enabled
-	}
-	return false
-}
-
-func (m *TelemetryConfig_Adapters_Prometheus) GetMetricsExpiryDuration() string {
-	if m != nil && m.MetricsExpiryDuration != nil {
-		return *m.MetricsExpiryDuration
-	}
-	return ""
-}
-
+// Configuration options for security feature.
 type SecurityConfig struct {
-	// Selects whether policy enforcement is installed.
-	Enabled *bool `protobuf:"varint,1,opt,name=enabled" json:"enabled,omitempty"`
-	// Namespace that all components for this feature are installed into.
-	Namespace        *string `protobuf:"bytes,2,opt,name=namespace" json:"namespace,omitempty"`
-	Image            *string `protobuf:"bytes,10,opt,name=image" json:"image,omitempty"`
-	SelfSigned       *bool   `protobuf:"varint,11,opt,name=self_signed,json=selfSigned" json:"self_signed,omitempty"`
-	CreateMeshPolicy *bool   `protobuf:"varint,12,opt,name=create_mesh_policy,json=createMeshPolicy" json:"create_mesh_policy,omitempty"`
-	// k8s scaling settings.
-	ReplicaCount *uint32 `protobuf:"varint,80,opt,name=replica_count,json=replicaCount" json:"replica_count,omitempty"`
-	// Annotations and selectors.
-	NodeSelector map[string]string `protobuf:"bytes,92,rep,name=node_selector,json=nodeSelector" json:"node_selector,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	// Kustomize style overrides for k8s resources in rendered manifests.
-	ResourceOverride     []*ResourceOverride `protobuf:"bytes,100,rep,name=resource_override,json=resourceOverride" json:"resource_override,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}            `json:"-"`
-	XXX_unrecognized     []byte              `json:"-"`
-	XXX_sizecache        int32               `json:"-"`
+	// Selects whether security feature is installed. Must be set for any sub-component to be installed.
+	Enabled *protobuf.BoolValue `protobuf:"bytes,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
+	// Namespace that security components are installed into.
+	Namespace string `protobuf:"bytes,2,opt,name=namespace,proto3" json:"namespace,omitempty"`
+	// Enables MTLS for control plane.
+	// Will result in delays starting the pods while secrets are propagated, not recommended for tests.
+	ControlPlaneMtls bool `protobuf:"varint,13,opt,name=control_plane_mtls,json=controlPlaneMtls,proto3" json:"control_plane_mtls,omitempty"`
+	// Enables MTLS for service to service traffic.
+	DataPlaneMtls        bool                        `protobuf:"varint,14,opt,name=data_plane_mtls,json=dataPlaneMtls,proto3" json:"data_plane_mtls,omitempty"`
+	TrustDomain          string                      `protobuf:"bytes,15,opt,name=trust_domain,json=trustDomain,proto3" json:"trust_domain,omitempty"`
+	Citadel              *CitadelComponentConfig     `protobuf:"bytes,20,opt,name=citadel,proto3" json:"citadel,omitempty"`
+	CertManager          *CertManagerComponentConfig `protobuf:"bytes,21,opt,name=cert_manager,json=certManager,proto3" json:"cert_manager,omitempty"`
+	NodeAgent            *NodeAgentComponentConfig   `protobuf:"bytes,22,opt,name=node_agent,json=nodeAgent,proto3" json:"node_agent,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}                    `json:"-"`
+	XXX_unrecognized     []byte                      `json:"-"`
+	XXX_sizecache        int32                       `json:"-"`
 }
 
 func (m *SecurityConfig) Reset()         { *m = SecurityConfig{} }
 func (m *SecurityConfig) String() string { return proto.CompactTextString(m) }
 func (*SecurityConfig) ProtoMessage()    {}
 func (*SecurityConfig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{8}
+	return fileDescriptor_d0a1188b3d395975, []int{4}
 }
 func (m *SecurityConfig) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1579,91 +848,84 @@ func (m *SecurityConfig) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_SecurityConfig proto.InternalMessageInfo
 
-func (m *SecurityConfig) GetEnabled() bool {
-	if m != nil && m.Enabled != nil {
-		return *m.Enabled
+func (m *SecurityConfig) GetEnabled() *protobuf.BoolValue {
+	if m != nil {
+		return m.Enabled
 	}
-	return false
+	return nil
 }
 
 func (m *SecurityConfig) GetNamespace() string {
-	if m != nil && m.Namespace != nil {
-		return *m.Namespace
+	if m != nil {
+		return m.Namespace
 	}
 	return ""
 }
 
-func (m *SecurityConfig) GetImage() string {
-	if m != nil && m.Image != nil {
-		return *m.Image
+func (m *SecurityConfig) GetControlPlaneMtls() bool {
+	if m != nil {
+		return m.ControlPlaneMtls
+	}
+	return false
+}
+
+func (m *SecurityConfig) GetDataPlaneMtls() bool {
+	if m != nil {
+		return m.DataPlaneMtls
+	}
+	return false
+}
+
+func (m *SecurityConfig) GetTrustDomain() string {
+	if m != nil {
+		return m.TrustDomain
 	}
 	return ""
 }
 
-func (m *SecurityConfig) GetSelfSigned() bool {
-	if m != nil && m.SelfSigned != nil {
-		return *m.SelfSigned
-	}
-	return false
-}
-
-func (m *SecurityConfig) GetCreateMeshPolicy() bool {
-	if m != nil && m.CreateMeshPolicy != nil {
-		return *m.CreateMeshPolicy
-	}
-	return false
-}
-
-func (m *SecurityConfig) GetReplicaCount() uint32 {
-	if m != nil && m.ReplicaCount != nil {
-		return *m.ReplicaCount
-	}
-	return 0
-}
-
-func (m *SecurityConfig) GetNodeSelector() map[string]string {
+func (m *SecurityConfig) GetCitadel() *CitadelComponentConfig {
 	if m != nil {
-		return m.NodeSelector
+		return m.Citadel
 	}
 	return nil
 }
 
-func (m *SecurityConfig) GetResourceOverride() []*ResourceOverride {
+func (m *SecurityConfig) GetCertManager() *CertManagerComponentConfig {
 	if m != nil {
-		return m.ResourceOverride
+		return m.CertManager
 	}
 	return nil
 }
 
-type SecurityConfig_CertManager struct {
-	// Selects whether cert manager is installed.
-	Enabled *bool `protobuf:"varint,1,opt,name=enabled" json:"enabled,omitempty"`
-	// Namespace that all components for this feature are installed into.
-	Namespace *string `protobuf:"bytes,2,opt,name=namespace" json:"namespace,omitempty"`
-	// hub is the path for docker images e.g. quay.io/jetstack
-	// TODO: clarify if image name default exists.
-	Hub *string `protobuf:"bytes,3,opt,name=hub" json:"hub,omitempty"`
-	// tag is the version tag for docker images e.g. 1.0.6
-	Tag *string `protobuf:"bytes,4,opt,name=tag" json:"tag,omitempty"`
-	// Passthrough to k8s resources.
-	Resources            *ResourceRequirements `protobuf:"bytes,82,opt,name=resources" json:"resources,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}              `json:"-"`
-	XXX_unrecognized     []byte                `json:"-"`
-	XXX_sizecache        int32                 `json:"-"`
+func (m *SecurityConfig) GetNodeAgent() *NodeAgentComponentConfig {
+	if m != nil {
+		return m.NodeAgent
+	}
+	return nil
 }
 
-func (m *SecurityConfig_CertManager) Reset()         { *m = SecurityConfig_CertManager{} }
-func (m *SecurityConfig_CertManager) String() string { return proto.CompactTextString(m) }
-func (*SecurityConfig_CertManager) ProtoMessage()    {}
-func (*SecurityConfig_CertManager) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{8, 0}
+// Configuration options for the pilot component.
+type PilotComponentConfig struct {
+	Common *CommonComponentConfig `protobuf:"bytes,1,opt,name=common,proto3" json:"common,omitempty"`
+	// Enables sidecar in the pilot pod.
+	Sidecar              bool     `protobuf:"varint,10,opt,name=sidecar,proto3" json:"sidecar,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
-func (m *SecurityConfig_CertManager) XXX_Unmarshal(b []byte) error {
+
+func (m *PilotComponentConfig) Reset()         { *m = PilotComponentConfig{} }
+func (m *PilotComponentConfig) String() string { return proto.CompactTextString(m) }
+func (*PilotComponentConfig) ProtoMessage()    {}
+func (*PilotComponentConfig) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d0a1188b3d395975, []int{5}
+}
+func (m *PilotComponentConfig) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *SecurityConfig_CertManager) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *PilotComponentConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_SecurityConfig_CertManager.Marshal(b, m, deterministic)
+		return xxx_messageInfo_PilotComponentConfig.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalTo(b)
@@ -1673,73 +935,440 @@ func (m *SecurityConfig_CertManager) XXX_Marshal(b []byte, deterministic bool) (
 		return b[:n], nil
 	}
 }
-func (m *SecurityConfig_CertManager) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_SecurityConfig_CertManager.Merge(m, src)
+func (m *PilotComponentConfig) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PilotComponentConfig.Merge(m, src)
 }
-func (m *SecurityConfig_CertManager) XXX_Size() int {
+func (m *PilotComponentConfig) XXX_Size() int {
 	return m.Size()
 }
-func (m *SecurityConfig_CertManager) XXX_DiscardUnknown() {
-	xxx_messageInfo_SecurityConfig_CertManager.DiscardUnknown(m)
+func (m *PilotComponentConfig) XXX_DiscardUnknown() {
+	xxx_messageInfo_PilotComponentConfig.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_SecurityConfig_CertManager proto.InternalMessageInfo
+var xxx_messageInfo_PilotComponentConfig proto.InternalMessageInfo
 
-func (m *SecurityConfig_CertManager) GetEnabled() bool {
-	if m != nil && m.Enabled != nil {
-		return *m.Enabled
-	}
-	return false
-}
-
-func (m *SecurityConfig_CertManager) GetNamespace() string {
-	if m != nil && m.Namespace != nil {
-		return *m.Namespace
-	}
-	return ""
-}
-
-func (m *SecurityConfig_CertManager) GetHub() string {
-	if m != nil && m.Hub != nil {
-		return *m.Hub
-	}
-	return ""
-}
-
-func (m *SecurityConfig_CertManager) GetTag() string {
-	if m != nil && m.Tag != nil {
-		return *m.Tag
-	}
-	return ""
-}
-
-func (m *SecurityConfig_CertManager) GetResources() *ResourceRequirements {
+func (m *PilotComponentConfig) GetCommon() *CommonComponentConfig {
 	if m != nil {
-		return m.Resources
+		return m.Common
 	}
 	return nil
 }
 
+func (m *PilotComponentConfig) GetSidecar() bool {
+	if m != nil {
+		return m.Sidecar
+	}
+	return false
+}
+
+// Configuration options for the proxy.
+type ProxyComponentConfig struct {
+	Common           *CommonComponentConfig                `protobuf:"bytes,1,opt,name=common,proto3" json:"common,omitempty"`
+	InterceptionMode ProxyComponentConfig_InterceptionMode `protobuf:"varint,12,opt,name=interception_mode,json=interceptionMode,proto3,enum=v1alpha1.ProxyComponentConfig_InterceptionMode" json:"interception_mode,omitempty"`
+	// Envoy specific timer settings.
+	ConnectTimeout         string `protobuf:"bytes,20,opt,name=connect_timeout,json=connectTimeout,proto3" json:"connect_timeout,omitempty"`
+	DrainDuration          string `protobuf:"bytes,21,opt,name=drain_duration,json=drainDuration,proto3" json:"drain_duration,omitempty"`
+	ParentShutdownDuration string `protobuf:"bytes,22,opt,name=parent_shutdown_duration,json=parentShutdownDuration,proto3" json:"parent_shutdown_duration,omitempty"`
+	// Controls number of Proxy worker threads.
+	// If set to 0 (default), starts worker thread for each CPU thread/core.
+	Concurrency          uint32   `protobuf:"varint,23,opt,name=concurrency,proto3" json:"concurrency,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *ProxyComponentConfig) Reset()         { *m = ProxyComponentConfig{} }
+func (m *ProxyComponentConfig) String() string { return proto.CompactTextString(m) }
+func (*ProxyComponentConfig) ProtoMessage()    {}
+func (*ProxyComponentConfig) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d0a1188b3d395975, []int{6}
+}
+func (m *ProxyComponentConfig) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *ProxyComponentConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_ProxyComponentConfig.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *ProxyComponentConfig) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ProxyComponentConfig.Merge(m, src)
+}
+func (m *ProxyComponentConfig) XXX_Size() int {
+	return m.Size()
+}
+func (m *ProxyComponentConfig) XXX_DiscardUnknown() {
+	xxx_messageInfo_ProxyComponentConfig.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ProxyComponentConfig proto.InternalMessageInfo
+
+func (m *ProxyComponentConfig) GetCommon() *CommonComponentConfig {
+	if m != nil {
+		return m.Common
+	}
+	return nil
+}
+
+func (m *ProxyComponentConfig) GetInterceptionMode() ProxyComponentConfig_InterceptionMode {
+	if m != nil {
+		return m.InterceptionMode
+	}
+	return ProxyComponentConfig_REDIRECT
+}
+
+func (m *ProxyComponentConfig) GetConnectTimeout() string {
+	if m != nil {
+		return m.ConnectTimeout
+	}
+	return ""
+}
+
+func (m *ProxyComponentConfig) GetDrainDuration() string {
+	if m != nil {
+		return m.DrainDuration
+	}
+	return ""
+}
+
+func (m *ProxyComponentConfig) GetParentShutdownDuration() string {
+	if m != nil {
+		return m.ParentShutdownDuration
+	}
+	return ""
+}
+
+func (m *ProxyComponentConfig) GetConcurrency() uint32 {
+	if m != nil {
+		return m.Concurrency
+	}
+	return 0
+}
+
+// Configuration options for the sidecar injector component.
+type SidecarInjectorComponentConfig struct {
+	Common               *CommonComponentConfig `protobuf:"bytes,1,opt,name=common,proto3" json:"common,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}               `json:"-"`
+	XXX_unrecognized     []byte                 `json:"-"`
+	XXX_sizecache        int32                  `json:"-"`
+}
+
+func (m *SidecarInjectorComponentConfig) Reset()         { *m = SidecarInjectorComponentConfig{} }
+func (m *SidecarInjectorComponentConfig) String() string { return proto.CompactTextString(m) }
+func (*SidecarInjectorComponentConfig) ProtoMessage()    {}
+func (*SidecarInjectorComponentConfig) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d0a1188b3d395975, []int{7}
+}
+func (m *SidecarInjectorComponentConfig) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *SidecarInjectorComponentConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_SidecarInjectorComponentConfig.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *SidecarInjectorComponentConfig) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SidecarInjectorComponentConfig.Merge(m, src)
+}
+func (m *SidecarInjectorComponentConfig) XXX_Size() int {
+	return m.Size()
+}
+func (m *SidecarInjectorComponentConfig) XXX_DiscardUnknown() {
+	xxx_messageInfo_SidecarInjectorComponentConfig.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SidecarInjectorComponentConfig proto.InternalMessageInfo
+
+func (m *SidecarInjectorComponentConfig) GetCommon() *CommonComponentConfig {
+	if m != nil {
+		return m.Common
+	}
+	return nil
+}
+
+// Configuration options for the policy enforcement component.
+type PolicyComponentConfig struct {
+	Common               *CommonComponentConfig `protobuf:"bytes,1,opt,name=common,proto3" json:"common,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}               `json:"-"`
+	XXX_unrecognized     []byte                 `json:"-"`
+	XXX_sizecache        int32                  `json:"-"`
+}
+
+func (m *PolicyComponentConfig) Reset()         { *m = PolicyComponentConfig{} }
+func (m *PolicyComponentConfig) String() string { return proto.CompactTextString(m) }
+func (*PolicyComponentConfig) ProtoMessage()    {}
+func (*PolicyComponentConfig) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d0a1188b3d395975, []int{8}
+}
+func (m *PolicyComponentConfig) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *PolicyComponentConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_PolicyComponentConfig.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *PolicyComponentConfig) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PolicyComponentConfig.Merge(m, src)
+}
+func (m *PolicyComponentConfig) XXX_Size() int {
+	return m.Size()
+}
+func (m *PolicyComponentConfig) XXX_DiscardUnknown() {
+	xxx_messageInfo_PolicyComponentConfig.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_PolicyComponentConfig proto.InternalMessageInfo
+
+func (m *PolicyComponentConfig) GetCommon() *CommonComponentConfig {
+	if m != nil {
+		return m.Common
+	}
+	return nil
+}
+
+// Configuration options for the telemetry component.
+type TelemetryComponentConfig struct {
+	Common               *CommonComponentConfig `protobuf:"bytes,1,opt,name=common,proto3" json:"common,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}               `json:"-"`
+	XXX_unrecognized     []byte                 `json:"-"`
+	XXX_sizecache        int32                  `json:"-"`
+}
+
+func (m *TelemetryComponentConfig) Reset()         { *m = TelemetryComponentConfig{} }
+func (m *TelemetryComponentConfig) String() string { return proto.CompactTextString(m) }
+func (*TelemetryComponentConfig) ProtoMessage()    {}
+func (*TelemetryComponentConfig) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d0a1188b3d395975, []int{9}
+}
+func (m *TelemetryComponentConfig) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *TelemetryComponentConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_TelemetryComponentConfig.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *TelemetryComponentConfig) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TelemetryComponentConfig.Merge(m, src)
+}
+func (m *TelemetryComponentConfig) XXX_Size() int {
+	return m.Size()
+}
+func (m *TelemetryComponentConfig) XXX_DiscardUnknown() {
+	xxx_messageInfo_TelemetryComponentConfig.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_TelemetryComponentConfig proto.InternalMessageInfo
+
+func (m *TelemetryComponentConfig) GetCommon() *CommonComponentConfig {
+	if m != nil {
+		return m.Common
+	}
+	return nil
+}
+
+// Configuration options for Citadel component.
+type CitadelComponentConfig struct {
+	Common               *CommonComponentConfig `protobuf:"bytes,1,opt,name=common,proto3" json:"common,omitempty"`
+	SelfSigned           bool                   `protobuf:"varint,11,opt,name=self_signed,json=selfSigned,proto3" json:"self_signed,omitempty"`
+	CreateMeshPolicy     bool                   `protobuf:"varint,12,opt,name=create_mesh_policy,json=createMeshPolicy,proto3" json:"create_mesh_policy,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}               `json:"-"`
+	XXX_unrecognized     []byte                 `json:"-"`
+	XXX_sizecache        int32                  `json:"-"`
+}
+
+func (m *CitadelComponentConfig) Reset()         { *m = CitadelComponentConfig{} }
+func (m *CitadelComponentConfig) String() string { return proto.CompactTextString(m) }
+func (*CitadelComponentConfig) ProtoMessage()    {}
+func (*CitadelComponentConfig) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d0a1188b3d395975, []int{10}
+}
+func (m *CitadelComponentConfig) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *CitadelComponentConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_CitadelComponentConfig.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *CitadelComponentConfig) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CitadelComponentConfig.Merge(m, src)
+}
+func (m *CitadelComponentConfig) XXX_Size() int {
+	return m.Size()
+}
+func (m *CitadelComponentConfig) XXX_DiscardUnknown() {
+	xxx_messageInfo_CitadelComponentConfig.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_CitadelComponentConfig proto.InternalMessageInfo
+
+func (m *CitadelComponentConfig) GetCommon() *CommonComponentConfig {
+	if m != nil {
+		return m.Common
+	}
+	return nil
+}
+
+func (m *CitadelComponentConfig) GetSelfSigned() bool {
+	if m != nil {
+		return m.SelfSigned
+	}
+	return false
+}
+
+func (m *CitadelComponentConfig) GetCreateMeshPolicy() bool {
+	if m != nil {
+		return m.CreateMeshPolicy
+	}
+	return false
+}
+
+// Configuration options for certificate manager component.
+type CertManagerComponentConfig struct {
+	Common               *CommonComponentConfig `protobuf:"bytes,1,opt,name=common,proto3" json:"common,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}               `json:"-"`
+	XXX_unrecognized     []byte                 `json:"-"`
+	XXX_sizecache        int32                  `json:"-"`
+}
+
+func (m *CertManagerComponentConfig) Reset()         { *m = CertManagerComponentConfig{} }
+func (m *CertManagerComponentConfig) String() string { return proto.CompactTextString(m) }
+func (*CertManagerComponentConfig) ProtoMessage()    {}
+func (*CertManagerComponentConfig) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d0a1188b3d395975, []int{11}
+}
+func (m *CertManagerComponentConfig) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *CertManagerComponentConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_CertManagerComponentConfig.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *CertManagerComponentConfig) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CertManagerComponentConfig.Merge(m, src)
+}
+func (m *CertManagerComponentConfig) XXX_Size() int {
+	return m.Size()
+}
+func (m *CertManagerComponentConfig) XXX_DiscardUnknown() {
+	xxx_messageInfo_CertManagerComponentConfig.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_CertManagerComponentConfig proto.InternalMessageInfo
+
+func (m *CertManagerComponentConfig) GetCommon() *CommonComponentConfig {
+	if m != nil {
+		return m.Common
+	}
+	return nil
+}
+
+// Configuration options for node agent component.
+type NodeAgentComponentConfig struct {
+	Common               *CommonComponentConfig `protobuf:"bytes,1,opt,name=common,proto3" json:"common,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}               `json:"-"`
+	XXX_unrecognized     []byte                 `json:"-"`
+	XXX_sizecache        int32                  `json:"-"`
+}
+
+func (m *NodeAgentComponentConfig) Reset()         { *m = NodeAgentComponentConfig{} }
+func (m *NodeAgentComponentConfig) String() string { return proto.CompactTextString(m) }
+func (*NodeAgentComponentConfig) ProtoMessage()    {}
+func (*NodeAgentComponentConfig) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d0a1188b3d395975, []int{12}
+}
+func (m *NodeAgentComponentConfig) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *NodeAgentComponentConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_NodeAgentComponentConfig.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *NodeAgentComponentConfig) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_NodeAgentComponentConfig.Merge(m, src)
+}
+func (m *NodeAgentComponentConfig) XXX_Size() int {
+	return m.Size()
+}
+func (m *NodeAgentComponentConfig) XXX_DiscardUnknown() {
+	xxx_messageInfo_NodeAgentComponentConfig.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_NodeAgentComponentConfig proto.InternalMessageInfo
+
+func (m *NodeAgentComponentConfig) GetCommon() *CommonComponentConfig {
+	if m != nil {
+		return m.Common
+	}
+	return nil
+}
+
+// Configuration options for configuration management feature.
 type ConfigManagementConfig struct {
-	// Selects whether config management is installed.
-	Enabled *bool `protobuf:"varint,1,opt,name=enabled" json:"enabled,omitempty"`
-	// Namespace that all components for this feature are installed into.
-	Namespace *string `protobuf:"bytes,2,opt,name=namespace" json:"namespace,omitempty"`
-	Image     *string `protobuf:"bytes,10,opt,name=image" json:"image,omitempty"`
-	// k8s scaling settings.
-	ReplicaCount *uint32 `protobuf:"varint,80,opt,name=replica_count,json=replicaCount" json:"replica_count,omitempty"`
-	// Kustomize style overrides for k8s resources in rendered manifests.
-	ResourceOverride     []*ResourceOverride `protobuf:"bytes,100,rep,name=resource_override,json=resourceOverride" json:"resource_override,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}            `json:"-"`
-	XXX_unrecognized     []byte              `json:"-"`
-	XXX_sizecache        int32               `json:"-"`
+	Common               *CommonComponentConfig `protobuf:"bytes,1,opt,name=common,proto3" json:"common,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}               `json:"-"`
+	XXX_unrecognized     []byte                 `json:"-"`
+	XXX_sizecache        int32                  `json:"-"`
 }
 
 func (m *ConfigManagementConfig) Reset()         { *m = ConfigManagementConfig{} }
 func (m *ConfigManagementConfig) String() string { return proto.CompactTextString(m) }
 func (*ConfigManagementConfig) ProtoMessage()    {}
 func (*ConfigManagementConfig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{9}
+	return fileDescriptor_d0a1188b3d395975, []int{13}
 }
 func (m *ConfigManagementConfig) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1768,55 +1397,353 @@ func (m *ConfigManagementConfig) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_ConfigManagementConfig proto.InternalMessageInfo
 
-func (m *ConfigManagementConfig) GetEnabled() bool {
-	if m != nil && m.Enabled != nil {
-		return *m.Enabled
-	}
-	return false
-}
-
-func (m *ConfigManagementConfig) GetNamespace() string {
-	if m != nil && m.Namespace != nil {
-		return *m.Namespace
-	}
-	return ""
-}
-
-func (m *ConfigManagementConfig) GetImage() string {
-	if m != nil && m.Image != nil {
-		return *m.Image
-	}
-	return ""
-}
-
-func (m *ConfigManagementConfig) GetReplicaCount() uint32 {
-	if m != nil && m.ReplicaCount != nil {
-		return *m.ReplicaCount
-	}
-	return 0
-}
-
-func (m *ConfigManagementConfig) GetResourceOverride() []*ResourceOverride {
+func (m *ConfigManagementConfig) GetCommon() *CommonComponentConfig {
 	if m != nil {
-		return m.ResourceOverride
+		return m.Common
 	}
 	return nil
 }
 
+// Configuration common to all components.
+type CommonComponentConfig struct {
+	// Selects whether policy enforcement is installed.
+	// Q. is this enough to cover both mixer.policy.enabled and disablePolicyChecks?
+	// +k8s:deepcopy-gen=false
+	Enabled *protobuf.BoolValue `protobuf:"bytes,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
+	// Namespace that all resources for this feature are installed into.
+	Namespace string                         `protobuf:"bytes,2,opt,name=namespace,proto3" json:"namespace,omitempty"`
+	Debug     CommonComponentConfig_LogLevel `protobuf:"varint,3,opt,name=debug,proto3,enum=v1alpha1.CommonComponentConfig_LogLevel" json:"debug,omitempty"`
+	// Additional environment variables for the container.
+	Env map[string]string `protobuf:"bytes,60,rep,name=env,proto3" json:"env,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	// Additional command line arguments for the container.
+	Args map[string]string `protobuf:"bytes,61,rep,name=args,proto3" json:"args,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	// Kubernetes resource spec.
+	K8S                  *KubernetesResourcesConfig `protobuf:"bytes,80,opt,name=k8s,proto3" json:"k8s,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}                   `json:"-"`
+	XXX_unrecognized     []byte                     `json:"-"`
+	XXX_sizecache        int32                      `json:"-"`
+}
+
+func (m *CommonComponentConfig) Reset()         { *m = CommonComponentConfig{} }
+func (m *CommonComponentConfig) String() string { return proto.CompactTextString(m) }
+func (*CommonComponentConfig) ProtoMessage()    {}
+func (*CommonComponentConfig) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d0a1188b3d395975, []int{14}
+}
+func (m *CommonComponentConfig) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *CommonComponentConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_CommonComponentConfig.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *CommonComponentConfig) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CommonComponentConfig.Merge(m, src)
+}
+func (m *CommonComponentConfig) XXX_Size() int {
+	return m.Size()
+}
+func (m *CommonComponentConfig) XXX_DiscardUnknown() {
+	xxx_messageInfo_CommonComponentConfig.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_CommonComponentConfig proto.InternalMessageInfo
+
+func (m *CommonComponentConfig) GetEnabled() *protobuf.BoolValue {
+	if m != nil {
+		return m.Enabled
+	}
+	return nil
+}
+
+func (m *CommonComponentConfig) GetNamespace() string {
+	if m != nil {
+		return m.Namespace
+	}
+	return ""
+}
+
+func (m *CommonComponentConfig) GetDebug() CommonComponentConfig_LogLevel {
+	if m != nil {
+		return m.Debug
+	}
+	return CommonComponentConfig_NONE
+}
+
+func (m *CommonComponentConfig) GetEnv() map[string]string {
+	if m != nil {
+		return m.Env
+	}
+	return nil
+}
+
+func (m *CommonComponentConfig) GetArgs() map[string]string {
+	if m != nil {
+		return m.Args
+	}
+	return nil
+}
+
+func (m *CommonComponentConfig) GetK8S() *KubernetesResourcesConfig {
+	if m != nil {
+		return m.K8S
+	}
+	return nil
+}
+
+// KubernetesResourcesConfig is a common set of k8s resource configs for components.
+type KubernetesResourcesConfig struct {
+	// k8s resources settings.
+	// https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/#resource-requests-and-limits-of-pod-and-container
+	Resources *Resources `protobuf:"bytes,1,opt,name=resources,proto3" json:"resources,omitempty"`
+	// k8s readinessProbe settings.
+	// https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/
+	ReadinessProbe *v1.Probe `protobuf:"bytes,2,opt,name=readiness_probe,json=readinessProbe,proto3" json:"readiness_probe,omitempty"`
+	// k8s Deployment replicas setting.
+	// https://kubernetes.io/docs/concepts/workloads/controllers/deployment/
+	ReplicaCount uint32 `protobuf:"varint,3,opt,name=replica_count,json=replicaCount,proto3" json:"replica_count,omitempty"`
+	// k8s HorizontalPodAutoscaler settings.
+	// https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/
+	HpaSpec *v11.HorizontalPodAutoscalerSpec `protobuf:"bytes,4,opt,name=hpa_spec,json=hpaSpec,proto3" json:"hpa_spec,omitempty"`
+	// k8s PodDisruptionBudget settings.
+	// https://kubernetes.io/docs/concepts/workloads/pods/disruptions/#how-disruption-budgets-work
+	PodDisruptionBudget *PodDisruptionBudgetSpec `protobuf:"bytes,5,opt,name=pod_disruption_budget,json=podDisruptionBudget,proto3" json:"pod_disruption_budget,omitempty"`
+	// k8s pod annotations.
+	// https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+	PodAnnotations map[string]string `protobuf:"bytes,6,rep,name=pod_annotations,json=podAnnotations,proto3" json:"pod_annotations,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	// k8s nodeSelector.
+	// https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#nodeselector
+	NodeSelector map[string]string                       `protobuf:"bytes,7,rep,name=node_selector,json=nodeSelector,proto3" json:"node_selector,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	NodeAffinity *KubernetesResourcesConfig_NodeAffinity `protobuf:"bytes,8,opt,name=node_affinity,json=nodeAffinity,proto3" json:"node_affinity,omitempty"`
+	// k8s imagePullPolicy.
+	// https://kubernetes.io/docs/concepts/containers/images/
+	ImagePullPolicy string `protobuf:"bytes,9,opt,name=image_pull_policy,json=imagePullPolicy,proto3" json:"image_pull_policy,omitempty"`
+	// k8s priority_class_name. Default for all resources unless overridden.
+	// https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/#priorityclass
+	PriorityClassName string `protobuf:"bytes,10,opt,name=priority_class_name,json=priorityClassName,proto3" json:"priority_class_name,omitempty"`
+	// Kustomize style overrides for k8s resources in rendered manifests.
+	K8SObjectOverrides   []*K8SObjectOverride `protobuf:"bytes,100,rep,name=k8s_object_overrides,json=k8sObjectOverrides,proto3" json:"k8s_object_overrides,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
+	XXX_unrecognized     []byte               `json:"-"`
+	XXX_sizecache        int32                `json:"-"`
+}
+
+func (m *KubernetesResourcesConfig) Reset()         { *m = KubernetesResourcesConfig{} }
+func (m *KubernetesResourcesConfig) String() string { return proto.CompactTextString(m) }
+func (*KubernetesResourcesConfig) ProtoMessage()    {}
+func (*KubernetesResourcesConfig) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d0a1188b3d395975, []int{15}
+}
+func (m *KubernetesResourcesConfig) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *KubernetesResourcesConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_KubernetesResourcesConfig.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *KubernetesResourcesConfig) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_KubernetesResourcesConfig.Merge(m, src)
+}
+func (m *KubernetesResourcesConfig) XXX_Size() int {
+	return m.Size()
+}
+func (m *KubernetesResourcesConfig) XXX_DiscardUnknown() {
+	xxx_messageInfo_KubernetesResourcesConfig.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_KubernetesResourcesConfig proto.InternalMessageInfo
+
+func (m *KubernetesResourcesConfig) GetResources() *Resources {
+	if m != nil {
+		return m.Resources
+	}
+	return nil
+}
+
+func (m *KubernetesResourcesConfig) GetReadinessProbe() *v1.Probe {
+	if m != nil {
+		return m.ReadinessProbe
+	}
+	return nil
+}
+
+func (m *KubernetesResourcesConfig) GetReplicaCount() uint32 {
+	if m != nil {
+		return m.ReplicaCount
+	}
+	return 0
+}
+
+func (m *KubernetesResourcesConfig) GetHpaSpec() *v11.HorizontalPodAutoscalerSpec {
+	if m != nil {
+		return m.HpaSpec
+	}
+	return nil
+}
+
+func (m *KubernetesResourcesConfig) GetPodDisruptionBudget() *PodDisruptionBudgetSpec {
+	if m != nil {
+		return m.PodDisruptionBudget
+	}
+	return nil
+}
+
+func (m *KubernetesResourcesConfig) GetPodAnnotations() map[string]string {
+	if m != nil {
+		return m.PodAnnotations
+	}
+	return nil
+}
+
+func (m *KubernetesResourcesConfig) GetNodeSelector() map[string]string {
+	if m != nil {
+		return m.NodeSelector
+	}
+	return nil
+}
+
+func (m *KubernetesResourcesConfig) GetNodeAffinity() *KubernetesResourcesConfig_NodeAffinity {
+	if m != nil {
+		return m.NodeAffinity
+	}
+	return nil
+}
+
+func (m *KubernetesResourcesConfig) GetImagePullPolicy() string {
+	if m != nil {
+		return m.ImagePullPolicy
+	}
+	return ""
+}
+
+func (m *KubernetesResourcesConfig) GetPriorityClassName() string {
+	if m != nil {
+		return m.PriorityClassName
+	}
+	return ""
+}
+
+func (m *KubernetesResourcesConfig) GetK8SObjectOverrides() []*K8SObjectOverride {
+	if m != nil {
+		return m.K8SObjectOverrides
+	}
+	return nil
+}
+
+// k8s node affinity.
+// https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+type KubernetesResourcesConfig_NodeAffinity struct {
+	ArchAmd64            uint32   `protobuf:"varint,1,opt,name=arch_amd64,json=archAmd64,proto3" json:"arch_amd64,omitempty"`
+	ArchS390X            uint32   `protobuf:"varint,2,opt,name=arch_s390x,json=archS390x,proto3" json:"arch_s390x,omitempty"`
+	ArchPpc64Le          uint32   `protobuf:"varint,3,opt,name=arch_ppc64le,json=archPpc64le,proto3" json:"arch_ppc64le,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *KubernetesResourcesConfig_NodeAffinity) Reset() {
+	*m = KubernetesResourcesConfig_NodeAffinity{}
+}
+func (m *KubernetesResourcesConfig_NodeAffinity) String() string { return proto.CompactTextString(m) }
+func (*KubernetesResourcesConfig_NodeAffinity) ProtoMessage()    {}
+func (*KubernetesResourcesConfig_NodeAffinity) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d0a1188b3d395975, []int{15, 2}
+}
+func (m *KubernetesResourcesConfig_NodeAffinity) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *KubernetesResourcesConfig_NodeAffinity) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_KubernetesResourcesConfig_NodeAffinity.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *KubernetesResourcesConfig_NodeAffinity) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_KubernetesResourcesConfig_NodeAffinity.Merge(m, src)
+}
+func (m *KubernetesResourcesConfig_NodeAffinity) XXX_Size() int {
+	return m.Size()
+}
+func (m *KubernetesResourcesConfig_NodeAffinity) XXX_DiscardUnknown() {
+	xxx_messageInfo_KubernetesResourcesConfig_NodeAffinity.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_KubernetesResourcesConfig_NodeAffinity proto.InternalMessageInfo
+
+func (m *KubernetesResourcesConfig_NodeAffinity) GetArchAmd64() uint32 {
+	if m != nil {
+		return m.ArchAmd64
+	}
+	return 0
+}
+
+func (m *KubernetesResourcesConfig_NodeAffinity) GetArchS390X() uint32 {
+	if m != nil {
+		return m.ArchS390X
+	}
+	return 0
+}
+
+func (m *KubernetesResourcesConfig_NodeAffinity) GetArchPpc64Le() uint32 {
+	if m != nil {
+		return m.ArchPpc64Le
+	}
+	return 0
+}
+
+// Configuration options for ingress gateways.
 type IngressGatewayConfig struct {
-	LoadBalancerIP           *string  `protobuf:"bytes,11,opt,name=load_balancer_iP,json=loadBalancerIP" json:"load_balancer_iP,omitempty"`
-	LoadBalancerSourceRanges []string `protobuf:"bytes,12,rep,name=load_balancer_source_ranges,json=loadBalancerSourceRanges" json:"load_balancer_source_ranges,omitempty"`
-	ExternalIPs              []string `protobuf:"bytes,13,rep,name=external_iPs,json=externalIPs" json:"external_iPs,omitempty"`
-	XXX_NoUnkeyedLiteral     struct{} `json:"-"`
-	XXX_unrecognized         []byte   `json:"-"`
-	XXX_sizecache            int32    `json:"-"`
+	// Common gateway configuration.
+	Gateway     *GatewayConfig                   `protobuf:"bytes,10,opt,name=gateway,proto3" json:"gateway,omitempty"`
+	IngressType IngressGatewayConfig_IngressType `protobuf:"varint,11,opt,name=ingress_type,json=ingressType,proto3,enum=v1alpha1.IngressGatewayConfig_IngressType" json:"ingress_type,omitempty"`
+	// enableHttps will add port 443 on the ingress.
+	// It REQUIRES that the certificates are installed  in the
+	// expected secrets - enabling this option without certificates
+	// will result in LDS rejection and the ingress will not work.
+	HttpsEnabled *protobuf.BoolValue `protobuf:"bytes,12,opt,name=https_enabled,json=httpsEnabled,proto3" json:"https_enabled,omitempty"`
+	// Sets the IP address for the load balancer.
+	// If unset, IP address will be allocated automatically if the provider
+	// platform supports auto allocation.
+	LoadBalancerIp string `protobuf:"bytes,13,opt,name=load_balancer_ip,json=loadBalancerIp,proto3" json:"load_balancer_ip,omitempty"`
+	// ???
+	LoadBalancerSourceRanges []string `protobuf:"bytes,14,rep,name=load_balancer_source_ranges,json=loadBalancerSourceRanges,proto3" json:"load_balancer_source_ranges,omitempty"`
+	// ???
+	ExternalIps []string `protobuf:"bytes,15,rep,name=external_ips,json=externalIps,proto3" json:"external_ips,omitempty"`
+	// If true, ingress gateway fetches credentials from SDS server to handle TLS connections.
+	SdsEnabled            *protobuf.BoolValue                        `protobuf:"bytes,16,opt,name=sds_enabled,json=sdsEnabled,proto3" json:"sds_enabled,omitempty"`
+	ExternalTrafficPolicy IngressGatewayConfig_ExternalTrafficPolicy `protobuf:"varint,17,opt,name=externalTrafficPolicy,proto3,enum=v1alpha1.IngressGatewayConfig_ExternalTrafficPolicy" json:"externalTrafficPolicy,omitempty"`
+	XXX_NoUnkeyedLiteral  struct{}                                   `json:"-"`
+	XXX_unrecognized      []byte                                     `json:"-"`
+	XXX_sizecache         int32                                      `json:"-"`
 }
 
 func (m *IngressGatewayConfig) Reset()         { *m = IngressGatewayConfig{} }
 func (m *IngressGatewayConfig) String() string { return proto.CompactTextString(m) }
 func (*IngressGatewayConfig) ProtoMessage()    {}
 func (*IngressGatewayConfig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{10}
+	return fileDescriptor_d0a1188b3d395975, []int{16}
 }
 func (m *IngressGatewayConfig) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1845,9 +1772,30 @@ func (m *IngressGatewayConfig) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_IngressGatewayConfig proto.InternalMessageInfo
 
-func (m *IngressGatewayConfig) GetLoadBalancerIP() string {
-	if m != nil && m.LoadBalancerIP != nil {
-		return *m.LoadBalancerIP
+func (m *IngressGatewayConfig) GetGateway() *GatewayConfig {
+	if m != nil {
+		return m.Gateway
+	}
+	return nil
+}
+
+func (m *IngressGatewayConfig) GetIngressType() IngressGatewayConfig_IngressType {
+	if m != nil {
+		return m.IngressType
+	}
+	return IngressGatewayConfig_ISTIO
+}
+
+func (m *IngressGatewayConfig) GetHttpsEnabled() *protobuf.BoolValue {
+	if m != nil {
+		return m.HttpsEnabled
+	}
+	return nil
+}
+
+func (m *IngressGatewayConfig) GetLoadBalancerIp() string {
+	if m != nil {
+		return m.LoadBalancerIp
 	}
 	return ""
 }
@@ -1859,71 +1807,31 @@ func (m *IngressGatewayConfig) GetLoadBalancerSourceRanges() []string {
 	return nil
 }
 
-func (m *IngressGatewayConfig) GetExternalIPs() []string {
+func (m *IngressGatewayConfig) GetExternalIps() []string {
 	if m != nil {
-		return m.ExternalIPs
+		return m.ExternalIps
 	}
 	return nil
 }
 
-type IngressGatewayConfig_Sds struct {
-	// Selects whether config management is installed.
-	Enabled              *bool    `protobuf:"varint,1,opt,name=enabled" json:"enabled,omitempty"`
-	Image                *string  `protobuf:"bytes,10,opt,name=image" json:"image,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *IngressGatewayConfig_Sds) Reset()         { *m = IngressGatewayConfig_Sds{} }
-func (m *IngressGatewayConfig_Sds) String() string { return proto.CompactTextString(m) }
-func (*IngressGatewayConfig_Sds) ProtoMessage()    {}
-func (*IngressGatewayConfig_Sds) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{10, 0}
-}
-func (m *IngressGatewayConfig_Sds) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *IngressGatewayConfig_Sds) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_IngressGatewayConfig_Sds.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
+func (m *IngressGatewayConfig) GetSdsEnabled() *protobuf.BoolValue {
+	if m != nil {
+		return m.SdsEnabled
 	}
-}
-func (m *IngressGatewayConfig_Sds) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_IngressGatewayConfig_Sds.Merge(m, src)
-}
-func (m *IngressGatewayConfig_Sds) XXX_Size() int {
-	return m.Size()
-}
-func (m *IngressGatewayConfig_Sds) XXX_DiscardUnknown() {
-	xxx_messageInfo_IngressGatewayConfig_Sds.DiscardUnknown(m)
+	return nil
 }
 
-var xxx_messageInfo_IngressGatewayConfig_Sds proto.InternalMessageInfo
-
-func (m *IngressGatewayConfig_Sds) GetEnabled() bool {
-	if m != nil && m.Enabled != nil {
-		return *m.Enabled
+func (m *IngressGatewayConfig) GetExternalTrafficPolicy() IngressGatewayConfig_ExternalTrafficPolicy {
+	if m != nil {
+		return m.ExternalTrafficPolicy
 	}
-	return false
+	return IngressGatewayConfig_NONE
 }
 
-func (m *IngressGatewayConfig_Sds) GetImage() string {
-	if m != nil && m.Image != nil {
-		return *m.Image
-	}
-	return ""
-}
-
+// Configuration options for egress gateways.
 type EgressGatewayConfig struct {
-	Gateway              *GatewayConfig `protobuf:"bytes,10,opt,name=gateway" json:"gateway,omitempty"`
+	// Common gateway configuration.
+	Gateway              *GatewayConfig `protobuf:"bytes,10,opt,name=gateway,proto3" json:"gateway,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}       `json:"-"`
 	XXX_unrecognized     []byte         `json:"-"`
 	XXX_sizecache        int32          `json:"-"`
@@ -1933,7 +1841,7 @@ func (m *EgressGatewayConfig) Reset()         { *m = EgressGatewayConfig{} }
 func (m *EgressGatewayConfig) String() string { return proto.CompactTextString(m) }
 func (*EgressGatewayConfig) ProtoMessage()    {}
 func (*EgressGatewayConfig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{11}
+	return fileDescriptor_d0a1188b3d395975, []int{17}
 }
 func (m *EgressGatewayConfig) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1969,26 +1877,33 @@ func (m *EgressGatewayConfig) GetGateway() *GatewayConfig {
 	return nil
 }
 
-type IlbGatewayConfig struct {
-	Gateway              *GatewayConfig `protobuf:"bytes,10,opt,name=gateway" json:"gateway,omitempty"`
-	LoadBalancerIP       *string        `protobuf:"bytes,11,opt,name=load_balancer_iP,json=loadBalancerIP" json:"load_balancer_iP,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}       `json:"-"`
-	XXX_unrecognized     []byte         `json:"-"`
-	XXX_sizecache        int32          `json:"-"`
+// Configuration options for internal load balancer gateways.
+type LoadBalancingGatewayConfig struct {
+	// Common gateway configuration.
+	Gateway *GatewayConfig `protobuf:"bytes,10,opt,name=gateway,proto3" json:"gateway,omitempty"`
+	// Sets the IP address for the load balancer.
+	// If unset, IP address will be allocated automatically if the provider
+	// platform supports auto allocation.
+	// TODO: create IP type here and elsewhere.
+	// TODO: look into tagging these
+	LoadBalancerIp       string   `protobuf:"bytes,11,opt,name=load_balancer_ip,json=loadBalancerIp,proto3" json:"load_balancer_ip,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *IlbGatewayConfig) Reset()         { *m = IlbGatewayConfig{} }
-func (m *IlbGatewayConfig) String() string { return proto.CompactTextString(m) }
-func (*IlbGatewayConfig) ProtoMessage()    {}
-func (*IlbGatewayConfig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{12}
+func (m *LoadBalancingGatewayConfig) Reset()         { *m = LoadBalancingGatewayConfig{} }
+func (m *LoadBalancingGatewayConfig) String() string { return proto.CompactTextString(m) }
+func (*LoadBalancingGatewayConfig) ProtoMessage()    {}
+func (*LoadBalancingGatewayConfig) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d0a1188b3d395975, []int{18}
 }
-func (m *IlbGatewayConfig) XXX_Unmarshal(b []byte) error {
+func (m *LoadBalancingGatewayConfig) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *IlbGatewayConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *LoadBalancingGatewayConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_IlbGatewayConfig.Marshal(b, m, deterministic)
+		return xxx_messageInfo_LoadBalancingGatewayConfig.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalTo(b)
@@ -1998,55 +1913,47 @@ func (m *IlbGatewayConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, er
 		return b[:n], nil
 	}
 }
-func (m *IlbGatewayConfig) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_IlbGatewayConfig.Merge(m, src)
+func (m *LoadBalancingGatewayConfig) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LoadBalancingGatewayConfig.Merge(m, src)
 }
-func (m *IlbGatewayConfig) XXX_Size() int {
+func (m *LoadBalancingGatewayConfig) XXX_Size() int {
 	return m.Size()
 }
-func (m *IlbGatewayConfig) XXX_DiscardUnknown() {
-	xxx_messageInfo_IlbGatewayConfig.DiscardUnknown(m)
+func (m *LoadBalancingGatewayConfig) XXX_DiscardUnknown() {
+	xxx_messageInfo_LoadBalancingGatewayConfig.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_IlbGatewayConfig proto.InternalMessageInfo
+var xxx_messageInfo_LoadBalancingGatewayConfig proto.InternalMessageInfo
 
-func (m *IlbGatewayConfig) GetGateway() *GatewayConfig {
+func (m *LoadBalancingGatewayConfig) GetGateway() *GatewayConfig {
 	if m != nil {
 		return m.Gateway
 	}
 	return nil
 }
 
-func (m *IlbGatewayConfig) GetLoadBalancerIP() string {
-	if m != nil && m.LoadBalancerIP != nil {
-		return *m.LoadBalancerIP
+func (m *LoadBalancingGatewayConfig) GetLoadBalancerIp() string {
+	if m != nil {
+		return m.LoadBalancerIp
 	}
 	return ""
 }
 
+// Common config for all gateway types.
 type GatewayConfig struct {
+	Common *CommonComponentConfig `protobuf:"bytes,1,opt,name=common,proto3" json:"common,omitempty"`
 	// NodePort, ClusterIP or LoadBalancer.
-	Type *string `protobuf:"bytes,10,opt,name=type" json:"type,omitempty"`
-	// Additional environment variables for the container.
-	Env map[string]string `protobuf:"bytes,60,rep,name=env" json:"env,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	// k8s scaling settings.
-	HpaSpec *v1.HorizontalPodAutoscalerSpec `protobuf:"bytes,86,opt,name=hpa_spec,json=hpaSpec" json:"hpa_spec,omitempty"`
-	// Annotations and selectors.
-	PodAnnotations     map[string]string `protobuf:"bytes,90,rep,name=pod_annotations,json=podAnnotations" json:"pod_annotations,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	ServiceAnnotations map[string]string `protobuf:"bytes,91,rep,name=service_annotations,json=serviceAnnotations" json:"service_annotations,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	NodeSelector       map[string]string `protobuf:"bytes,92,rep,name=node_selector,json=nodeSelector" json:"node_selector,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	// Kustomize style overrides for k8s resources in rendered manifests.
-	ResourceOverride     []*ResourceOverride `protobuf:"bytes,100,rep,name=resource_override,json=resourceOverride" json:"resource_override,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}            `json:"-"`
-	XXX_unrecognized     []byte              `json:"-"`
-	XXX_sizecache        int32               `json:"-"`
+	Type                 string   `protobuf:"bytes,10,opt,name=type,proto3" json:"type,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
 func (m *GatewayConfig) Reset()         { *m = GatewayConfig{} }
 func (m *GatewayConfig) String() string { return proto.CompactTextString(m) }
 func (*GatewayConfig) ProtoMessage()    {}
 func (*GatewayConfig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{13}
+	return fileDescriptor_d0a1188b3d395975, []int{19}
 }
 func (m *GatewayConfig) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -2075,106 +1982,16 @@ func (m *GatewayConfig) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_GatewayConfig proto.InternalMessageInfo
 
+func (m *GatewayConfig) GetCommon() *CommonComponentConfig {
+	if m != nil {
+		return m.Common
+	}
+	return nil
+}
+
 func (m *GatewayConfig) GetType() string {
-	if m != nil && m.Type != nil {
-		return *m.Type
-	}
-	return ""
-}
-
-func (m *GatewayConfig) GetEnv() map[string]string {
 	if m != nil {
-		return m.Env
-	}
-	return nil
-}
-
-func (m *GatewayConfig) GetHpaSpec() *v1.HorizontalPodAutoscalerSpec {
-	if m != nil {
-		return m.HpaSpec
-	}
-	return nil
-}
-
-func (m *GatewayConfig) GetPodAnnotations() map[string]string {
-	if m != nil {
-		return m.PodAnnotations
-	}
-	return nil
-}
-
-func (m *GatewayConfig) GetServiceAnnotations() map[string]string {
-	if m != nil {
-		return m.ServiceAnnotations
-	}
-	return nil
-}
-
-func (m *GatewayConfig) GetNodeSelector() map[string]string {
-	if m != nil {
-		return m.NodeSelector
-	}
-	return nil
-}
-
-func (m *GatewayConfig) GetResourceOverride() []*ResourceOverride {
-	if m != nil {
-		return m.ResourceOverride
-	}
-	return nil
-}
-
-type GatewayConfig_Labels struct {
-	App                  *string  `protobuf:"bytes,1,opt,name=app" json:"app,omitempty"`
-	Istio                *string  `protobuf:"bytes,2,opt,name=istio" json:"istio,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *GatewayConfig_Labels) Reset()         { *m = GatewayConfig_Labels{} }
-func (m *GatewayConfig_Labels) String() string { return proto.CompactTextString(m) }
-func (*GatewayConfig_Labels) ProtoMessage()    {}
-func (*GatewayConfig_Labels) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{13, 0}
-}
-func (m *GatewayConfig_Labels) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *GatewayConfig_Labels) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_GatewayConfig_Labels.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *GatewayConfig_Labels) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_GatewayConfig_Labels.Merge(m, src)
-}
-func (m *GatewayConfig_Labels) XXX_Size() int {
-	return m.Size()
-}
-func (m *GatewayConfig_Labels) XXX_DiscardUnknown() {
-	xxx_messageInfo_GatewayConfig_Labels.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_GatewayConfig_Labels proto.InternalMessageInfo
-
-func (m *GatewayConfig_Labels) GetApp() string {
-	if m != nil && m.App != nil {
-		return *m.App
-	}
-	return ""
-}
-
-func (m *GatewayConfig_Labels) GetIstio() string {
-	if m != nil && m.Istio != nil {
-		return *m.Istio
+		return m.Type
 	}
 	return ""
 }
@@ -2182,21 +1999,21 @@ func (m *GatewayConfig_Labels) GetIstio() string {
 // OperatorConfig defines a config used to install an external operator.
 type OperatorConfig struct {
 	// manifest_path is the URL for the operator install manifest.
-	ManifestPath *string `protobuf:"bytes,1,opt,name=manifest_path,json=manifestPath" json:"manifest_path,omitempty"`
+	ManifestPath string `protobuf:"bytes,1,opt,name=manifest_path,json=manifestPath,proto3" json:"manifest_path,omitempty"`
 	// namespace is the namespace the operator manifest and CR are installed into.
-	Namespace *string `protobuf:"bytes,2,opt,name=namespace" json:"namespace,omitempty"`
+	Namespace string `protobuf:"bytes,2,opt,name=namespace,proto3" json:"namespace,omitempty"`
 	// spec is the initial CR for the operator.
-	Spec                 *ResourceOverride `protobuf:"bytes,100,opt,name=spec" json:"spec,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}          `json:"-"`
-	XXX_unrecognized     []byte            `json:"-"`
-	XXX_sizecache        int32             `json:"-"`
+	Spec                 *K8SObjectOverride `protobuf:"bytes,100,opt,name=spec,proto3" json:"spec,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}           `json:"-"`
+	XXX_unrecognized     []byte             `json:"-"`
+	XXX_sizecache        int32              `json:"-"`
 }
 
 func (m *OperatorConfig) Reset()         { *m = OperatorConfig{} }
 func (m *OperatorConfig) String() string { return proto.CompactTextString(m) }
 func (*OperatorConfig) ProtoMessage()    {}
 func (*OperatorConfig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{14}
+	return fileDescriptor_d0a1188b3d395975, []int{20}
 }
 func (m *OperatorConfig) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -2226,20 +2043,20 @@ func (m *OperatorConfig) XXX_DiscardUnknown() {
 var xxx_messageInfo_OperatorConfig proto.InternalMessageInfo
 
 func (m *OperatorConfig) GetManifestPath() string {
-	if m != nil && m.ManifestPath != nil {
-		return *m.ManifestPath
+	if m != nil {
+		return m.ManifestPath
 	}
 	return ""
 }
 
 func (m *OperatorConfig) GetNamespace() string {
-	if m != nil && m.Namespace != nil {
-		return *m.Namespace
+	if m != nil {
+		return m.Namespace
 	}
 	return ""
 }
 
-func (m *OperatorConfig) GetSpec() *ResourceOverride {
+func (m *OperatorConfig) GetSpec() *K8SObjectOverride {
 	if m != nil {
 		return m.Spec
 	}
@@ -2247,8 +2064,8 @@ func (m *OperatorConfig) GetSpec() *ResourceOverride {
 }
 
 type IstioInstaller struct {
-	Spec                 *InstallerSpec   `protobuf:"bytes,3,opt,name=spec" json:"spec,omitempty"`
-	Status               *InstallerStatus `protobuf:"bytes,4,opt,name=status" json:"status,omitempty"`
+	Spec                 *InstallerSpec   `protobuf:"bytes,3,opt,name=spec,proto3" json:"spec,omitempty"`
+	Status               *InstallerStatus `protobuf:"bytes,4,opt,name=status,proto3" json:"status,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}         `json:"-"`
 	XXX_unrecognized     []byte           `json:"-"`
 	XXX_sizecache        int32            `json:"-"`
@@ -2258,7 +2075,7 @@ func (m *IstioInstaller) Reset()         { *m = IstioInstaller{} }
 func (m *IstioInstaller) String() string { return proto.CompactTextString(m) }
 func (*IstioInstaller) ProtoMessage()    {}
 func (*IstioInstaller) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{15}
+	return fileDescriptor_d0a1188b3d395975, []int{21}
 }
 func (m *IstioInstaller) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -2301,28 +2118,27 @@ func (m *IstioInstaller) GetStatus() *InstallerStatus {
 	return nil
 }
 
-// ResourceRequirements describes the compute resource requirements.
-// Mirrors k8s.io.api.core.v1.ResourceRequirements for Unmarshaling.
-type ResourceRequirements struct {
-	Limits               map[string]string `protobuf:"bytes,1,rep,name=limits" json:"limits,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	Requests             map[string]string `protobuf:"bytes,2,rep,name=requests" json:"requests,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+// Mirrors k8s.io.api.core.v1.ResourceRequirements for unmarshaling.
+type Resources struct {
+	Limits               map[string]string `protobuf:"bytes,1,rep,name=limits,proto3" json:"limits,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	Requests             map[string]string `protobuf:"bytes,2,rep,name=requests,proto3" json:"requests,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 	XXX_NoUnkeyedLiteral struct{}          `json:"-"`
 	XXX_unrecognized     []byte            `json:"-"`
 	XXX_sizecache        int32             `json:"-"`
 }
 
-func (m *ResourceRequirements) Reset()         { *m = ResourceRequirements{} }
-func (m *ResourceRequirements) String() string { return proto.CompactTextString(m) }
-func (*ResourceRequirements) ProtoMessage()    {}
-func (*ResourceRequirements) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{16}
+func (m *Resources) Reset()         { *m = Resources{} }
+func (m *Resources) String() string { return proto.CompactTextString(m) }
+func (*Resources) ProtoMessage()    {}
+func (*Resources) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d0a1188b3d395975, []int{22}
 }
-func (m *ResourceRequirements) XXX_Unmarshal(b []byte) error {
+func (m *Resources) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *ResourceRequirements) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *Resources) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_ResourceRequirements.Marshal(b, m, deterministic)
+		return xxx_messageInfo_Resources.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalTo(b)
@@ -2332,38 +2148,37 @@ func (m *ResourceRequirements) XXX_Marshal(b []byte, deterministic bool) ([]byte
 		return b[:n], nil
 	}
 }
-func (m *ResourceRequirements) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ResourceRequirements.Merge(m, src)
+func (m *Resources) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Resources.Merge(m, src)
 }
-func (m *ResourceRequirements) XXX_Size() int {
+func (m *Resources) XXX_Size() int {
 	return m.Size()
 }
-func (m *ResourceRequirements) XXX_DiscardUnknown() {
-	xxx_messageInfo_ResourceRequirements.DiscardUnknown(m)
+func (m *Resources) XXX_DiscardUnknown() {
+	xxx_messageInfo_Resources.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_ResourceRequirements proto.InternalMessageInfo
+var xxx_messageInfo_Resources proto.InternalMessageInfo
 
-func (m *ResourceRequirements) GetLimits() map[string]string {
+func (m *Resources) GetLimits() map[string]string {
 	if m != nil {
 		return m.Limits
 	}
 	return nil
 }
 
-func (m *ResourceRequirements) GetRequests() map[string]string {
+func (m *Resources) GetRequests() map[string]string {
 	if m != nil {
 		return m.Requests
 	}
 	return nil
 }
 
-// PodDisruptionBudgetSpec is a description of a PodDisruptionBudget.
-// Mirrors k8s.io.api.policy.v1beta1.PodDisruptionBudget for Unmarshaling.
+// Mirrors k8s.io.api.policy.v1beta1.PodDisruptionBudget for unmarshaling.
 type PodDisruptionBudgetSpec struct {
-	MinAvailable         *uint32            `protobuf:"varint,1,opt,name=min_available,json=minAvailable" json:"min_available,omitempty"`
-	Selector             *v12.LabelSelector `protobuf:"bytes,2,opt,name=selector" json:"selector,omitempty"`
-	MaxUnavailable       *uint32            `protobuf:"varint,3,opt,name=max_unavailable,json=maxUnavailable" json:"max_unavailable,omitempty"`
+	MinAvailable         uint32             `protobuf:"varint,1,opt,name=min_available,json=minAvailable,proto3" json:"min_available,omitempty"`
+	Selector             *v12.LabelSelector `protobuf:"bytes,2,opt,name=selector,proto3" json:"selector,omitempty"`
+	MaxUnavailable       uint32             `protobuf:"varint,3,opt,name=max_unavailable,json=maxUnavailable,proto3" json:"max_unavailable,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}           `json:"-"`
 	XXX_unrecognized     []byte             `json:"-"`
 	XXX_sizecache        int32              `json:"-"`
@@ -2373,7 +2188,7 @@ func (m *PodDisruptionBudgetSpec) Reset()         { *m = PodDisruptionBudgetSpec
 func (m *PodDisruptionBudgetSpec) String() string { return proto.CompactTextString(m) }
 func (*PodDisruptionBudgetSpec) ProtoMessage()    {}
 func (*PodDisruptionBudgetSpec) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{17}
+	return fileDescriptor_d0a1188b3d395975, []int{23}
 }
 func (m *PodDisruptionBudgetSpec) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -2403,8 +2218,8 @@ func (m *PodDisruptionBudgetSpec) XXX_DiscardUnknown() {
 var xxx_messageInfo_PodDisruptionBudgetSpec proto.InternalMessageInfo
 
 func (m *PodDisruptionBudgetSpec) GetMinAvailable() uint32 {
-	if m != nil && m.MinAvailable != nil {
-		return *m.MinAvailable
+	if m != nil {
+		return m.MinAvailable
 	}
 	return 0
 }
@@ -2417,38 +2232,37 @@ func (m *PodDisruptionBudgetSpec) GetSelector() *v12.LabelSelector {
 }
 
 func (m *PodDisruptionBudgetSpec) GetMaxUnavailable() uint32 {
-	if m != nil && m.MaxUnavailable != nil {
-		return *m.MaxUnavailable
+	if m != nil {
+		return m.MaxUnavailable
 	}
 	return 0
 }
 
-// ResourceOverride specifies a patch for an existing k8s resource.
-type ResourceOverride struct {
-	PatchType *ResourceOverride_PatchType `protobuf:"varint,1,opt,name=patch_type,json=patchType,enum=v1alpha1.ResourceOverride_PatchType" json:"patch_type,omitempty"`
-	Op        *ResourceOverride_Op        `protobuf:"varint,2,opt,name=op,enum=v1alpha1.ResourceOverride_Op" json:"op,omitempty"`
+// Patch for an existing k8s resource.
+type K8SObjectOverride struct {
+	PatchType K8SObjectOverride_PatchType `protobuf:"varint,1,opt,name=patch_type,json=patchType,proto3,enum=v1alpha1.K8SObjectOverride_PatchType" json:"patch_type,omitempty"`
+	Op        K8SObjectOverride_Op        `protobuf:"varint,2,opt,name=op,proto3,enum=v1alpha1.K8SObjectOverride_Op" json:"op,omitempty"`
 	// From k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta.TypeMeta
-	Kind                 *string     `protobuf:"bytes,3,opt,name=kind" json:"kind,omitempty"`
-	ApiVersion           *string     `protobuf:"bytes,4,opt,name=api_version,json=apiVersion" json:"api_version,omitempty"`
-	Metadata             *ObjectMeta `protobuf:"bytes,5,opt,name=metadata" json:"metadata,omitempty"`
-    Data map[string]interface{}      `protobuf:"bytes,6,opt,name=data" json:"data,omitempty"`
+	Kind                 string      `protobuf:"bytes,3,opt,name=kind,proto3" json:"kind,omitempty"`
+	ApiVersion           string      `protobuf:"bytes,4,opt,name=api_version,json=apiVersion,proto3" json:"api_version,omitempty"`
+	Metadata             *ObjectMeta `protobuf:"bytes,5,opt,name=metadata,proto3" json:"metadata,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}    `json:"-"`
 	XXX_unrecognized     []byte      `json:"-"`
 	XXX_sizecache        int32       `json:"-"`
 }
 
-func (m *ResourceOverride) Reset()         { *m = ResourceOverride{} }
-func (m *ResourceOverride) String() string { return proto.CompactTextString(m) }
-func (*ResourceOverride) ProtoMessage()    {}
-func (*ResourceOverride) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{18}
+func (m *K8SObjectOverride) Reset()         { *m = K8SObjectOverride{} }
+func (m *K8SObjectOverride) String() string { return proto.CompactTextString(m) }
+func (*K8SObjectOverride) ProtoMessage()    {}
+func (*K8SObjectOverride) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d0a1188b3d395975, []int{24}
 }
-func (m *ResourceOverride) XXX_Unmarshal(b []byte) error {
+func (m *K8SObjectOverride) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *ResourceOverride) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *K8SObjectOverride) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_ResourceOverride.Marshal(b, m, deterministic)
+		return xxx_messageInfo_K8SObjectOverride.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalTo(b)
@@ -2458,47 +2272,47 @@ func (m *ResourceOverride) XXX_Marshal(b []byte, deterministic bool) ([]byte, er
 		return b[:n], nil
 	}
 }
-func (m *ResourceOverride) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ResourceOverride.Merge(m, src)
+func (m *K8SObjectOverride) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_K8SObjectOverride.Merge(m, src)
 }
-func (m *ResourceOverride) XXX_Size() int {
+func (m *K8SObjectOverride) XXX_Size() int {
 	return m.Size()
 }
-func (m *ResourceOverride) XXX_DiscardUnknown() {
-	xxx_messageInfo_ResourceOverride.DiscardUnknown(m)
+func (m *K8SObjectOverride) XXX_DiscardUnknown() {
+	xxx_messageInfo_K8SObjectOverride.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_ResourceOverride proto.InternalMessageInfo
+var xxx_messageInfo_K8SObjectOverride proto.InternalMessageInfo
 
-func (m *ResourceOverride) GetPatchType() ResourceOverride_PatchType {
-	if m != nil && m.PatchType != nil {
-		return *m.PatchType
+func (m *K8SObjectOverride) GetPatchType() K8SObjectOverride_PatchType {
+	if m != nil {
+		return m.PatchType
 	}
-	return ResourceOverride_STRATEGIC
+	return K8SObjectOverride_STRATEGIC
 }
 
-func (m *ResourceOverride) GetOp() ResourceOverride_Op {
-	if m != nil && m.Op != nil {
-		return *m.Op
+func (m *K8SObjectOverride) GetOp() K8SObjectOverride_Op {
+	if m != nil {
+		return m.Op
 	}
-	return ResourceOverride_ADD
+	return K8SObjectOverride_ADD
 }
 
-func (m *ResourceOverride) GetKind() string {
-	if m != nil && m.Kind != nil {
-		return *m.Kind
-	}
-	return ""
-}
-
-func (m *ResourceOverride) GetApiVersion() string {
-	if m != nil && m.ApiVersion != nil {
-		return *m.ApiVersion
+func (m *K8SObjectOverride) GetKind() string {
+	if m != nil {
+		return m.Kind
 	}
 	return ""
 }
 
-func (m *ResourceOverride) GetMetadata() *ObjectMeta {
+func (m *K8SObjectOverride) GetApiVersion() string {
+	if m != nil {
+		return m.ApiVersion
+	}
+	return ""
+}
+
+func (m *K8SObjectOverride) GetMetadata() *ObjectMeta {
 	if m != nil {
 		return m.Metadata
 	}
@@ -2507,8 +2321,8 @@ func (m *ResourceOverride) GetMetadata() *ObjectMeta {
 
 type ObjectMeta struct {
 	// From k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta
-	Name                 *string  `protobuf:"bytes,5,opt,name=name" json:"name,omitempty"`
-	Namespace            *string  `protobuf:"bytes,6,opt,name=namespace" json:"namespace,omitempty"`
+	Name                 string   `protobuf:"bytes,5,opt,name=name,proto3" json:"name,omitempty"`
+	Namespace            string   `protobuf:"bytes,6,opt,name=namespace,proto3" json:"namespace,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -2518,7 +2332,7 @@ func (m *ObjectMeta) Reset()         { *m = ObjectMeta{} }
 func (m *ObjectMeta) String() string { return proto.CompactTextString(m) }
 func (*ObjectMeta) ProtoMessage()    {}
 func (*ObjectMeta) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{19}
+	return fileDescriptor_d0a1188b3d395975, []int{25}
 }
 func (m *ObjectMeta) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -2548,109 +2362,40 @@ func (m *ObjectMeta) XXX_DiscardUnknown() {
 var xxx_messageInfo_ObjectMeta proto.InternalMessageInfo
 
 func (m *ObjectMeta) GetName() string {
-	if m != nil && m.Name != nil {
-		return *m.Name
+	if m != nil {
+		return m.Name
 	}
 	return ""
 }
 
 func (m *ObjectMeta) GetNamespace() string {
-	if m != nil && m.Namespace != nil {
-		return *m.Namespace
+	if m != nil {
+		return m.Namespace
 	}
 	return ""
 }
 
-// FIXME: this should be moved out
-type SdsConfig struct {
-	Enabled              *bool    `protobuf:"varint,1,opt,name=enabled" json:"enabled,omitempty"`
-	UdsPath              *string  `protobuf:"bytes,2,opt,name=uds_path,json=udsPath" json:"uds_path,omitempty"`
-	UseTrustworthyJwt    *bool    `protobuf:"varint,3,opt,name=use_trustworthy_jwt,json=useTrustworthyJwt" json:"use_trustworthy_jwt,omitempty"`
-	UseNormalJwt         *bool    `protobuf:"varint,4,opt,name=use_normal_jwt,json=useNormalJwt" json:"use_normal_jwt,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *SdsConfig) Reset()         { *m = SdsConfig{} }
-func (m *SdsConfig) String() string { return proto.CompactTextString(m) }
-func (*SdsConfig) ProtoMessage()    {}
-func (*SdsConfig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{20}
-}
-func (m *SdsConfig) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *SdsConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_SdsConfig.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *SdsConfig) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_SdsConfig.Merge(m, src)
-}
-func (m *SdsConfig) XXX_Size() int {
-	return m.Size()
-}
-func (m *SdsConfig) XXX_DiscardUnknown() {
-	xxx_messageInfo_SdsConfig.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_SdsConfig proto.InternalMessageInfo
-
-func (m *SdsConfig) GetEnabled() bool {
-	if m != nil && m.Enabled != nil {
-		return *m.Enabled
-	}
-	return false
-}
-
-func (m *SdsConfig) GetUdsPath() string {
-	if m != nil && m.UdsPath != nil {
-		return *m.UdsPath
-	}
-	return ""
-}
-
-func (m *SdsConfig) GetUseTrustworthyJwt() bool {
-	if m != nil && m.UseTrustworthyJwt != nil {
-		return *m.UseTrustworthyJwt
-	}
-	return false
-}
-
-func (m *SdsConfig) GetUseNormalJwt() bool {
-	if m != nil && m.UseNormalJwt != nil {
-		return *m.UseNormalJwt
-	}
-	return false
-}
-
-// TestKube are for testing that k8s resources unmarshal correctly.
+// TESTING ONLY
 type TestKube struct {
-	Resources           *ResourceRequirements           `protobuf:"bytes,80,opt,name=resources" json:"resources,omitempty"`
-	ReadinessProbe      *v11.Probe                      `protobuf:"bytes,81,opt,name=readiness_probe,json=readinessProbe" json:"readiness_probe,omitempty"`
-	HpaSpec             *v1.HorizontalPodAutoscalerSpec `protobuf:"bytes,51,opt,name=hpa_spec,json=hpaSpec" json:"hpa_spec,omitempty"`
-	PodDisruptionBudget *PodDisruptionBudgetSpec        `protobuf:"bytes,52,opt,name=pod_disruption_budget,json=podDisruptionBudget" json:"pod_disruption_budget,omitempty"`
+	Env                 map[string]string                `protobuf:"bytes,60,rep,name=env,proto3" json:"env,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	Resources           *Resources                       `protobuf:"bytes,80,opt,name=resources,proto3" json:"resources,omitempty"`
+	ReadinessProbe      *v1.Probe                        `protobuf:"bytes,81,opt,name=readiness_probe,json=readinessProbe,proto3" json:"readiness_probe,omitempty"`
+	HpaSpec             *v11.HorizontalPodAutoscalerSpec `protobuf:"bytes,86,opt,name=hpa_spec,json=hpaSpec,proto3" json:"hpa_spec,omitempty"`
+	PodDisruptionBudget *PodDisruptionBudgetSpec         `protobuf:"bytes,87,opt,name=pod_disruption_budget,json=podDisruptionBudget,proto3" json:"pod_disruption_budget,omitempty"`
+	PodAnnotations      map[string]string                `protobuf:"bytes,90,rep,name=pod_annotations,json=podAnnotations,proto3" json:"pod_annotations,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	NodeSelector        map[string]string                `protobuf:"bytes,92,rep,name=node_selector,json=nodeSelector,proto3" json:"node_selector,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 	// Kustomize style overrides for k8s resources in rendered manifests.
-	ResourceOverride     []*ResourceOverride `protobuf:"bytes,100,rep,name=resource_override,json=resourceOverride" json:"resource_override,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}            `json:"-"`
-	XXX_unrecognized     []byte              `json:"-"`
-	XXX_sizecache        int32               `json:"-"`
+	K8SObjectOverride    []*K8SObjectOverride `protobuf:"bytes,100,rep,name=k8s_object_override,json=k8sObjectOverride,proto3" json:"k8s_object_override,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
+	XXX_unrecognized     []byte               `json:"-"`
+	XXX_sizecache        int32                `json:"-"`
 }
 
 func (m *TestKube) Reset()         { *m = TestKube{} }
 func (m *TestKube) String() string { return proto.CompactTextString(m) }
 func (*TestKube) ProtoMessage()    {}
 func (*TestKube) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{21}
+	return fileDescriptor_d0a1188b3d395975, []int{26}
 }
 func (m *TestKube) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -2679,21 +2424,28 @@ func (m *TestKube) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_TestKube proto.InternalMessageInfo
 
-func (m *TestKube) GetResources() *ResourceRequirements {
+func (m *TestKube) GetEnv() map[string]string {
+	if m != nil {
+		return m.Env
+	}
+	return nil
+}
+
+func (m *TestKube) GetResources() *Resources {
 	if m != nil {
 		return m.Resources
 	}
 	return nil
 }
 
-func (m *TestKube) GetReadinessProbe() *v11.Probe {
+func (m *TestKube) GetReadinessProbe() *v1.Probe {
 	if m != nil {
 		return m.ReadinessProbe
 	}
 	return nil
 }
 
-func (m *TestKube) GetHpaSpec() *v1.HorizontalPodAutoscalerSpec {
+func (m *TestKube) GetHpaSpec() *v11.HorizontalPodAutoscalerSpec {
 	if m != nil {
 		return m.HpaSpec
 	}
@@ -2707,250 +2459,261 @@ func (m *TestKube) GetPodDisruptionBudget() *PodDisruptionBudgetSpec {
 	return nil
 }
 
-func (m *TestKube) GetResourceOverride() []*ResourceOverride {
+func (m *TestKube) GetPodAnnotations() map[string]string {
 	if m != nil {
-		return m.ResourceOverride
+		return m.PodAnnotations
+	}
+	return nil
+}
+
+func (m *TestKube) GetNodeSelector() map[string]string {
+	if m != nil {
+		return m.NodeSelector
+	}
+	return nil
+}
+
+func (m *TestKube) GetK8SObjectOverride() []*K8SObjectOverride {
+	if m != nil {
+		return m.K8SObjectOverride
 	}
 	return nil
 }
 
 func init() {
-	proto.RegisterEnum("v1alpha1.ProxyConfig_InterceptionMode", ProxyConfig_InterceptionMode_name, ProxyConfig_InterceptionMode_value)
-	proto.RegisterEnum("v1alpha1.TelemetryConfig_LoadSheddingMode", TelemetryConfig_LoadSheddingMode_name, TelemetryConfig_LoadSheddingMode_value)
-	proto.RegisterEnum("v1alpha1.ResourceOverride_PatchType", ResourceOverride_PatchType_name, ResourceOverride_PatchType_value)
-	proto.RegisterEnum("v1alpha1.ResourceOverride_Op", ResourceOverride_Op_name, ResourceOverride_Op_value)
+	proto.RegisterEnum("v1alpha1.InstallerStatus_Status", InstallerStatus_Status_name, InstallerStatus_Status_value)
+	proto.RegisterEnum("v1alpha1.PolicyTelemetryConfig_OutboundPolicy", PolicyTelemetryConfig_OutboundPolicy_name, PolicyTelemetryConfig_OutboundPolicy_value)
+	proto.RegisterEnum("v1alpha1.ProxyComponentConfig_InterceptionMode", ProxyComponentConfig_InterceptionMode_name, ProxyComponentConfig_InterceptionMode_value)
+	proto.RegisterEnum("v1alpha1.CommonComponentConfig_LogLevel", CommonComponentConfig_LogLevel_name, CommonComponentConfig_LogLevel_value)
+	proto.RegisterEnum("v1alpha1.IngressGatewayConfig_IngressType", IngressGatewayConfig_IngressType_name, IngressGatewayConfig_IngressType_value)
+	proto.RegisterEnum("v1alpha1.IngressGatewayConfig_ExternalTrafficPolicy", IngressGatewayConfig_ExternalTrafficPolicy_name, IngressGatewayConfig_ExternalTrafficPolicy_value)
+	proto.RegisterEnum("v1alpha1.K8SObjectOverride_PatchType", K8SObjectOverride_PatchType_name, K8SObjectOverride_PatchType_value)
+	proto.RegisterEnum("v1alpha1.K8SObjectOverride_Op", K8SObjectOverride_Op_name, K8SObjectOverride_Op_value)
 	proto.RegisterType((*InstallerSpec)(nil), "v1alpha1.InstallerSpec")
 	proto.RegisterType((*InstallerStatus)(nil), "v1alpha1.InstallerStatus")
-	proto.RegisterType((*RemoteClusterConfig)(nil), "v1alpha1.RemoteClusterConfig")
+	proto.RegisterType((*InstallerStatus_VersionStatus)(nil), "v1alpha1.InstallerStatus.VersionStatus")
 	proto.RegisterType((*TrafficManagementConfig)(nil), "v1alpha1.TrafficManagementConfig")
-	proto.RegisterType((*PilotConfig)(nil), "v1alpha1.PilotConfig")
-	proto.RegisterMapType((map[string]string)(nil), "v1alpha1.PilotConfig.AdditionalArgsEntry")
-	proto.RegisterMapType((map[string]string)(nil), "v1alpha1.PilotConfig.EnvEntry")
-	proto.RegisterMapType((map[string]string)(nil), "v1alpha1.PilotConfig.NodeSelectorEntry")
-	proto.RegisterType((*ProxyConfig)(nil), "v1alpha1.ProxyConfig")
-	proto.RegisterMapType((map[string]string)(nil), "v1alpha1.ProxyConfig.AdditionalArgsEntry")
-	proto.RegisterMapType((map[string]string)(nil), "v1alpha1.ProxyConfig.EnvEntry")
-	proto.RegisterType((*ProxyConfig_LightstepConfig)(nil), "v1alpha1.ProxyConfig.LightstepConfig")
-	proto.RegisterType((*ProxyConfig_ZipkinConfig)(nil), "v1alpha1.ProxyConfig.ZipkinConfig")
-	proto.RegisterType((*PolicyConfig)(nil), "v1alpha1.PolicyConfig")
-	proto.RegisterMapType((map[string]string)(nil), "v1alpha1.PolicyConfig.EnvEntry")
-	proto.RegisterType((*TelemetryConfig)(nil), "v1alpha1.TelemetryConfig")
-	proto.RegisterMapType((map[string]string)(nil), "v1alpha1.TelemetryConfig.NodeSelectorEntry")
-	proto.RegisterMapType((map[string]string)(nil), "v1alpha1.TelemetryConfig.PodAnnotationsEntry")
-	proto.RegisterType((*TelemetryConfig_Adapters)(nil), "v1alpha1.TelemetryConfig.Adapters")
-	proto.RegisterType((*TelemetryConfig_Adapters_KubernetesEnv)(nil), "v1alpha1.TelemetryConfig.Adapters.KubernetesEnv")
-	proto.RegisterType((*TelemetryConfig_Adapters_Stdio)(nil), "v1alpha1.TelemetryConfig.Adapters.Stdio")
-	proto.RegisterType((*TelemetryConfig_Adapters_Prometheus)(nil), "v1alpha1.TelemetryConfig.Adapters.Prometheus")
+	proto.RegisterType((*PolicyTelemetryConfig)(nil), "v1alpha1.PolicyTelemetryConfig")
 	proto.RegisterType((*SecurityConfig)(nil), "v1alpha1.SecurityConfig")
-	proto.RegisterMapType((map[string]string)(nil), "v1alpha1.SecurityConfig.NodeSelectorEntry")
-	proto.RegisterType((*SecurityConfig_CertManager)(nil), "v1alpha1.SecurityConfig.CertManager")
+	proto.RegisterType((*PilotComponentConfig)(nil), "v1alpha1.PilotComponentConfig")
+	proto.RegisterType((*ProxyComponentConfig)(nil), "v1alpha1.ProxyComponentConfig")
+	proto.RegisterType((*SidecarInjectorComponentConfig)(nil), "v1alpha1.SidecarInjectorComponentConfig")
+	proto.RegisterType((*PolicyComponentConfig)(nil), "v1alpha1.PolicyComponentConfig")
+	proto.RegisterType((*TelemetryComponentConfig)(nil), "v1alpha1.TelemetryComponentConfig")
+	proto.RegisterType((*CitadelComponentConfig)(nil), "v1alpha1.CitadelComponentConfig")
+	proto.RegisterType((*CertManagerComponentConfig)(nil), "v1alpha1.CertManagerComponentConfig")
+	proto.RegisterType((*NodeAgentComponentConfig)(nil), "v1alpha1.NodeAgentComponentConfig")
 	proto.RegisterType((*ConfigManagementConfig)(nil), "v1alpha1.ConfigManagementConfig")
+	proto.RegisterType((*CommonComponentConfig)(nil), "v1alpha1.CommonComponentConfig")
+	proto.RegisterMapType((map[string]string)(nil), "v1alpha1.CommonComponentConfig.ArgsEntry")
+	proto.RegisterMapType((map[string]string)(nil), "v1alpha1.CommonComponentConfig.EnvEntry")
+	proto.RegisterType((*KubernetesResourcesConfig)(nil), "v1alpha1.KubernetesResourcesConfig")
+	proto.RegisterMapType((map[string]string)(nil), "v1alpha1.KubernetesResourcesConfig.NodeSelectorEntry")
+	proto.RegisterMapType((map[string]string)(nil), "v1alpha1.KubernetesResourcesConfig.PodAnnotationsEntry")
+	proto.RegisterType((*KubernetesResourcesConfig_NodeAffinity)(nil), "v1alpha1.KubernetesResourcesConfig.NodeAffinity")
 	proto.RegisterType((*IngressGatewayConfig)(nil), "v1alpha1.IngressGatewayConfig")
-	proto.RegisterType((*IngressGatewayConfig_Sds)(nil), "v1alpha1.IngressGatewayConfig.Sds")
 	proto.RegisterType((*EgressGatewayConfig)(nil), "v1alpha1.EgressGatewayConfig")
-	proto.RegisterType((*IlbGatewayConfig)(nil), "v1alpha1.IlbGatewayConfig")
+	proto.RegisterType((*LoadBalancingGatewayConfig)(nil), "v1alpha1.LoadBalancingGatewayConfig")
 	proto.RegisterType((*GatewayConfig)(nil), "v1alpha1.GatewayConfig")
-	proto.RegisterMapType((map[string]string)(nil), "v1alpha1.GatewayConfig.EnvEntry")
-	proto.RegisterMapType((map[string]string)(nil), "v1alpha1.GatewayConfig.NodeSelectorEntry")
-	proto.RegisterMapType((map[string]string)(nil), "v1alpha1.GatewayConfig.PodAnnotationsEntry")
-	proto.RegisterMapType((map[string]string)(nil), "v1alpha1.GatewayConfig.ServiceAnnotationsEntry")
-	proto.RegisterType((*GatewayConfig_Labels)(nil), "v1alpha1.GatewayConfig.Labels")
 	proto.RegisterType((*OperatorConfig)(nil), "v1alpha1.OperatorConfig")
 	proto.RegisterType((*IstioInstaller)(nil), "v1alpha1.IstioInstaller")
-	proto.RegisterType((*ResourceRequirements)(nil), "v1alpha1.ResourceRequirements")
-	proto.RegisterMapType((map[string]string)(nil), "v1alpha1.ResourceRequirements.LimitsEntry")
-	proto.RegisterMapType((map[string]string)(nil), "v1alpha1.ResourceRequirements.RequestsEntry")
+	proto.RegisterType((*Resources)(nil), "v1alpha1.Resources")
+	proto.RegisterMapType((map[string]string)(nil), "v1alpha1.Resources.LimitsEntry")
+	proto.RegisterMapType((map[string]string)(nil), "v1alpha1.Resources.RequestsEntry")
 	proto.RegisterType((*PodDisruptionBudgetSpec)(nil), "v1alpha1.PodDisruptionBudgetSpec")
-	proto.RegisterType((*ResourceOverride)(nil), "v1alpha1.ResourceOverride")
+	proto.RegisterType((*K8SObjectOverride)(nil), "v1alpha1.k8sObjectOverride")
 	proto.RegisterType((*ObjectMeta)(nil), "v1alpha1.ObjectMeta")
-	proto.RegisterType((*SdsConfig)(nil), "v1alpha1.SdsConfig")
 	proto.RegisterType((*TestKube)(nil), "v1alpha1.TestKube")
+	proto.RegisterMapType((map[string]string)(nil), "v1alpha1.TestKube.EnvEntry")
+	proto.RegisterMapType((map[string]string)(nil), "v1alpha1.TestKube.NodeSelectorEntry")
+	proto.RegisterMapType((map[string]string)(nil), "v1alpha1.TestKube.PodAnnotationsEntry")
 }
 
 func init() { proto.RegisterFile("istioinstaller_types.proto", fileDescriptor_d0a1188b3d395975) }
 
 var fileDescriptor_d0a1188b3d395975 = []byte{
-	// 2874 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xec, 0x5a, 0x4b, 0x73, 0x1b, 0xc7,
-	0xb5, 0x16, 0x48, 0x89, 0x02, 0x0e, 0x1e, 0x04, 0x9b, 0x22, 0x35, 0xe2, 0xf5, 0xa5, 0x68, 0x5c,
-	0xf9, 0x9a, 0xf2, 0x03, 0x14, 0x69, 0x5f, 0x5f, 0xd9, 0x71, 0x9c, 0xa2, 0x48, 0x84, 0x82, 0xc2,
-	0x07, 0x3c, 0x80, 0x1d, 0xdb, 0x49, 0x65, 0xd2, 0x9c, 0x69, 0x02, 0x2d, 0x0e, 0x66, 0xc6, 0xdd,
-	0x3d, 0x10, 0xe1, 0x6d, 0x16, 0xc9, 0x0f, 0x48, 0xa5, 0xb2, 0xc8, 0x3e, 0xdb, 0x54, 0x65, 0x93,
-	0xfc, 0x83, 0x2c, 0xb3, 0x48, 0x55, 0x2a, 0x8b, 0x54, 0xa5, 0x9c, 0x6d, 0x7e, 0x42, 0x52, 0x49,
-	0xf5, 0x63, 0x80, 0x01, 0x08, 0xc8, 0x94, 0x2c, 0x2b, 0x5e, 0x64, 0x87, 0xfe, 0xce, 0x77, 0xce,
-	0x74, 0xf7, 0x9c, 0x3e, 0xfd, 0x75, 0x0f, 0x60, 0x85, 0x72, 0x41, 0x43, 0x1a, 0x70, 0x81, 0x7d,
-	0x9f, 0x30, 0x47, 0xf4, 0x23, 0xc2, 0xab, 0x11, 0x0b, 0x45, 0x88, 0xb2, 0xbd, 0x4d, 0xec, 0x47,
-	0x1d, 0xbc, 0xb9, 0x52, 0x39, 0xbd, 0xcb, 0xab, 0x34, 0xdc, 0xc0, 0x11, 0xdd, 0x70, 0x43, 0x46,
-	0x36, 0x7a, 0x9b, 0x1b, 0x6d, 0x12, 0x10, 0x86, 0x05, 0xf1, 0x34, 0x7b, 0xe5, 0x76, 0x8a, 0x83,
-	0x63, 0x11, 0x72, 0x17, 0xfb, 0x34, 0x68, 0x4f, 0xa2, 0xbe, 0x39, 0xa4, 0x76, 0xb1, 0xdb, 0xa1,
-	0x01, 0x61, 0xfd, 0x8d, 0xe8, 0xb4, 0x2d, 0x01, 0xbe, 0xd1, 0x25, 0x02, 0x4f, 0xf0, 0xaa, 0xfc,
-	0x7a, 0x0e, 0x8a, 0xf5, 0xa4, 0xa3, 0xcd, 0x88, 0xb8, 0xe8, 0x0e, 0x5c, 0x33, 0x3d, 0x77, 0x22,
-	0xec, 0x9e, 0xe2, 0x36, 0x71, 0x22, 0x2c, 0x3a, 0x56, 0x66, 0x2d, 0xb3, 0x9e, 0xb3, 0x91, 0xb1,
-	0x35, 0xb4, 0xa9, 0x81, 0x45, 0x07, 0xbd, 0x0c, 0xf3, 0x6e, 0x18, 0x08, 0x16, 0xaa, 0xc1, 0x06,
-	0xb8, 0x4b, 0xac, 0x19, 0x45, 0x2e, 0x0d, 0xe1, 0x43, 0xdc, 0x25, 0xa8, 0x0c, 0xb3, 0x9d, 0xf8,
-	0xd8, 0x9a, 0x55, 0x46, 0xf9, 0x53, 0x22, 0x02, 0xb7, 0xad, 0xcb, 0x1a, 0x11, 0xb8, 0x8d, 0xee,
-	0x82, 0xe5, 0x91, 0x13, 0x1c, 0xfb, 0x42, 0x45, 0xe2, 0x11, 0x76, 0x89, 0x13, 0x31, 0x72, 0x42,
-	0xcf, 0xac, 0x2b, 0x8a, 0xb6, 0x6c, 0xec, 0x87, 0x89, 0xb9, 0xa1, 0xac, 0xe8, 0x7d, 0x58, 0x62,
-	0xa4, 0x1b, 0x0a, 0xe2, 0xb8, 0x7e, 0xcc, 0x05, 0x61, 0x8e, 0x1b, 0x06, 0x27, 0xb4, 0x6d, 0xc1,
-	0x5a, 0x66, 0x3d, 0xbf, 0xf5, 0xdf, 0xd5, 0x64, 0xe6, 0xab, 0xb6, 0xa2, 0xed, 0x68, 0xd6, 0x8e,
-	0x22, 0xd9, 0x8b, 0xec, 0x3c, 0x88, 0x1a, 0x80, 0x04, 0xc3, 0x27, 0x27, 0xd4, 0x75, 0xba, 0x38,
-	0xc0, 0x6d, 0xd2, 0x25, 0x81, 0xb0, 0xae, 0xa9, 0x78, 0x2f, 0x0e, 0xe3, 0xb5, 0x34, 0xe7, 0x60,
-	0x40, 0x31, 0x31, 0x17, 0xc4, 0xb8, 0x01, 0x55, 0x61, 0x2e, 0x0a, 0x7d, 0xea, 0xf6, 0xad, 0x25,
-	0x15, 0x65, 0x79, 0x18, 0xa5, 0xa1, 0x70, 0xe3, 0x6a, 0x58, 0xe8, 0xff, 0x21, 0x27, 0x88, 0x4f,
-	0xba, 0x44, 0xb0, 0xbe, 0xb5, 0xac, 0x5c, 0x6e, 0xa4, 0x1e, 0x9c, 0x98, 0x8c, 0xd7, 0x90, 0x8b,
-	0xde, 0x84, 0x2c, 0x27, 0x6e, 0xcc, 0xa8, 0xe8, 0x5b, 0xd7, 0x95, 0x9f, 0x35, 0xf4, 0x6b, 0x1a,
-	0x8b, 0x71, 0x1b, 0x30, 0xd1, 0x01, 0x2c, 0xe8, 0x49, 0x4b, 0x8f, 0xd7, 0x52, 0xee, 0x6b, 0x43,
-	0x77, 0xed, 0x76, 0x6e, 0xb8, 0x65, 0x77, 0x0c, 0x47, 0x7b, 0x30, 0x4f, 0x83, 0x36, 0x23, 0x9c,
-	0x3b, 0x6d, 0x2c, 0xc8, 0x23, 0xdc, 0xb7, 0x56, 0xd7, 0x66, 0xd7, 0xf3, 0x5b, 0xab, 0xc3, 0x60,
-	0x75, 0x4d, 0xd8, 0xd3, 0x76, 0x13, 0xaa, 0x44, 0x47, 0x50, 0xb4, 0x0b, 0x25, 0x32, 0x1a, 0xe7,
-	0xa6, 0x8a, 0x93, 0x7a, 0xa9, 0xb5, 0x09, 0x61, 0x8a, 0x64, 0x24, 0xca, 0x1e, 0x20, 0x72, 0x26,
-	0x08, 0x0b, 0xb0, 0xef, 0x84, 0x91, 0x5c, 0x07, 0x21, 0xe3, 0xd6, 0x96, 0x8a, 0x94, 0x9a, 0x9d,
-	0x23, 0x63, 0x4a, 0xde, 0x62, 0xe2, 0x93, 0xe0, 0xbc, 0x82, 0x61, 0x7e, 0xb8, 0x68, 0x04, 0x16,
-	0x31, 0x47, 0xff, 0x03, 0xc5, 0x88, 0x85, 0x67, 0x7d, 0xc7, 0xe4, 0xbc, 0x59, 0x2f, 0x05, 0x05,
-	0xee, 0x68, 0x0c, 0xdd, 0x86, 0x32, 0xa7, 0x1e, 0x71, 0x31, 0x73, 0x68, 0xf0, 0x90, 0xb8, 0x22,
-	0x64, 0x66, 0xa9, 0xcc, 0x1b, 0xbc, 0x6e, 0xe0, 0xca, 0x06, 0x2c, 0x4e, 0x48, 0x53, 0x64, 0xc1,
-	0x55, 0x12, 0xe0, 0x63, 0x9f, 0x78, 0xea, 0x01, 0x59, 0x3b, 0x69, 0x56, 0xfe, 0x96, 0x81, 0xeb,
-	0x53, 0x12, 0x71, 0xba, 0x17, 0x7a, 0x01, 0x72, 0x83, 0x65, 0x66, 0xba, 0x32, 0x04, 0xd0, 0x4b,
-	0x50, 0x92, 0x55, 0xc7, 0x74, 0x96, 0x86, 0x81, 0x5a, 0xbb, 0x59, 0xbb, 0x28, 0xd1, 0x7a, 0x02,
-	0xa2, 0xbb, 0x50, 0x88, 0xa8, 0x1f, 0x8a, 0x64, 0xc1, 0x5d, 0x56, 0x09, 0xb3, 0x94, 0x4a, 0x6d,
-	0x69, 0x35, 0xd3, 0x99, 0x8f, 0x86, 0x0d, 0xe5, 0x99, 0xcc, 0x9a, 0xf4, 0xbc, 0x72, 0xce, 0xd3,
-	0x4c, 0x9f, 0xf6, 0x1c, 0x36, 0x2a, 0x3f, 0xbd, 0x0a, 0xf9, 0x54, 0x58, 0x74, 0x0d, 0xae, 0x78,
-	0xe4, 0x38, 0x6e, 0x9b, 0x01, 0xea, 0x86, 0x1c, 0xb8, 0x99, 0x58, 0x55, 0x05, 0xb2, 0x76, 0xd2,
-	0x94, 0x43, 0x13, 0x4c, 0xd6, 0x16, 0x8e, 0xbb, 0x91, 0xac, 0xa9, 0x56, 0x7e, 0x2d, 0xb3, 0x3e,
-	0x63, 0x17, 0x15, 0xda, 0x34, 0x20, 0xba, 0x0f, 0x37, 0x4f, 0x09, 0x89, 0xb0, 0x4f, 0x7b, 0xe4,
-	0x00, 0x9f, 0x35, 0x09, 0xeb, 0xa9, 0x77, 0x11, 0xe8, 0xa1, 0x6f, 0xb7, 0x89, 0x55, 0x50, 0xb3,
-	0xf6, 0x45, 0x34, 0x64, 0xc3, 0x3c, 0xf6, 0x3c, 0x2a, 0x9b, 0xd8, 0x77, 0x30, 0x6b, 0x27, 0x99,
-	0x77, 0x7b, 0xe2, 0x3c, 0x55, 0xb7, 0x07, 0xe4, 0x6d, 0xd6, 0xe6, 0xb5, 0x40, 0xb0, 0xbe, 0x5d,
-	0xc2, 0x23, 0x20, 0xba, 0x03, 0xb3, 0x24, 0xe8, 0x59, 0xef, 0x8e, 0xaf, 0xa9, 0x74, 0x9c, 0x5a,
-	0xd0, 0xd3, 0xce, 0x92, 0x8a, 0xde, 0x85, 0x1c, 0x23, 0x3c, 0x8c, 0x99, 0x4b, 0xb8, 0xd5, 0x50,
-	0xb3, 0xbd, 0x9a, 0x2e, 0x8c, 0xda, 0x64, 0x93, 0x4f, 0x63, 0xca, 0x54, 0x06, 0x71, 0x7b, 0xe8,
-	0x20, 0x93, 0x9c, 0x91, 0xc8, 0xa7, 0x2e, 0x76, 0xdc, 0x30, 0x0e, 0x84, 0xf5, 0xc1, 0x5a, 0x66,
-	0xbd, 0x68, 0x17, 0x0c, 0xb8, 0x23, 0x31, 0xf4, 0x3e, 0x64, 0x3b, 0x11, 0x76, 0x78, 0x44, 0x5c,
-	0xeb, 0x43, 0xf5, 0x84, 0xb7, 0xaa, 0x7a, 0x6f, 0xaa, 0xe2, 0x88, 0x56, 0x53, 0xdb, 0x58, 0xb5,
-	0xb7, 0x59, 0xbd, 0x1f, 0x32, 0xfa, 0x59, 0x18, 0x08, 0xec, 0x37, 0x42, 0x6f, 0xdb, 0xd8, 0xf4,
-	0x56, 0x64, 0x5f, 0xed, 0x44, 0x58, 0xed, 0x49, 0x1f, 0xc0, 0x52, 0x14, 0x7a, 0x8e, 0x47, 0x39,
-	0x8b, 0x23, 0x39, 0x7e, 0xe7, 0x38, 0xf6, 0xda, 0x44, 0x58, 0xdf, 0x1d, 0x2f, 0xc5, 0x8d, 0xd0,
-	0xdb, 0x1d, 0xb0, 0xee, 0x29, 0x92, 0x0a, 0xb5, 0x18, 0x9d, 0x37, 0xa0, 0x7d, 0x28, 0x06, 0xa1,
-	0x47, 0x1c, 0x4e, 0x7c, 0xbd, 0x16, 0xbf, 0xaf, 0x26, 0xf2, 0xe5, 0xc9, 0x13, 0x79, 0x18, 0x7a,
-	0xa4, 0x69, 0x98, 0x7a, 0x46, 0x0b, 0x41, 0x0a, 0x42, 0x7b, 0xb0, 0x90, 0xcc, 0x94, 0x13, 0xf6,
-	0x08, 0x63, 0xd4, 0x23, 0x96, 0xa7, 0x22, 0xae, 0x9c, 0x9f, 0xe2, 0x23, 0xc3, 0xb0, 0xcb, 0x6c,
-	0x0c, 0x59, 0xd9, 0x86, 0xc5, 0x09, 0x2f, 0x5f, 0xee, 0x95, 0xa7, 0xa4, 0x6f, 0xea, 0x8a, 0xfc,
-	0x29, 0x73, 0xbe, 0x87, 0xfd, 0x38, 0x59, 0xb8, 0xba, 0xf1, 0xce, 0xcc, 0xdd, 0xcc, 0xca, 0x5b,
-	0x90, 0x4d, 0xde, 0xfb, 0x13, 0xf9, 0x7d, 0x0b, 0x16, 0xce, 0x0d, 0xf3, 0x49, 0x02, 0x54, 0xfe,
-	0x5c, 0x80, 0x7c, 0x6a, 0xcd, 0x4e, 0x59, 0x96, 0xab, 0x00, 0x11, 0xa3, 0x3d, 0xea, 0x93, 0x36,
-	0xf1, 0xcc, 0xca, 0x4c, 0x21, 0x52, 0x51, 0xe8, 0x02, 0xe5, 0x48, 0x61, 0xe4, 0xc5, 0xdd, 0x48,
-	0xad, 0xce, 0xac, 0x5d, 0xd2, 0xf0, 0x8e, 0x41, 0x51, 0x13, 0x16, 0x68, 0x20, 0x08, 0x73, 0x89,
-	0x4e, 0x8b, 0x6e, 0xe8, 0xe9, 0x05, 0x59, 0xda, 0xfa, 0xdf, 0x89, 0x45, 0xa4, 0x5a, 0x4f, 0xd1,
-	0x0f, 0x42, 0x39, 0xff, 0x74, 0x0c, 0x41, 0x37, 0x21, 0xcf, 0x55, 0x51, 0x77, 0xa2, 0x90, 0x09,
-	0xab, 0xa8, 0x72, 0x1c, 0x34, 0xd4, 0x08, 0x99, 0x40, 0xaf, 0xc0, 0x02, 0xed, 0x2a, 0x61, 0x14,
-	0x4b, 0x95, 0xa4, 0xf7, 0xf3, 0x92, 0xae, 0xe3, 0xca, 0xd0, 0x88, 0x7d, 0x5f, 0x6f, 0xe7, 0x68,
-	0x1d, 0xca, 0xba, 0xc2, 0xd1, 0x80, 0x0a, 0x47, 0x59, 0xad, 0x79, 0xad, 0x8e, 0x14, 0x5e, 0x0f,
-	0xa8, 0xa8, 0x4b, 0x54, 0x45, 0x0d, 0x5c, 0x3f, 0xf6, 0x88, 0x43, 0x23, 0x87, 0xe1, 0xa0, 0x4d,
-	0xb8, 0x55, 0x36, 0x51, 0xb5, 0xa1, 0x1e, 0xd9, 0x0a, 0x96, 0x5c, 0x72, 0x36, 0xce, 0x5d, 0xd0,
-	0x5c, 0x63, 0x18, 0x70, 0xb7, 0x60, 0x69, 0x10, 0x37, 0x38, 0x0e, 0xe3, 0xc0, 0x53, 0xe3, 0xe2,
-	0x16, 0x52, 0xfc, 0xc5, 0x24, 0xb6, 0xb6, 0xc9, 0x01, 0x2a, 0x9f, 0x41, 0xfc, 0x11, 0x9f, 0x45,
-	0xed, 0x93, 0x3c, 0x23, 0xed, 0xa3, 0x65, 0xa0, 0xac, 0x78, 0x8e, 0xa0, 0x5d, 0x12, 0xc6, 0x5a,
-	0x29, 0x69, 0x19, 0x28, 0xe1, 0x96, 0x46, 0x65, 0xe9, 0xf5, 0x18, 0xa6, 0x81, 0xe3, 0xc5, 0x0c,
-	0xab, 0x5d, 0x65, 0x49, 0xf1, 0x8a, 0x0a, 0xdd, 0x35, 0xa0, 0x54, 0x82, 0x11, 0x66, 0x24, 0x10,
-	0x0e, 0xef, 0xc4, 0xc2, 0x0b, 0x1f, 0xa5, 0x1c, 0x96, 0xb5, 0x12, 0xd4, 0xf6, 0xa6, 0x31, 0x0f,
-	0x3c, 0xd7, 0x20, 0xef, 0x86, 0x81, 0x1b, 0x33, 0x46, 0x02, 0x57, 0xcb, 0x9f, 0xa2, 0x9d, 0x86,
-	0x64, 0x17, 0x12, 0x91, 0xe8, 0x85, 0x5d, 0x4c, 0x03, 0x25, 0x72, 0x72, 0x76, 0xd1, 0xa0, 0xbb,
-	0x0a, 0x44, 0x6f, 0xc3, 0x0d, 0x55, 0x77, 0x02, 0xee, 0x70, 0x82, 0x99, 0xdb, 0x19, 0x6a, 0x52,
-	0x6e, 0xdd, 0x30, 0x7d, 0x08, 0xbd, 0xdd, 0x80, 0x37, 0x95, 0x79, 0x20, 0x49, 0x39, 0xda, 0x81,
-	0x9c, 0x4f, 0xdb, 0x1d, 0xc1, 0x05, 0x89, 0xac, 0x55, 0x55, 0xa6, 0x5e, 0x9a, 0x9c, 0x91, 0xfb,
-	0x09, 0x2d, 0x11, 0x71, 0x03, 0x3f, 0xf4, 0x0e, 0xcc, 0x7d, 0x46, 0xa3, 0x53, 0x1a, 0x58, 0x37,
-	0x55, 0x84, 0xca, 0xe4, 0x08, 0x9f, 0x28, 0x4e, 0xa2, 0x1c, 0xb5, 0x07, 0x7a, 0x09, 0x66, 0xb9,
-	0xc7, 0xad, 0x75, 0xe5, 0xb8, 0x98, 0xd2, 0x7e, 0x1e, 0x37, 0x4c, 0x69, 0xbf, 0xd8, 0xb6, 0x94,
-	0x7a, 0xd6, 0x97, 0xda, 0x96, 0x52, 0x71, 0x9e, 0xe5, 0xb6, 0x74, 0x0f, 0xe6, 0x19, 0xc1, 0x1e,
-	0x0d, 0xa4, 0x40, 0x8c, 0x58, 0x78, 0x4c, 0xac, 0xf7, 0x8d, 0x54, 0x4e, 0x6d, 0x3c, 0xb2, 0x94,
-	0xc8, 0x1d, 0xa7, 0x21, 0x09, 0x76, 0x69, 0xe0, 0xa1, 0xda, 0xcf, 0xae, 0x7a, 0xff, 0x24, 0x03,
-	0xf3, 0x63, 0xaf, 0x54, 0xca, 0x10, 0xec, 0x79, 0x52, 0x8a, 0x9a, 0x2a, 0x9a, 0x34, 0xd1, 0x8b,
-	0x50, 0xc0, 0xae, 0x2b, 0xfb, 0x2d, 0xc2, 0x53, 0x12, 0x98, 0x82, 0x9a, 0xd7, 0x58, 0x4b, 0x42,
-	0x68, 0x0d, 0x0a, 0x72, 0xbf, 0x25, 0x4c, 0xe8, 0x83, 0x98, 0x3e, 0x3e, 0x81, 0x8b, 0x77, 0x08,
-	0x13, 0xea, 0x00, 0xb6, 0x0c, 0x73, 0x4a, 0xc1, 0x13, 0xa5, 0xbc, 0xb2, 0xb6, 0x69, 0xad, 0xac,
-	0x43, 0x21, 0x9d, 0x1a, 0xd3, 0xbb, 0xf1, 0x6f, 0xdc, 0x72, 0x2a, 0xaf, 0x41, 0x79, 0xbc, 0x26,
-	0xa3, 0x02, 0x64, 0xed, 0xda, 0x6e, 0xdd, 0xae, 0xed, 0xb4, 0xca, 0x97, 0x10, 0xc0, 0x5c, 0xab,
-	0x61, 0x1f, 0x7d, 0xf4, 0x71, 0x39, 0x53, 0xf9, 0xf1, 0x65, 0x28, 0xa4, 0x0f, 0x4a, 0x4f, 0x2d,
-	0x6d, 0x37, 0xd3, 0x39, 0x7a, 0x73, 0xf2, 0x29, 0xec, 0x3f, 0xda, 0x69, 0xba, 0x76, 0x7a, 0x66,
-	0xeb, 0xe5, 0x69, 0xf3, 0xe6, 0xef, 0x39, 0x98, 0x1f, 0x3b, 0xff, 0x3e, 0x75, 0x32, 0xdc, 0x05,
-	0x8b, 0x13, 0xce, 0xe5, 0xe4, 0xc8, 0x03, 0x54, 0x40, 0x45, 0xdf, 0x49, 0x02, 0x69, 0x75, 0xb2,
-	0x6c, 0xec, 0xdb, 0xc6, 0x5c, 0x33, 0x71, 0x3f, 0x02, 0xe4, 0x87, 0xd8, 0x73, 0x78, 0x87, 0x78,
-	0x1e, 0x0d, 0xda, 0x5a, 0x81, 0xe4, 0x95, 0x02, 0x79, 0x65, 0xea, 0x41, 0xbd, 0xba, 0x1f, 0x62,
-	0xaf, 0x69, 0x5c, 0xb4, 0x0a, 0xf1, 0xc7, 0x10, 0x54, 0x83, 0x9b, 0xa3, 0x91, 0x7d, 0x2c, 0xe4,
-	0xde, 0xe5, 0x88, 0x0e, 0x23, 0xbc, 0x13, 0xfa, 0x9e, 0x39, 0x79, 0xbc, 0x90, 0x76, 0xdd, 0xd7,
-	0xa4, 0x56, 0xc2, 0x39, 0x9f, 0x76, 0x8d, 0x09, 0x69, 0xf7, 0x21, 0xcc, 0xcb, 0x1c, 0xc1, 0x41,
-	0x10, 0x0a, 0xb5, 0x85, 0x72, 0xeb, 0x13, 0xf5, 0x2a, 0x5f, 0x9f, 0x3e, 0x04, 0x99, 0x72, 0x43,
-	0xbe, 0xd9, 0x08, 0xa2, 0x11, 0x10, 0x35, 0x26, 0x0b, 0xec, 0x57, 0xa7, 0x47, 0x7d, 0x6e, 0x22,
-	0xfb, 0x1f, 0xb3, 0x90, 0xdd, 0xf6, 0x70, 0x24, 0x08, 0xe3, 0x52, 0xa4, 0xc5, 0x9c, 0x38, 0x58,
-	0xb7, 0x9d, 0x1d, 0x7b, 0x97, 0x9b, 0x04, 0x2a, 0xc5, 0x9c, 0x18, 0x9a, 0x44, 0x91, 0x07, 0x4b,
-	0xa7, 0xf1, 0x31, 0x61, 0x01, 0x11, 0x84, 0x3b, 0x24, 0xe8, 0x25, 0x27, 0xd7, 0x19, 0xb5, 0x9a,
-	0xee, 0x4c, 0x1f, 0x59, 0xf2, 0xb0, 0xea, 0x77, 0x06, 0xfe, 0xb5, 0xa0, 0x67, 0x2f, 0x9e, 0xa6,
-	0x9b, 0x26, 0x8f, 0xdf, 0x83, 0x2b, 0x5c, 0x78, 0x34, 0x54, 0xb5, 0x3e, 0xbf, 0xb5, 0x7e, 0x81,
-	0xa8, 0x4d, 0xc9, 0xb7, 0xb5, 0x1b, 0x3a, 0x90, 0xfa, 0x3a, 0xec, 0x12, 0xd1, 0x21, 0x31, 0x37,
-	0xc7, 0xf1, 0xd7, 0x2f, 0x10, 0xa4, 0x31, 0x70, 0xb2, 0x53, 0x01, 0x56, 0x6e, 0x43, 0x71, 0xa4,
-	0xd3, 0xd3, 0xd7, 0xd9, 0xca, 0x1e, 0x5c, 0x51, 0x3d, 0x79, 0xcc, 0x52, 0xbc, 0x05, 0xa5, 0x30,
-	0x16, 0x51, 0x2c, 0x1c, 0xcc, 0x9d, 0x87, 0x3c, 0xd4, 0x9b, 0x5e, 0xd6, 0x2e, 0x68, 0x74, 0x9b,
-	0x3f, 0xe0, 0x61, 0xb0, 0xf2, 0x03, 0x80, 0x61, 0x6f, 0x1e, 0x13, 0xed, 0x2d, 0xb8, 0x2e, 0x87,
-	0x42, 0x5d, 0xee, 0x90, 0xb3, 0x88, 0xb2, 0xfe, 0x50, 0x24, 0xea, 0x65, 0xbe, 0x64, 0xcc, 0x35,
-	0x65, 0x4d, 0x34, 0xa2, 0xdc, 0xf1, 0x26, 0x64, 0xf0, 0xf3, 0x3d, 0x2c, 0xbd, 0x03, 0xe5, 0xf1,
-	0x42, 0x80, 0xf2, 0x70, 0xb5, 0x76, 0xf8, 0xed, 0x23, 0x7b, 0xa7, 0x56, 0xbe, 0x24, 0x1b, 0xfb,
-	0x47, 0x7b, 0x47, 0x87, 0xfb, 0x1f, 0x97, 0x33, 0x72, 0x53, 0xdc, 0xad, 0x37, 0xb7, 0xef, 0xed,
-	0xd7, 0x76, 0xcb, 0x33, 0x95, 0x3f, 0x5e, 0x86, 0xd2, 0xe8, 0x35, 0xde, 0x53, 0x57, 0xbf, 0x6b,
-	0x70, 0x45, 0x9f, 0x4b, 0x40, 0x77, 0x50, 0x35, 0xd4, 0x29, 0x88, 0xf8, 0x27, 0x0e, 0xa7, 0xed,
-	0x80, 0x78, 0xe6, 0xfc, 0x05, 0x12, 0x6a, 0x2a, 0x04, 0xbd, 0x06, 0xc8, 0x65, 0x04, 0x0b, 0xe2,
-	0x74, 0x09, 0xef, 0x24, 0xc7, 0xa0, 0x82, 0xe2, 0x95, 0xb5, 0xe5, 0x80, 0xf0, 0x8e, 0x39, 0x07,
-	0x5d, 0xa8, 0x0e, 0x1d, 0x4d, 0xae, 0x17, 0xaf, 0x4c, 0xbb, 0xb9, 0x7c, 0x7e, 0xe5, 0xe2, 0x97,
-	0x19, 0xc8, 0x4b, 0xbd, 0xa5, 0xaf, 0xd6, 0xd8, 0x53, 0xcf, 0xf5, 0x45, 0xae, 0xc0, 0x47, 0x74,
-	0x86, 0xfd, 0x84, 0x3a, 0xe3, 0xcb, 0x67, 0xe5, 0x1f, 0x32, 0xb0, 0x3c, 0xf9, 0x86, 0xf7, 0x19,
-	0x67, 0xd8, 0x85, 0x52, 0xe2, 0x59, 0xbd, 0xc1, 0xca, 0x9f, 0x32, 0x70, 0x6d, 0xd2, 0x5d, 0xb3,
-	0x2c, 0xfe, 0x6a, 0xa3, 0x3d, 0xc6, 0x3e, 0x0e, 0x5c, 0xc2, 0x1c, 0xda, 0x50, 0xd9, 0x9e, 0xb3,
-	0x4b, 0x12, 0xbf, 0x67, 0xe0, 0x7a, 0x03, 0x7d, 0x13, 0xfe, 0x6b, 0x94, 0x69, 0xfa, 0x65, 0xce,
-	0xdf, 0x85, 0xb5, 0xd9, 0xf5, 0x9c, 0x6d, 0xa5, 0x9d, 0x9a, 0xfa, 0x55, 0xe9, 0x83, 0xf8, 0x8b,
-	0x50, 0x18, 0x5c, 0x3f, 0xd3, 0x06, 0xb7, 0x8a, 0x8a, 0x9f, 0x4f, 0xb0, 0x7a, 0x83, 0xaf, 0xfc,
-	0x1f, 0xcc, 0x36, 0xbd, 0xc7, 0x95, 0xbb, 0x89, 0x33, 0x59, 0xb9, 0x0f, 0x8b, 0x13, 0xae, 0xbf,
-	0xd1, 0x26, 0x5c, 0x4d, 0xae, 0xcb, 0xf5, 0x37, 0x90, 0xeb, 0xc3, 0x19, 0x1b, 0xbd, 0x28, 0x4f,
-	0x78, 0x95, 0x10, 0xca, 0x75, 0xff, 0xf8, 0xcb, 0x86, 0xb9, 0xf8, 0x9c, 0x56, 0x7e, 0x35, 0x07,
-	0xc5, 0xd1, 0xc7, 0x21, 0xb8, 0x2c, 0xfa, 0x51, 0x32, 0x42, 0xf5, 0x1b, 0x6d, 0xa5, 0xd5, 0xfa,
-	0xda, 0x94, 0xc7, 0x8f, 0xc9, 0xf5, 0xaf, 0x40, 0x4b, 0xb7, 0xa6, 0xe9, 0xa4, 0x57, 0xa7, 0x75,
-	0xe9, 0x22, 0x2a, 0xe9, 0x87, 0xb0, 0xc8, 0x09, 0xeb, 0x51, 0x97, 0x8c, 0x44, 0xfe, 0x9e, 0x8a,
-	0xbc, 0x31, 0x2d, 0x72, 0x53, 0xbb, 0x9c, 0x8b, 0x8e, 0xf8, 0x39, 0x03, 0x3a, 0x9c, 0x5c, 0x57,
-	0x6f, 0x4f, 0x8b, 0xfd, 0xdc, 0xca, 0xea, 0x1d, 0x98, 0xdb, 0xc7, 0xc7, 0xc4, 0xe7, 0xb2, 0x42,
-	0xe1, 0x28, 0x4a, 0x2a, 0x14, 0x8e, 0x22, 0x95, 0xea, 0x5c, 0xd0, 0x30, 0xa9, 0x50, 0xaa, 0xf1,
-	0xd4, 0x37, 0x9b, 0xcf, 0x60, 0xbf, 0xaf, 0xc1, 0xf5, 0x29, 0x93, 0xfe, 0x7c, 0x65, 0xc3, 0x8f,
-	0x32, 0x50, 0x1a, 0xfd, 0x46, 0x25, 0x4b, 0x69, 0x17, 0x07, 0xf4, 0x84, 0x70, 0x91, 0xfe, 0x5a,
-	0x5b, 0x48, 0x40, 0x75, 0x4d, 0xf0, 0xf8, 0x1a, 0x5d, 0x85, 0xcb, 0x6a, 0xa9, 0x78, 0x6a, 0xa9,
-	0x3c, 0xee, 0x35, 0x2a, 0x5e, 0x25, 0x82, 0x52, 0x5d, 0xbe, 0x91, 0xc1, 0x87, 0x30, 0xf4, 0xaa,
-	0x89, 0x30, 0x3b, 0x5e, 0x24, 0x46, 0x3e, 0x30, 0x6b, 0x77, 0xb4, 0x09, 0x73, 0xfa, 0x46, 0xd5,
-	0xc8, 0xd3, 0x1b, 0x93, 0xe8, 0x8a, 0x60, 0x1b, 0x62, 0xe5, 0x17, 0x33, 0x70, 0x6d, 0xd2, 0xee,
-	0x87, 0xee, 0xc1, 0x9c, 0x4f, 0xbb, 0x54, 0x48, 0xd1, 0x3e, 0xa6, 0x17, 0x26, 0xf1, 0xab, 0xfb,
-	0x8a, 0xac, 0x13, 0xdb, 0x78, 0xa2, 0xfb, 0x90, 0x65, 0xe4, 0xd3, 0x98, 0x70, 0xc1, 0xad, 0x19,
-	0x15, 0xe5, 0xb5, 0x2f, 0x88, 0x62, 0x1b, 0xba, 0x8e, 0x33, 0xf0, 0x5e, 0x79, 0x1b, 0xf2, 0xa9,
-	0x07, 0x3c, 0x51, 0x6a, 0x7c, 0x03, 0x8a, 0x23, 0x51, 0x9f, 0x28, 0x2d, 0x7e, 0x93, 0x81, 0xeb,
-	0x53, 0x8e, 0xf0, 0x2a, 0x3f, 0x68, 0xe0, 0xe0, 0x1e, 0xa6, 0xbe, 0xdc, 0x48, 0x54, 0xc4, 0xa2,
-	0x5d, 0xe8, 0xd2, 0x60, 0x3b, 0xc1, 0xd0, 0x11, 0x64, 0x07, 0x05, 0x42, 0x1f, 0x67, 0xde, 0x48,
-	0x15, 0xcc, 0xc1, 0x9f, 0x0a, 0xaa, 0xd1, 0x69, 0x5b, 0x02, 0xbc, 0xda, 0x25, 0x02, 0xcb, 0xda,
-	0xa9, 0x96, 0x70, 0x92, 0xcf, 0xf6, 0x20, 0x08, 0x7a, 0x19, 0xe6, 0xbb, 0xf8, 0xcc, 0x89, 0x83,
-	0xe1, 0x73, 0x67, 0xd5, 0x73, 0x4b, 0x5d, 0x7c, 0xf6, 0xc1, 0x10, 0xad, 0xfc, 0x76, 0x06, 0xca,
-	0xe3, 0x69, 0x86, 0x76, 0x00, 0x22, 0x2c, 0xdc, 0x8e, 0xfa, 0xfb, 0x84, 0xea, 0x70, 0x69, 0xeb,
-	0xd6, 0xf4, 0xb4, 0xac, 0x36, 0x24, 0xb9, 0xd5, 0x8f, 0x88, 0x9d, 0x8b, 0x92, 0x9f, 0xe8, 0x75,
-	0x98, 0x09, 0x23, 0x35, 0x9a, 0xd2, 0xe8, 0x3f, 0x00, 0xc6, 0x9c, 0x8f, 0x22, 0x7b, 0x26, 0x8c,
-	0xe4, 0xde, 0x73, 0x4a, 0x03, 0xcf, 0xe8, 0x33, 0xf5, 0x5b, 0x0a, 0x61, 0x1c, 0x51, 0xa7, 0x47,
-	0x18, 0x97, 0xa7, 0x0a, 0x2d, 0xd4, 0x00, 0x47, 0xf4, 0x43, 0x8d, 0xa0, 0x3b, 0x90, 0x95, 0x33,
-	0xe1, 0x61, 0x81, 0xcd, 0x07, 0xcc, 0x6b, 0xa9, 0x8f, 0xc9, 0xc7, 0x0f, 0x89, 0x2b, 0x0e, 0x88,
-	0xc0, 0xf6, 0x80, 0x55, 0xb9, 0x05, 0xb9, 0x41, 0x6f, 0x51, 0x11, 0x72, 0xcd, 0x96, 0xbd, 0xdd,
-	0xaa, 0xed, 0xd5, 0x77, 0xca, 0x97, 0x50, 0x16, 0x2e, 0x3f, 0x68, 0x1e, 0x1d, 0x96, 0x33, 0x95,
-	0x5b, 0x30, 0x73, 0x14, 0xa1, 0xab, 0x30, 0xbb, 0xbd, 0xbb, 0xab, 0xaf, 0xc1, 0x76, 0x6b, 0xfb,
-	0xb5, 0x56, 0xad, 0x9c, 0x41, 0x39, 0xb8, 0xd2, 0xd8, 0x6e, 0xed, 0xdc, 0x2f, 0xcf, 0x54, 0xde,
-	0x03, 0x18, 0x3e, 0x43, 0x0e, 0x40, 0xfd, 0x01, 0x43, 0xff, 0x55, 0x42, 0xfd, 0x1e, 0x5d, 0xf7,
-	0x73, 0x63, 0xeb, 0xbe, 0xf2, 0xb3, 0x0c, 0xe4, 0x06, 0x77, 0xc2, 0x8f, 0x51, 0x1e, 0x37, 0x20,
-	0x1b, 0x7b, 0x5c, 0x57, 0x17, 0x9d, 0x7b, 0x57, 0x63, 0x8f, 0xab, 0xc2, 0x52, 0x85, 0x45, 0x79,
-	0x7c, 0x16, 0x2c, 0xe6, 0xe2, 0x51, 0xc8, 0x44, 0xa7, 0xef, 0x3c, 0x7c, 0x24, 0xcc, 0xb7, 0xe2,
-	0x85, 0x98, 0x93, 0xd6, 0xd0, 0xf2, 0xe0, 0x91, 0x90, 0x27, 0x40, 0xc9, 0x0f, 0x42, 0xd6, 0xc5,
-	0xbe, 0xa2, 0xea, 0x7b, 0xcb, 0x42, 0xcc, 0xc9, 0xa1, 0x02, 0x1f, 0x3c, 0x12, 0x95, 0x7f, 0xce,
-	0x40, 0xb6, 0x45, 0xb8, 0x90, 0x47, 0xcf, 0xaf, 0xc1, 0x05, 0x71, 0x5a, 0x4e, 0xbc, 0xf1, 0x15,
-	0x5f, 0xcd, 0xbd, 0xf9, 0xb5, 0xb8, 0x9a, 0xbb, 0x57, 0xfe, 0xdd, 0xe7, 0xab, 0x99, 0xdf, 0x7f,
-	0xbe, 0x9a, 0xf9, 0xcb, 0xe7, 0xab, 0x99, 0x9f, 0xff, 0x75, 0xf5, 0xd2, 0xbf, 0x02, 0x00, 0x00,
-	0xff, 0xff, 0x28, 0x98, 0x36, 0xd5, 0xda, 0x24, 0x00, 0x00,
+	// 2889 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xcc, 0x59, 0x5f, 0x73, 0xdb, 0xc6,
+	0xb5, 0x37, 0x45, 0xc9, 0x22, 0x0f, 0x45, 0x8a, 0x5a, 0x49, 0x36, 0x2c, 0x3b, 0x8a, 0x8c, 0x38,
+	0x89, 0x92, 0x9b, 0x4b, 0xf9, 0x5f, 0x1c, 0xd9, 0xb9, 0x4e, 0x42, 0x49, 0x8c, 0xcc, 0x84, 0x12,
+	0x19, 0x90, 0x76, 0xae, 0x73, 0x33, 0x83, 0xbb, 0x04, 0x56, 0x24, 0x22, 0x10, 0x8b, 0x62, 0x97,
+	0x8a, 0xd9, 0xe7, 0xce, 0xb4, 0x4f, 0x7d, 0xec, 0x74, 0xa6, 0x2f, 0x7d, 0xe9, 0x77, 0xe8, 0x43,
+	0x3f, 0x40, 0x1f, 0xfb, 0x11, 0x3a, 0xee, 0x47, 0xe8, 0x63, 0xa7, 0xd3, 0xce, 0x2e, 0x16, 0x04,
+	0xf8, 0xc7, 0x92, 0xa5, 0x24, 0x33, 0x7d, 0x03, 0xce, 0xf9, 0x9d, 0xdf, 0x62, 0x77, 0xcf, 0x9e,
+	0x3f, 0x0b, 0x58, 0x73, 0x18, 0x77, 0xa8, 0xe3, 0x31, 0x8e, 0x5d, 0x97, 0x04, 0x26, 0x1f, 0xf8,
+	0x84, 0x95, 0xfc, 0x80, 0x72, 0x8a, 0x32, 0x27, 0x77, 0xb0, 0xeb, 0x77, 0xf1, 0x9d, 0x35, 0xfd,
+	0x78, 0x9b, 0x95, 0x1c, 0xba, 0x85, 0x7d, 0x67, 0xcb, 0xa2, 0x01, 0xd9, 0x3a, 0xb9, 0xb3, 0xd5,
+	0x21, 0x1e, 0x09, 0x30, 0x27, 0x76, 0x88, 0x5e, 0x7b, 0x2f, 0x81, 0xc1, 0x7d, 0x4e, 0x99, 0x85,
+	0x5d, 0xc7, 0xeb, 0x4c, 0x83, 0xde, 0x8f, 0xa1, 0x3d, 0x6c, 0x75, 0x1d, 0x8f, 0x04, 0x83, 0x2d,
+	0xff, 0xb8, 0x23, 0x04, 0x6c, 0xab, 0x47, 0x38, 0x9e, 0x66, 0xf5, 0x59, 0xc7, 0xe1, 0xdd, 0x7e,
+	0xbb, 0x64, 0xd1, 0xde, 0x56, 0x87, 0x76, 0xe8, 0x96, 0x14, 0xb7, 0xfb, 0x47, 0xf1, 0x43, 0x87,
+	0xd2, 0x8e, 0x4b, 0xe2, 0xf7, 0xef, 0x03, 0xec, 0xfb, 0x24, 0x50, 0x13, 0xd2, 0x5f, 0xce, 0x41,
+	0xbe, 0x1a, 0x4d, 0xb5, 0xe9, 0x13, 0x0b, 0xdd, 0x86, 0x15, 0x35, 0x77, 0xd3, 0xc7, 0xd6, 0x31,
+	0xee, 0x10, 0xd3, 0xc7, 0xbc, 0xab, 0xa5, 0x36, 0x52, 0x9b, 0x59, 0x03, 0x29, 0x5d, 0x23, 0x54,
+	0x35, 0x30, 0xef, 0xa2, 0x22, 0xa4, 0xbb, 0xfd, 0xb6, 0x96, 0x96, 0x00, 0xf1, 0x28, 0x24, 0x1c,
+	0x77, 0xb4, 0xd9, 0x50, 0xc2, 0x71, 0x07, 0x6d, 0x83, 0x66, 0x93, 0x23, 0xdc, 0x77, 0xb9, 0xe9,
+	0xe1, 0x1e, 0x61, 0x3e, 0xb6, 0x88, 0xe9, 0x07, 0xe4, 0xc8, 0x79, 0xa1, 0xcd, 0x49, 0xd8, 0x15,
+	0xa5, 0x3f, 0x8c, 0xd4, 0x0d, 0xa9, 0x45, 0x0d, 0x40, 0x3c, 0xc0, 0x47, 0x47, 0x8e, 0x65, 0xf6,
+	0xb0, 0x87, 0x3b, 0xa4, 0x47, 0x3c, 0xae, 0x5d, 0xdb, 0x48, 0x6d, 0xe6, 0xee, 0xde, 0x2c, 0x45,
+	0xfb, 0x51, 0x6a, 0x85, 0x98, 0x83, 0x21, 0x64, 0x97, 0x7a, 0x47, 0x4e, 0xc7, 0x58, 0xe2, 0xe3,
+	0x0a, 0xf4, 0x05, 0x14, 0x7d, 0xea, 0x3a, 0xd6, 0xc0, 0xe4, 0xc4, 0x25, 0x3d, 0xc2, 0x83, 0x81,
+	0xb6, 0x26, 0xf9, 0xde, 0x8c, 0xf9, 0x1a, 0x12, 0xd1, 0x8a, 0x00, 0x8a, 0x6d, 0xd1, 0x1f, 0x15,
+	0xa3, 0xfb, 0x90, 0x61, 0xc4, 0xea, 0x07, 0x0e, 0x1f, 0x68, 0x37, 0x24, 0x87, 0x16, 0x73, 0x34,
+	0x95, 0x46, 0x19, 0x0f, 0x91, 0xe8, 0x00, 0x96, 0x2c, 0x29, 0x4b, 0x4e, 0xe9, 0x0d, 0x69, 0xbe,
+	0x11, 0x9b, 0x87, 0x66, 0x13, 0x33, 0x2a, 0x5a, 0x63, 0x72, 0xb4, 0x0f, 0x8b, 0x8e, 0xd7, 0x09,
+	0x08, 0x63, 0x66, 0x07, 0x73, 0xf2, 0x3d, 0x1e, 0x68, 0xeb, 0x1b, 0xe9, 0xcd, 0xdc, 0xdd, 0xf5,
+	0x98, 0xac, 0x1a, 0x02, 0xf6, 0x43, 0xbd, 0xa2, 0x2a, 0x38, 0x23, 0x52, 0xb4, 0x07, 0x05, 0x32,
+	0xca, 0xf3, 0xa6, 0xe4, 0x79, 0x23, 0xe6, 0xa9, 0x4c, 0xa1, 0xc9, 0x93, 0x11, 0x96, 0x7d, 0x40,
+	0xe4, 0x05, 0x27, 0x81, 0x87, 0x5d, 0x93, 0xfa, 0xc2, 0x61, 0x69, 0xc0, 0xb4, 0xbb, 0x92, 0x29,
+	0xb1, 0x3a, 0x75, 0xa5, 0x8a, 0x36, 0x2a, 0xb2, 0x89, 0xe4, 0x0c, 0x7d, 0x0e, 0x0b, 0xc7, 0xdb,
+	0xcc, 0x54, 0x8e, 0xc1, 0xb4, 0x86, 0x5c, 0xa1, 0xb7, 0x62, 0x8a, 0x2f, 0xfb, 0x6d, 0x12, 0x78,
+	0x84, 0x13, 0x66, 0x10, 0x46, 0xfb, 0x81, 0x45, 0x98, 0x62, 0xcb, 0x1d, 0x6f, 0xb3, 0x3d, 0x65,
+	0xa7, 0xff, 0x6e, 0x0e, 0x16, 0x63, 0x27, 0xe7, 0x98, 0xf7, 0x19, 0x7a, 0x36, 0xd5, 0xad, 0x52,
+	0x72, 0x84, 0x77, 0x93, 0xcb, 0x36, 0x62, 0x56, 0x7a, 0x46, 0x02, 0xe6, 0x50, 0x2f, 0x7c, 0x9b,
+	0xe6, 0x5c, 0xc6, 0x14, 0xe7, 0x9a, 0x39, 0x1f, 0xeb, 0x84, 0x93, 0xed, 0x26, 0x9c, 0x2c, 0x7d,
+	0x3e, 0xae, 0xd8, 0xe7, 0x5a, 0xd3, 0x7c, 0x6e, 0xf6, 0x7c, 0x6c, 0x93, 0xae, 0xd7, 0x98, 0x74,
+	0xbd, 0x39, 0xb9, 0xd1, 0xaf, 0xcd, 0x39, 0xee, 0x83, 0x87, 0x13, 0x3e, 0x78, 0xf9, 0x7c, 0x84,
+	0xa3, 0xde, 0xb8, 0x66, 0x41, 0x7e, 0x44, 0x8f, 0x34, 0x98, 0x3f, 0x09, 0x05, 0x2a, 0xa6, 0x45,
+	0xaf, 0x68, 0x1b, 0x2e, 0x33, 0x89, 0x91, 0x3b, 0x56, 0x48, 0x9e, 0xc5, 0xf1, 0x21, 0xd5, 0x58,
+	0x0a, 0xaf, 0x3f, 0x82, 0xcb, 0x8a, 0x3d, 0x03, 0xb3, 0x87, 0xf5, 0xc3, 0x4a, 0xf1, 0x12, 0x2a,
+	0x00, 0x54, 0x0f, 0x9b, 0xad, 0x72, 0xad, 0x56, 0x3d, 0xdc, 0x2f, 0xa6, 0x50, 0x0e, 0xe6, 0x9f,
+	0x54, 0xca, 0xb5, 0xd6, 0x93, 0xe7, 0xc5, 0x19, 0x94, 0x85, 0xb9, 0x8a, 0x61, 0xd4, 0x8d, 0x62,
+	0x5a, 0xff, 0xe7, 0x1c, 0x5c, 0x7d, 0x45, 0xf4, 0x42, 0xf7, 0x61, 0x9e, 0x78, 0xb8, 0xed, 0x12,
+	0x5b, 0xb9, 0xe6, 0x5a, 0x29, 0x0c, 0xe8, 0xa5, 0x28, 0xa0, 0x97, 0x76, 0x28, 0x75, 0x9f, 0x61,
+	0xb7, 0x4f, 0x8c, 0x08, 0x8a, 0x6e, 0x40, 0x76, 0x18, 0x64, 0xe5, 0x54, 0xb2, 0x46, 0x2c, 0x40,
+	0xef, 0xc3, 0x92, 0xe3, 0x59, 0x6e, 0xdf, 0x26, 0xa6, 0xe3, 0x9b, 0x01, 0xf6, 0x3a, 0x84, 0x69,
+	0x45, 0x89, 0x5a, 0x54, 0x8a, 0xaa, 0x6f, 0x48, 0xb1, 0xc0, 0x92, 0x17, 0xe3, 0xd8, 0xa5, 0x10,
+	0xab, 0x14, 0x43, 0xec, 0x5d, 0x58, 0x1d, 0xf2, 0x7a, 0x6d, 0xda, 0xf7, 0x6c, 0xd3, 0xa7, 0x01,
+	0x67, 0x1a, 0x92, 0xf8, 0xe5, 0x88, 0x3b, 0xd4, 0x35, 0x84, 0x4a, 0xd8, 0x0c, 0xf9, 0x47, 0x6c,
+	0x96, 0x43, 0x9b, 0x68, 0x8c, 0xa4, 0xcd, 0xdb, 0x50, 0xb0, 0xdc, 0x3e, 0xe3, 0x24, 0x30, 0x6d,
+	0xda, 0xc3, 0x8e, 0xa7, 0x69, 0x12, 0x9c, 0x57, 0xd2, 0x3d, 0x29, 0x44, 0x0f, 0xe1, 0x9a, 0x4f,
+	0x6d, 0xd3, 0xf6, 0x98, 0xc9, 0x08, 0x0e, 0xac, 0x6e, 0x9c, 0x78, 0x98, 0x4c, 0x1f, 0x59, 0xe3,
+	0x8a, 0x4f, 0xed, 0x3d, 0x8f, 0x35, 0xa5, 0x7a, 0x98, 0x77, 0x18, 0x3a, 0x84, 0xd5, 0x70, 0x29,
+	0x4d, 0x91, 0xb5, 0x4d, 0xc7, 0xfb, 0x8e, 0x58, 0x5c, 0xf8, 0xcb, 0xda, 0x99, 0x7b, 0xb0, 0x1c,
+	0x1a, 0x96, 0xfb, 0x9c, 0x56, 0x23, 0x33, 0xf4, 0x7f, 0x70, 0x43, 0xf1, 0xc5, 0x9f, 0x60, 0xb6,
+	0x07, 0x51, 0x60, 0xd3, 0xae, 0x9f, 0x49, 0x7b, 0x2d, 0xb4, 0x8f, 0xbf, 0x71, 0x67, 0xa0, 0xa2,
+	0x1b, 0xba, 0x0f, 0x73, 0xbe, 0xe3, 0x52, 0xae, 0xad, 0x4b, 0x96, 0x44, 0xc8, 0x6f, 0x08, 0xf1,
+	0x2e, 0xed, 0xf9, 0xd4, 0x8b, 0xb3, 0x47, 0x08, 0x96, 0x56, 0x01, 0x7d, 0x21, 0x02, 0xfc, 0xb8,
+	0x95, 0x10, 0x4f, 0x5a, 0x09, 0x29, 0x6a, 0x42, 0x91, 0x39, 0x36, 0xb1, 0x70, 0xa0, 0x16, 0x85,
+	0x06, 0xda, 0x86, 0x24, 0xd8, 0x4c, 0x64, 0xbd, 0x10, 0x51, 0x55, 0x80, 0x71, 0xaa, 0x45, 0x36,
+	0xaa, 0xd7, 0x7f, 0x95, 0x86, 0xd5, 0xa9, 0xd9, 0x16, 0xd5, 0xe1, 0x8a, 0x8a, 0xa5, 0x56, 0x97,
+	0x58, 0xc7, 0xe6, 0x11, 0x76, 0x64, 0x46, 0xf1, 0x34, 0x38, 0x7b, 0x23, 0x42, 0xcb, 0x5d, 0x61,
+	0xf8, 0x39, 0x76, 0x44, 0x56, 0xf1, 0x10, 0x85, 0x1b, 0xb4, 0xcf, 0x43, 0x3f, 0x8b, 0xa2, 0xbf,
+	0x1a, 0xa1, 0x47, 0x6d, 0xa2, 0xe5, 0xe4, 0xb1, 0x2f, 0x9d, 0x51, 0x05, 0x94, 0xea, 0x8a, 0x23,
+	0xd4, 0x1a, 0xd7, 0x22, 0x4e, 0x75, 0x8a, 0x43, 0xf1, 0x01, 0xb5, 0x09, 0xfa, 0x08, 0x2e, 0x87,
+	0xfc, 0xda, 0xdd, 0xe9, 0x05, 0xc6, 0xf8, 0xea, 0x28, 0x38, 0xfa, 0x0c, 0xb2, 0x71, 0xfe, 0xb8,
+	0x27, 0x6d, 0xf5, 0x44, 0xb1, 0x13, 0x7f, 0xd0, 0xa8, 0x79, 0x6c, 0xa4, 0xdf, 0x85, 0xc2, 0xe8,
+	0x77, 0xa2, 0x3c, 0x64, 0xcb, 0xb5, 0x5a, 0xfd, 0x6b, 0xb3, 0x7c, 0xf8, 0xbc, 0x78, 0x09, 0x2d,
+	0x41, 0xde, 0xa8, 0xec, 0x57, 0x9b, 0x2d, 0xe3, 0xb9, 0x59, 0x3f, 0xac, 0x3d, 0x2f, 0xa6, 0xf4,
+	0x3f, 0xa4, 0xa1, 0x30, 0x5a, 0xb4, 0xfc, 0x24, 0x11, 0xe8, 0x03, 0x40, 0x16, 0xf5, 0x78, 0x40,
+	0x5d, 0xd3, 0x77, 0xb1, 0x47, 0xcc, 0x1e, 0x77, 0x99, 0x96, 0xdf, 0x48, 0x6d, 0x66, 0x64, 0x8a,
+	0x11, 0x9a, 0x86, 0x50, 0x1c, 0x70, 0x97, 0xa1, 0x77, 0x60, 0xd1, 0xc6, 0x1c, 0x27, 0xa1, 0x05,
+	0x09, 0xcd, 0x0b, 0x71, 0x8c, 0xbb, 0x09, 0x0b, 0x3c, 0xe8, 0x33, 0x1e, 0x45, 0x85, 0x45, 0x39,
+	0x6c, 0x4e, 0xca, 0x54, 0x4c, 0x78, 0x04, 0xf3, 0x96, 0xc3, 0xb1, 0x4d, 0x5c, 0x6d, 0x65, 0xa2,
+	0xda, 0x0a, 0x15, 0xe3, 0x2b, 0x1a, 0x19, 0xa0, 0x7d, 0x58, 0xb0, 0x48, 0xc0, 0x55, 0xf6, 0x0c,
+	0xb4, 0x55, 0x49, 0x70, 0x2b, 0x41, 0x40, 0x02, 0x1e, 0x06, 0xf0, 0x09, 0x9f, 0xcf, 0x59, 0xb1,
+	0x0e, 0x95, 0x01, 0x3c, 0x6a, 0x13, 0x13, 0x77, 0x44, 0x06, 0xbe, 0x32, 0xbe, 0xb7, 0x87, 0xd4,
+	0x26, 0xe5, 0x8e, 0xb4, 0x1d, 0xdb, 0x5b, 0x2f, 0xd2, 0xe8, 0x0e, 0xac, 0x4c, 0x3b, 0xdc, 0xc2,
+	0xdd, 0x2c, 0xda, 0xeb, 0xa9, 0xcc, 0x36, 0xe2, 0x6e, 0xbb, 0x52, 0x3e, 0xe1, 0x6e, 0x21, 0x5c,
+	0xe4, 0x44, 0x75, 0x2c, 0xe5, 0xd1, 0xca, 0x18, 0xd1, 0xab, 0xfe, 0xcb, 0x34, 0xac, 0x4c, 0x0b,
+	0x09, 0x17, 0x1f, 0xeb, 0x5b, 0x91, 0x7f, 0x38, 0x09, 0x2c, 0xe2, 0x8b, 0xe8, 0x18, 0x9e, 0xbc,
+	0x05, 0x79, 0xf2, 0xb6, 0x4e, 0x0f, 0x43, 0xa5, 0x6a, 0xc2, 0x4e, 0x9c, 0x2f, 0xa3, 0xe8, 0x8c,
+	0x49, 0xd0, 0xbb, 0xb0, 0x68, 0x51, 0xcf, 0x23, 0x16, 0x37, 0xb9, 0xd3, 0x23, 0xb4, 0xcf, 0xe5,
+	0x56, 0x67, 0x8d, 0x82, 0x12, 0xb7, 0x42, 0xa9, 0x48, 0x23, 0x76, 0x80, 0x1d, 0xcf, 0xb4, 0xfb,
+	0x01, 0x96, 0xd1, 0x7d, 0x35, 0x4c, 0x23, 0x52, 0xba, 0xa7, 0x84, 0xa2, 0x71, 0xf1, 0x71, 0x40,
+	0x3c, 0x6e, 0xb2, 0x6e, 0x9f, 0xdb, 0xf4, 0xfb, 0x84, 0xc1, 0x15, 0x95, 0x45, 0xa4, 0xbe, 0xa9,
+	0xd4, 0x43, 0xcb, 0x0d, 0xc8, 0x59, 0xd4, 0xb3, 0xfa, 0x41, 0x40, 0x3c, 0x6b, 0xa0, 0x5d, 0xdd,
+	0x48, 0x6d, 0xe6, 0x8d, 0xa4, 0x48, 0xff, 0x00, 0x8a, 0xe3, 0x33, 0x42, 0x0b, 0x90, 0x31, 0x2a,
+	0x7b, 0x55, 0xa3, 0xb2, 0xdb, 0x2a, 0x5e, 0x42, 0x00, 0x97, 0x5b, 0x0d, 0xa3, 0xfe, 0xbf, 0xe2,
+	0x70, 0x3e, 0x87, 0xf5, 0xd3, 0x43, 0xeb, 0x85, 0xb7, 0x44, 0x6f, 0x44, 0x11, 0xf8, 0x47, 0x63,
+	0x6c, 0x82, 0xf6, 0xaa, 0x20, 0x75, 0x71, 0xd2, 0xdf, 0xa7, 0xe0, 0xca, 0xf4, 0x63, 0x7a, 0x71,
+	0x6f, 0x7c, 0x13, 0x72, 0x8c, 0xb8, 0x47, 0x26, 0x73, 0x3a, 0x1e, 0xb1, 0x65, 0x06, 0xc8, 0x18,
+	0x20, 0x44, 0x4d, 0x29, 0x91, 0xc1, 0x2a, 0x20, 0x98, 0x13, 0xb3, 0x47, 0x58, 0x57, 0xa5, 0x0b,
+	0xe9, 0xaf, 0x22, 0x58, 0x49, 0xcd, 0x01, 0x61, 0xdd, 0x70, 0xfd, 0xf4, 0xa7, 0xb0, 0xf6, 0xea,
+	0x38, 0xf0, 0x83, 0x96, 0xf3, 0x55, 0x71, 0xe1, 0xe2, 0xa4, 0x5f, 0xc1, 0x95, 0xe9, 0x2d, 0xe6,
+	0xc5, 0x29, 0x7f, 0x3d, 0x0b, 0xab, 0x53, 0x11, 0x3f, 0x49, 0x1e, 0xf9, 0x04, 0xe6, 0x6c, 0xd2,
+	0xee, 0x77, 0x64, 0x53, 0x54, 0x48, 0xd6, 0x20, 0x53, 0xbf, 0xa1, 0x54, 0xa3, 0x9d, 0x1a, 0x39,
+	0x21, 0xae, 0x11, 0x9a, 0xa1, 0x47, 0x90, 0x26, 0xde, 0x89, 0xf6, 0x3f, 0xb2, 0xbf, 0x38, 0xd3,
+	0xba, 0xe2, 0x9d, 0x54, 0x3c, 0x1e, 0x0c, 0x0c, 0x61, 0x84, 0x1e, 0xc3, 0x2c, 0x0e, 0x3a, 0x4c,
+	0x7b, 0x2c, 0x8d, 0xdf, 0x3b, 0xcb, 0xb8, 0x1c, 0x74, 0x58, 0x68, 0x2d, 0xcd, 0xd0, 0x87, 0x90,
+	0x3e, 0xde, 0x3e, 0x57, 0x47, 0x2b, 0xf0, 0x6b, 0x0f, 0x20, 0x13, 0x7d, 0x06, 0x2a, 0x42, 0xfa,
+	0x98, 0x0c, 0x54, 0x0f, 0x23, 0x1e, 0xd1, 0x0a, 0xcc, 0x9d, 0x88, 0xf5, 0x53, 0x2b, 0x15, 0xbe,
+	0x3c, 0x9a, 0xd9, 0x4e, 0xad, 0x7d, 0x04, 0xd9, 0xe1, 0x17, 0x9c, 0xc7, 0x50, 0xff, 0x04, 0x32,
+	0xd1, 0xaa, 0x25, 0x5a, 0x9b, 0x61, 0xf7, 0x92, 0x12, 0xc2, 0xaf, 0xcb, 0xc6, 0x61, 0xd8, 0xd2,
+	0xec, 0x55, 0x76, 0x9e, 0xee, 0x17, 0xd3, 0x42, 0x58, 0x3d, 0xfc, 0xbc, 0x5e, 0x9c, 0xd5, 0x7f,
+	0x93, 0x81, 0x6b, 0xaf, 0x9c, 0x13, 0xba, 0x03, 0xd9, 0x20, 0x12, 0x29, 0xb7, 0x58, 0x8e, 0xd7,
+	0x62, 0x88, 0x36, 0x62, 0x14, 0xda, 0x81, 0xc5, 0x80, 0x60, 0xdb, 0xf1, 0x44, 0x87, 0xe8, 0x07,
+	0xb4, 0x4d, 0x54, 0x7b, 0x7d, 0xad, 0x14, 0x5e, 0xa1, 0x95, 0xb0, 0xef, 0x94, 0x2c, 0x1a, 0x90,
+	0xd2, 0x89, 0xcc, 0x22, 0x6d, 0x62, 0x14, 0x86, 0x16, 0xf2, 0x1d, 0xbd, 0x05, 0xf9, 0x80, 0xf8,
+	0xae, 0x63, 0x61, 0xd3, 0xa2, 0x7d, 0x8f, 0x4b, 0xff, 0xc9, 0x1b, 0x0b, 0x4a, 0xb8, 0x2b, 0x64,
+	0xe8, 0x2b, 0xc8, 0x74, 0x7d, 0x6c, 0x32, 0x9f, 0x58, 0xaa, 0x4d, 0x7e, 0x90, 0x1c, 0x21, 0x71,
+	0x9f, 0x27, 0x06, 0x7a, 0x42, 0x03, 0xe7, 0xe7, 0xd4, 0xe3, 0xd8, 0x6d, 0x50, 0xbb, 0xac, 0x74,
+	0xe1, 0x8d, 0x9a, 0x31, 0xdf, 0xf5, 0xb1, 0xbc, 0x5a, 0x7b, 0x0a, 0xab, 0xb2, 0x25, 0x71, 0x58,
+	0xd0, 0x0f, 0x73, 0x5f, 0xbb, 0x6f, 0x77, 0x08, 0x97, 0x37, 0x60, 0x23, 0xb7, 0x59, 0x0d, 0x6a,
+	0xef, 0x0d, 0x51, 0x3b, 0x12, 0x24, 0xa9, 0x96, 0xfd, 0x49, 0x05, 0xfa, 0x7f, 0x58, 0x14, 0xb4,
+	0xd8, 0xf3, 0x28, 0x97, 0xa9, 0x87, 0xa9, 0x96, 0xf9, 0xa3, 0xd7, 0xf0, 0x2b, 0x31, 0x54, 0x39,
+	0xb6, 0x0c, 0x7d, 0xb4, 0xe0, 0x8f, 0x08, 0xd1, 0x37, 0x90, 0x97, 0x25, 0x0b, 0x23, 0x6e, 0x58,
+	0xf4, 0xcf, 0x4b, 0xfe, 0x0f, 0x5f, 0x87, 0x5f, 0xc4, 0xad, 0xa6, 0xb2, 0x0b, 0xd9, 0x17, 0xbc,
+	0x84, 0x08, 0x3d, 0x55, 0xdc, 0xa2, 0x74, 0xf6, 0x1c, 0x3e, 0xd0, 0x32, 0x72, 0x31, 0x6e, 0xbf,
+	0x2e, 0x77, 0x59, 0xd9, 0x85, 0xb4, 0xd1, 0x9b, 0xec, 0x72, 0x7b, 0xf2, 0xf2, 0xb2, 0xef, 0xba,
+	0x51, 0xd4, 0xce, 0xaa, 0x2e, 0x57, 0x28, 0x1a, 0x7d, 0xd7, 0x55, 0x85, 0x71, 0x09, 0x96, 0xfd,
+	0xc0, 0xa1, 0xa2, 0xea, 0x35, 0x2d, 0x17, 0x33, 0x26, 0xfb, 0x34, 0x59, 0x09, 0x65, 0x8d, 0xa5,
+	0x48, 0xb5, 0x2b, 0x34, 0xa2, 0x03, 0x43, 0x07, 0xb0, 0x72, 0xbc, 0xcd, 0x4c, 0xda, 0x16, 0x69,
+	0xd8, 0xa4, 0x27, 0x24, 0x08, 0x1c, 0x9b, 0x30, 0xcd, 0x96, 0xab, 0x72, 0x3d, 0xfe, 0xf2, 0xe3,
+	0x6d, 0x56, 0x97, 0xa0, 0xba, 0xc2, 0x18, 0x68, 0x42, 0xc4, 0xd6, 0xca, 0xb0, 0x3c, 0x65, 0x13,
+	0xce, 0x75, 0xbe, 0x3f, 0x85, 0xa5, 0x89, 0x75, 0x3e, 0x17, 0x01, 0x85, 0x85, 0xe4, 0x62, 0xa2,
+	0x37, 0x00, 0x64, 0xcf, 0x8c, 0x7b, 0xf6, 0x83, 0xfb, 0x92, 0x22, 0x6f, 0x64, 0x85, 0xa4, 0x2c,
+	0x04, 0x43, 0x35, 0xbb, 0xf7, 0xf0, 0xf6, 0x0b, 0xc9, 0xa6, 0xd4, 0x4d, 0x21, 0x10, 0xa5, 0xb8,
+	0x54, 0xfb, 0xbe, 0xf5, 0xe0, 0xbe, 0x4b, 0xd4, 0xf9, 0xca, 0x09, 0x59, 0x23, 0x14, 0xe9, 0x7f,
+	0x9f, 0x85, 0x95, 0x69, 0x77, 0x92, 0xe8, 0x0e, 0xcc, 0x47, 0x17, 0x3f, 0x61, 0x97, 0x77, 0x35,
+	0x5e, 0xcf, 0xd1, 0x6b, 0xc7, 0x08, 0x87, 0x0e, 0x60, 0x21, 0xba, 0x84, 0xe2, 0x03, 0x3f, 0x6a,
+	0xe3, 0xde, 0x3f, 0xfd, 0xf2, 0x33, 0x12, 0xb6, 0x06, 0x3e, 0x31, 0x72, 0x4e, 0xfc, 0x82, 0x3e,
+	0x85, 0x7c, 0x97, 0x73, 0x9f, 0x99, 0x51, 0xc2, 0x5a, 0x38, 0x33, 0x61, 0x2d, 0x48, 0x83, 0x8a,
+	0xca, 0x5a, 0x9b, 0x50, 0x74, 0x29, 0xb6, 0xcd, 0x36, 0x76, 0xb1, 0x67, 0x91, 0xc0, 0x74, 0x7c,
+	0xd9, 0xdd, 0x64, 0x8d, 0x82, 0x90, 0xef, 0x28, 0x71, 0xd5, 0x47, 0x8f, 0xe1, 0xfa, 0x28, 0x32,
+	0xf4, 0xef, 0xe8, 0xa6, 0xa5, 0xb0, 0x91, 0xde, 0xcc, 0x1a, 0x5a, 0xd2, 0xa8, 0x29, 0x01, 0xea,
+	0xca, 0xe5, 0x26, 0x2c, 0x0c, 0x6f, 0x5a, 0x1d, 0x9f, 0x69, 0x8b, 0x12, 0x9f, 0x8b, 0x64, 0x55,
+	0x9f, 0xa1, 0x8f, 0x21, 0xc7, 0xec, 0x78, 0x2a, 0xc5, 0x33, 0xa7, 0x02, 0xcc, 0x1e, 0x4e, 0xe4,
+	0x3b, 0x58, 0x8d, 0xb8, 0x46, 0x7a, 0x5b, 0x79, 0x05, 0x54, 0xb8, 0x7b, 0xff, 0x8c, 0x15, 0xae,
+	0x4c, 0xb3, 0x35, 0xa6, 0x53, 0xea, 0x9b, 0x90, 0x4b, 0xec, 0x88, 0xc8, 0x26, 0xd5, 0x66, 0xab,
+	0x5a, 0x0f, 0x2f, 0xd2, 0xbe, 0x7c, 0xba, 0x53, 0x31, 0x0e, 0x2b, 0xad, 0x4a, 0xb3, 0x98, 0xd2,
+	0x1f, 0xc2, 0xea, 0x54, 0xe6, 0xd1, 0x04, 0x55, 0xab, 0xef, 0x96, 0x6b, 0xe1, 0xb5, 0xdb, 0x6e,
+	0xed, 0x69, 0xb3, 0x55, 0x31, 0x8a, 0x33, 0xfa, 0x13, 0x58, 0xae, 0xfc, 0x28, 0x3e, 0xa7, 0x0f,
+	0x60, 0xad, 0x36, 0xdc, 0x16, 0xc7, 0xeb, 0xfc, 0x60, 0x27, 0x9e, 0xe6, 0x34, 0xb9, 0x69, 0x4e,
+	0xa3, 0x7f, 0x0b, 0xf9, 0xd1, 0xd1, 0x2e, 0x5c, 0xfc, 0x22, 0x98, 0x95, 0x07, 0x26, 0x8c, 0x74,
+	0xf2, 0x59, 0xff, 0x45, 0x0a, 0x0a, 0xa3, 0x57, 0xf3, 0x22, 0x5f, 0xf6, 0xb0, 0xe7, 0x1c, 0x11,
+	0xc6, 0x93, 0xff, 0x82, 0x16, 0x22, 0xa1, 0xfc, 0x0b, 0x74, 0x7a, 0xa9, 0xb6, 0x05, 0xb3, 0x32,
+	0x93, 0xda, 0xf2, 0x03, 0x4f, 0x0d, 0x91, 0x12, 0xa8, 0xfb, 0x50, 0xa8, 0x32, 0xee, 0xd0, 0xe1,
+	0xc5, 0x2b, 0xfa, 0x2f, 0x45, 0x91, 0x1e, 0x5f, 0xd0, 0x91, 0xff, 0x57, 0xa1, 0x39, 0xba, 0x33,
+	0xbc, 0xca, 0x9d, 0x55, 0xd5, 0xc1, 0xab, 0xae, 0x72, 0x87, 0x77, 0xb8, 0xff, 0x48, 0x41, 0x76,
+	0x98, 0x60, 0xc4, 0x9a, 0xba, 0x4e, 0xcf, 0xe1, 0xa2, 0x2e, 0x49, 0x8f, 0xae, 0xe9, 0x10, 0x54,
+	0xaa, 0x49, 0x44, 0x98, 0xd5, 0x14, 0x1c, 0x3d, 0x86, 0x4c, 0x40, 0x7e, 0xd6, 0x27, 0x8c, 0x33,
+	0x6d, 0x46, 0x9a, 0xde, 0x9c, 0x66, 0x6a, 0x28, 0x4c, 0x68, 0x3c, 0x34, 0x59, 0x7b, 0x08, 0xb9,
+	0x04, 0xeb, 0xb9, 0x62, 0xf8, 0xc7, 0x90, 0x1f, 0x61, 0x3d, 0x57, 0xa1, 0xf7, 0xc7, 0x14, 0x5c,
+	0x7d, 0x45, 0xd5, 0x21, 0xf7, 0xdf, 0xf1, 0x4c, 0x7c, 0x82, 0x1d, 0x57, 0x04, 0x06, 0x95, 0x0f,
+	0x16, 0x7a, 0x8e, 0x57, 0x8e, 0x64, 0xa8, 0x0e, 0x99, 0x61, 0x79, 0x10, 0x56, 0x64, 0xf7, 0x12,
+	0xf5, 0xd2, 0xf0, 0xa7, 0x66, 0xc9, 0x3f, 0xee, 0x08, 0x01, 0x2b, 0xf5, 0x08, 0xc7, 0xa2, 0x74,
+	0xaa, 0xe1, 0x36, 0x71, 0xa3, 0xcc, 0x65, 0x0c, 0x49, 0x44, 0x27, 0xdf, 0xc3, 0x2f, 0xcc, 0xbe,
+	0x17, 0x8f, 0x1b, 0xe6, 0x91, 0x42, 0x0f, 0xbf, 0x78, 0x1a, 0x4b, 0xf5, 0x3f, 0xcd, 0xc0, 0xd2,
+	0x84, 0x1b, 0xa1, 0x3d, 0x00, 0x1f, 0x73, 0xab, 0x1b, 0xa6, 0x84, 0x94, 0x0c, 0x58, 0x6f, 0x9f,
+	0xe2, 0x77, 0xa5, 0x86, 0x40, 0xcb, 0x6c, 0x90, 0xf5, 0xa3, 0x47, 0x54, 0x82, 0x19, 0xea, 0xab,
+	0xdf, 0x01, 0xeb, 0xa7, 0x59, 0xd7, 0x7d, 0x63, 0x86, 0xfa, 0xe2, 0x44, 0x1d, 0x3b, 0x9e, 0xad,
+	0x7e, 0x86, 0xca, 0x67, 0xd1, 0x62, 0x62, 0xdf, 0x31, 0xa3, 0x9f, 0x0e, 0xe1, 0x5f, 0x51, 0xc0,
+	0xbe, 0xa3, 0xfe, 0x4b, 0xa0, 0xdb, 0x90, 0x11, 0x8b, 0x61, 0x63, 0x8e, 0x55, 0x29, 0xb8, 0x92,
+	0xf8, 0x4d, 0x26, 0xc7, 0x39, 0x20, 0x1c, 0x1b, 0x43, 0x94, 0x7e, 0x0b, 0xb2, 0xc3, 0xcf, 0x45,
+	0x79, 0xc8, 0x36, 0x5b, 0x46, 0xb9, 0x55, 0xd9, 0xaf, 0xee, 0x16, 0x2f, 0x89, 0x28, 0xf8, 0x45,
+	0xb3, 0x7e, 0x58, 0x4c, 0xe9, 0xb7, 0x60, 0xa6, 0xee, 0xa3, 0x79, 0x48, 0x97, 0xf7, 0xf6, 0xc2,
+	0xcb, 0x84, 0xbd, 0x4a, 0xad, 0xd2, 0xaa, 0x14, 0x53, 0x22, 0x40, 0x36, 0xca, 0xad, 0xdd, 0x27,
+	0xc5, 0x19, 0xfd, 0x13, 0x80, 0x78, 0x0c, 0x31, 0x01, 0x59, 0xfc, 0x84, 0x3f, 0x65, 0xe5, 0xf3,
+	0xe8, 0xd1, 0xbe, 0x3c, 0x76, 0xb4, 0xf5, 0x7f, 0xcd, 0x41, 0xa6, 0x45, 0x18, 0x17, 0x65, 0x1a,
+	0xfa, 0xef, 0x64, 0x4b, 0x75, 0x3d, 0x79, 0x63, 0x19, 0x02, 0xc6, 0xba, 0xa8, 0x91, 0x06, 0xa0,
+	0x71, 0xd1, 0x06, 0xe0, 0xab, 0xf3, 0x36, 0x00, 0xc9, 0xda, 0xfe, 0xd9, 0x4f, 0x5c, 0xdb, 0x7f,
+	0xfd, 0x83, 0x6a, 0xfb, 0xfa, 0x64, 0x6d, 0xff, 0x8d, 0x5c, 0xdb, 0x77, 0xa6, 0xac, 0xed, 0xeb,
+	0x94, 0xf2, 0xd5, 0xf1, 0x52, 0xfe, 0x5b, 0x49, 0x77, 0x6b, 0x0a, 0xdd, 0x59, 0x95, 0xfb, 0x97,
+	0xb0, 0x3c, 0xa5, 0x0c, 0x7e, 0x9d, 0x2a, 0x78, 0xf2, 0xb8, 0x5e, 0xb8, 0xb3, 0xfd, 0x0f, 0x28,
+	0x9e, 0x77, 0x8a, 0x7f, 0x7e, 0xb9, 0x9e, 0xfa, 0xcb, 0xcb, 0xf5, 0xd4, 0x5f, 0x5f, 0xae, 0xa7,
+	0x7e, 0xfb, 0xb7, 0xf5, 0x4b, 0xed, 0xcb, 0xb2, 0xb0, 0xba, 0xf7, 0xef, 0x00, 0x00, 0x00, 0xff,
+	0xff, 0x6b, 0xbc, 0xe6, 0xb2, 0x4c, 0x22, 0x00, 0x00,
 }
 
 func (m *InstallerSpec) Marshal() (dAtA []byte, err error) {
@@ -2968,105 +2731,77 @@ func (m *InstallerSpec) MarshalTo(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.InstallPackagePath != nil {
+	if len(m.InstallPackagePath) > 0 {
 		dAtA[i] = 0xa
 		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(*m.InstallPackagePath)))
-		i += copy(dAtA[i:], *m.InstallPackagePath)
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(m.InstallPackagePath)))
+		i += copy(dAtA[i:], m.InstallPackagePath)
 	}
-	if m.ControllerName != nil {
-		dAtA[i] = 0x12
-		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(*m.ControllerName)))
-		i += copy(dAtA[i:], *m.ControllerName)
-	}
-	if m.Hub != nil {
+	if len(m.Hub) > 0 {
 		dAtA[i] = 0x1a
 		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(*m.Hub)))
-		i += copy(dAtA[i:], *m.Hub)
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(m.Hub)))
+		i += copy(dAtA[i:], m.Hub)
 	}
-	if m.Tag != nil {
+	if len(m.Tag) > 0 {
 		dAtA[i] = 0x22
 		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(*m.Tag)))
-		i += copy(dAtA[i:], *m.Tag)
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(m.Tag)))
+		i += copy(dAtA[i:], m.Tag)
 	}
-	if m.DefaultNamespacePrefix != nil {
+	if len(m.DefaultNamespacePrefix) > 0 {
 		dAtA[i] = 0x2a
 		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(*m.DefaultNamespacePrefix)))
-		i += copy(dAtA[i:], *m.DefaultNamespacePrefix)
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(m.DefaultNamespacePrefix)))
+		i += copy(dAtA[i:], m.DefaultNamespacePrefix)
 	}
-	if m.RemoteClusterConfig != nil {
-		dAtA[i] = 0x52
+	if m.TrafficManagement != nil {
+		dAtA[i] = 0xca
 		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.RemoteClusterConfig.Size()))
-		n1, err := m.RemoteClusterConfig.MarshalTo(dAtA[i:])
+		dAtA[i] = 0x1
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.TrafficManagement.Size()))
+		n1, err := m.TrafficManagement.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
 		i += n1
 	}
-	if m.TrafficManagement != nil {
-		dAtA[i] = 0xa2
+	if m.PolicyTelemetry != nil {
+		dAtA[i] = 0xd2
 		i++
 		dAtA[i] = 0x1
 		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.TrafficManagement.Size()))
-		n2, err := m.TrafficManagement.MarshalTo(dAtA[i:])
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.PolicyTelemetry.Size()))
+		n2, err := m.PolicyTelemetry.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
 		i += n2
 	}
-	if m.Policy != nil {
-		dAtA[i] = 0xaa
+	if m.Security != nil {
+		dAtA[i] = 0xe2
 		i++
 		dAtA[i] = 0x1
 		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Policy.Size()))
-		n3, err := m.Policy.MarshalTo(dAtA[i:])
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Security.Size()))
+		n3, err := m.Security.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
 		i += n3
 	}
-	if m.Telemetry != nil {
-		dAtA[i] = 0xb2
-		i++
-		dAtA[i] = 0x1
-		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Telemetry.Size()))
-		n4, err := m.Telemetry.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n4
-	}
-	if m.Security != nil {
-		dAtA[i] = 0xba
-		i++
-		dAtA[i] = 0x1
-		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Security.Size()))
-		n5, err := m.Security.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n5
-	}
 	if m.ConfigManagement != nil {
-		dAtA[i] = 0xc2
+		dAtA[i] = 0xea
 		i++
 		dAtA[i] = 0x1
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.ConfigManagement.Size()))
-		n6, err := m.ConfigManagement.MarshalTo(dAtA[i:])
+		n4, err := m.ConfigManagement.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n6
+		i += n4
 	}
 	if len(m.IngressGateway) > 0 {
 		for _, msg := range m.IngressGateway {
@@ -3110,6 +2845,18 @@ func (m *InstallerSpec) MarshalTo(dAtA []byte) (int, error) {
 			i += n
 		}
 	}
+	if m.K8SDefaults != nil {
+		dAtA[i] = 0x82
+		i++
+		dAtA[i] = 0x5
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.K8SDefaults.Size()))
+		n5, err := m.K8SDefaults.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n5
+	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
 	}
@@ -3131,17 +2878,69 @@ func (m *InstallerStatus) MarshalTo(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.ProxyControl != nil {
+	if m.TrafficManagement != nil {
 		dAtA[i] = 0xa
 		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(*m.ProxyControl)))
-		i += copy(dAtA[i:], *m.ProxyControl)
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.TrafficManagement.Size()))
+		n6, err := m.TrafficManagement.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n6
 	}
-	if m.SidecarInjector != nil {
+	if m.PolicyTelemetry != nil {
 		dAtA[i] = 0x12
 		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(*m.SidecarInjector)))
-		i += copy(dAtA[i:], *m.SidecarInjector)
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.PolicyTelemetry.Size()))
+		n7, err := m.PolicyTelemetry.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n7
+	}
+	if m.Security != nil {
+		dAtA[i] = 0x1a
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Security.Size()))
+		n8, err := m.Security.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n8
+	}
+	if m.ConfigManagement != nil {
+		dAtA[i] = 0x22
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.ConfigManagement.Size()))
+		n9, err := m.ConfigManagement.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n9
+	}
+	if len(m.IngressGateway) > 0 {
+		for _, msg := range m.IngressGateway {
+			dAtA[i] = 0x2a
+			i++
+			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(msg.Size()))
+			n, err := msg.MarshalTo(dAtA[i:])
+			if err != nil {
+				return 0, err
+			}
+			i += n
+		}
+	}
+	if len(m.EgressGateway) > 0 {
+		for _, msg := range m.EgressGateway {
+			dAtA[i] = 0x32
+			i++
+			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(msg.Size()))
+			n, err := msg.MarshalTo(dAtA[i:])
+			if err != nil {
+				return 0, err
+			}
+			i += n
+		}
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
@@ -3149,7 +2948,7 @@ func (m *InstallerStatus) MarshalTo(dAtA []byte) (int, error) {
 	return i, nil
 }
 
-func (m *RemoteClusterConfig) Marshal() (dAtA []byte, err error) {
+func (m *InstallerStatus_VersionStatus) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalTo(dAtA)
@@ -3159,20 +2958,21 @@ func (m *RemoteClusterConfig) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *RemoteClusterConfig) MarshalTo(dAtA []byte) (int, error) {
+func (m *InstallerStatus_VersionStatus) MarshalTo(dAtA []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
 	_ = l
-	if m.Enabled != nil {
-		dAtA[i] = 0x8
+	if len(m.Version) > 0 {
+		dAtA[i] = 0xa
 		i++
-		if *m.Enabled {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
-		}
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(m.Version)))
+		i += copy(dAtA[i:], m.Version)
+	}
+	if m.Status != 0 {
+		dAtA[i] = 0x10
 		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Status))
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
@@ -3196,957 +2996,188 @@ func (m *TrafficManagementConfig) MarshalTo(dAtA []byte) (int, error) {
 	var l int
 	_ = l
 	if m.Enabled != nil {
-		dAtA[i] = 0x8
+		dAtA[i] = 0xa
 		i++
-		if *m.Enabled {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
-		}
-		i++
-	}
-	if m.Namespace != nil {
-		dAtA[i] = 0x12
-		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(*m.Namespace)))
-		i += copy(dAtA[i:], *m.Namespace)
-	}
-	if m.AutoInjection != nil {
-		dAtA[i] = 0x18
-		i++
-		if *m.AutoInjection {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
-		}
-		i++
-	}
-	if m.PilotConfig != nil {
-		dAtA[i] = 0x22
-		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.PilotConfig.Size()))
-		n7, err := m.PilotConfig.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n7
-	}
-	if m.ProxyConfig != nil {
-		dAtA[i] = 0x2a
-		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.ProxyConfig.Size()))
-		n8, err := m.ProxyConfig.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n8
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	return i, nil
-}
-
-func (m *PilotConfig) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *PilotConfig) MarshalTo(dAtA []byte) (int, error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	if m.Debug != nil {
-		dAtA[i] = 0x8
-		i++
-		if *m.Debug {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
-		}
-		i++
-	}
-	if m.Sidecar != nil {
-		dAtA[i] = 0x50
-		i++
-		if *m.Sidecar {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
-		}
-		i++
-	}
-	if m.TraceSampling != nil {
-		dAtA[i] = 0x5d
-		i++
-		encoding_binary.LittleEndian.PutUint32(dAtA[i:], uint32(math.Float32bits(float32(*m.TraceSampling))))
-		i += 4
-	}
-	if m.KeepaliveMaxServerConnectionAge != nil {
-		dAtA[i] = 0x62
-		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(*m.KeepaliveMaxServerConnectionAge)))
-		i += copy(dAtA[i:], *m.KeepaliveMaxServerConnectionAge)
-	}
-	if len(m.AdditionalArgs) > 0 {
-		for k, _ := range m.AdditionalArgs {
-			dAtA[i] = 0x92
-			i++
-			dAtA[i] = 0x3
-			i++
-			v := m.AdditionalArgs[k]
-			mapSize := 1 + len(k) + sovIstioinstallerTypes(uint64(len(k))) + 1 + len(v) + sovIstioinstallerTypes(uint64(len(v)))
-			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(mapSize))
-			dAtA[i] = 0xa
-			i++
-			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(k)))
-			i += copy(dAtA[i:], k)
-			dAtA[i] = 0x12
-			i++
-			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(v)))
-			i += copy(dAtA[i:], v)
-		}
-	}
-	if len(m.Env) > 0 {
-		for k, _ := range m.Env {
-			dAtA[i] = 0xe2
-			i++
-			dAtA[i] = 0x3
-			i++
-			v := m.Env[k]
-			mapSize := 1 + len(k) + sovIstioinstallerTypes(uint64(len(k))) + 1 + len(v) + sovIstioinstallerTypes(uint64(len(v)))
-			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(mapSize))
-			dAtA[i] = 0xa
-			i++
-			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(k)))
-			i += copy(dAtA[i:], k)
-			dAtA[i] = 0x12
-			i++
-			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(v)))
-			i += copy(dAtA[i:], v)
-		}
-	}
-	if m.Resources != nil {
-		dAtA[i] = 0x82
-		i++
-		dAtA[i] = 0x5
-		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Resources.Size()))
-		n9, err := m.Resources.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n9
-	}
-	if m.ReplicaCount != nil {
-		dAtA[i] = 0xa8
-		i++
-		dAtA[i] = 0x5
-		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(*m.ReplicaCount))
-	}
-	if m.HpaSpec != nil {
-		dAtA[i] = 0xb2
-		i++
-		dAtA[i] = 0x5
-		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.HpaSpec.Size()))
-		n10, err := m.HpaSpec.MarshalTo(dAtA[i:])
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Enabled.Size()))
+		n10, err := m.Enabled.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
 		i += n10
 	}
-	if m.PodDisruptionBudget != nil {
-		dAtA[i] = 0xba
+	if len(m.Namespace) > 0 {
+		dAtA[i] = 0x12
 		i++
-		dAtA[i] = 0x5
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(m.Namespace)))
+		i += copy(dAtA[i:], m.Namespace)
+	}
+	if len(m.IncludeIpRanges) > 0 {
+		dAtA[i] = 0x82
 		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.PodDisruptionBudget.Size()))
-		n11, err := m.PodDisruptionBudget.MarshalTo(dAtA[i:])
+		dAtA[i] = 0x1
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(m.IncludeIpRanges)))
+		i += copy(dAtA[i:], m.IncludeIpRanges)
+	}
+	if len(m.ExcludeIpRanges) > 0 {
+		dAtA[i] = 0x8a
+		i++
+		dAtA[i] = 0x1
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(m.ExcludeIpRanges)))
+		i += copy(dAtA[i:], m.ExcludeIpRanges)
+	}
+	if len(m.IncludeInboundPorts) > 0 {
+		dAtA[i] = 0x92
+		i++
+		dAtA[i] = 0x1
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(m.IncludeInboundPorts)))
+		i += copy(dAtA[i:], m.IncludeInboundPorts)
+	}
+	if len(m.ExcludeInboundPorts) > 0 {
+		dAtA[i] = 0x9a
+		i++
+		dAtA[i] = 0x1
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(m.ExcludeInboundPorts)))
+		i += copy(dAtA[i:], m.ExcludeInboundPorts)
+	}
+	if len(m.ClusterDomain) > 0 {
+		dAtA[i] = 0xc2
+		i++
+		dAtA[i] = 0x1
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(m.ClusterDomain)))
+		i += copy(dAtA[i:], m.ClusterDomain)
+	}
+	if len(m.PodDnsSearchNamespaces) > 0 {
+		dAtA[i] = 0xca
+		i++
+		dAtA[i] = 0x1
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(m.PodDnsSearchNamespaces)))
+		i += copy(dAtA[i:], m.PodDnsSearchNamespaces)
+	}
+	if m.EnableAutoInjection != nil {
+		dAtA[i] = 0xd2
+		i++
+		dAtA[i] = 0x1
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.EnableAutoInjection.Size()))
+		n11, err := m.EnableAutoInjection.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
 		i += n11
 	}
-	if len(m.NodeSelector) > 0 {
-		for k, _ := range m.NodeSelector {
-			dAtA[i] = 0xe2
-			i++
-			dAtA[i] = 0x5
-			i++
-			v := m.NodeSelector[k]
-			mapSize := 1 + len(k) + sovIstioinstallerTypes(uint64(len(k))) + 1 + len(v) + sovIstioinstallerTypes(uint64(len(v)))
-			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(mapSize))
-			dAtA[i] = 0xa
-			i++
-			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(k)))
-			i += copy(dAtA[i:], k)
-			dAtA[i] = 0x12
-			i++
-			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(v)))
-			i += copy(dAtA[i:], v)
-		}
-	}
-	if len(m.ResourceOverride) > 0 {
-		for _, msg := range m.ResourceOverride {
-			dAtA[i] = 0xa2
-			i++
-			dAtA[i] = 0x6
-			i++
-			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(msg.Size()))
-			n, err := msg.MarshalTo(dAtA[i:])
-			if err != nil {
-				return 0, err
-			}
-			i += n
-		}
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	return i, nil
-}
-
-func (m *ProxyConfig) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *ProxyConfig) MarshalTo(dAtA []byte) (int, error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	if m.Debug != nil {
-		dAtA[i] = 0x8
-		i++
-		if *m.Debug {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
-		}
-		i++
-	}
-	if m.Privileged != nil {
-		dAtA[i] = 0x50
-		i++
-		if *m.Privileged {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
-		}
-		i++
-	}
-	if m.EnableCoredump != nil {
-		dAtA[i] = 0x58
-		i++
-		if *m.EnableCoredump {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
-		}
-		i++
-	}
-	if m.InterceptionMode != nil {
-		dAtA[i] = 0x60
-		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(*m.InterceptionMode))
-	}
-	if m.StatusPort != nil {
-		dAtA[i] = 0x68
-		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(*m.StatusPort))
-	}
-	if m.ImagePullPolicy != nil {
-		dAtA[i] = 0x72
-		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(*m.ImagePullPolicy)))
-		i += copy(dAtA[i:], *m.ImagePullPolicy)
-	}
-	if m.ProxyInitImage != nil {
-		dAtA[i] = 0x7a
-		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(*m.ProxyInitImage)))
-		i += copy(dAtA[i:], *m.ProxyInitImage)
-	}
-	if m.IncludeIpRanges != nil {
-		dAtA[i] = 0x82
+	if m.EnableNamespacesByDefault != nil {
+		dAtA[i] = 0xda
 		i++
 		dAtA[i] = 0x1
 		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(*m.IncludeIpRanges)))
-		i += copy(dAtA[i:], *m.IncludeIpRanges)
-	}
-	if m.ExcludeIpRanges != nil {
-		dAtA[i] = 0x8a
-		i++
-		dAtA[i] = 0x1
-		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(*m.ExcludeIpRanges)))
-		i += copy(dAtA[i:], *m.ExcludeIpRanges)
-	}
-	if m.IncludeInboundPorts != nil {
-		dAtA[i] = 0x92
-		i++
-		dAtA[i] = 0x1
-		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(*m.IncludeInboundPorts)))
-		i += copy(dAtA[i:], *m.IncludeInboundPorts)
-	}
-	if m.ExcludeInboundPorts != nil {
-		dAtA[i] = 0x9a
-		i++
-		dAtA[i] = 0x1
-		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(*m.ExcludeInboundPorts)))
-		i += copy(dAtA[i:], *m.ExcludeInboundPorts)
-	}
-	if m.ConnectTimeout != nil {
-		dAtA[i] = 0xa2
-		i++
-		dAtA[i] = 0x1
-		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(*m.ConnectTimeout)))
-		i += copy(dAtA[i:], *m.ConnectTimeout)
-	}
-	if m.DrainDuration != nil {
-		dAtA[i] = 0xaa
-		i++
-		dAtA[i] = 0x1
-		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(*m.DrainDuration)))
-		i += copy(dAtA[i:], *m.DrainDuration)
-	}
-	if m.ParentShutdownDuration != nil {
-		dAtA[i] = 0xb2
-		i++
-		dAtA[i] = 0x1
-		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(*m.ParentShutdownDuration)))
-		i += copy(dAtA[i:], *m.ParentShutdownDuration)
-	}
-	if m.Concurrency != nil {
-		dAtA[i] = 0xb8
-		i++
-		dAtA[i] = 0x1
-		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(*m.Concurrency))
-	}
-	if m.ClusterDomain != nil {
-		dAtA[i] = 0xc2
-		i++
-		dAtA[i] = 0x1
-		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(*m.ClusterDomain)))
-		i += copy(dAtA[i:], *m.ClusterDomain)
-	}
-	if m.PodDnsSearchNamespaces != nil {
-		dAtA[i] = 0xca
-		i++
-		dAtA[i] = 0x1
-		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(*m.PodDnsSearchNamespaces)))
-		i += copy(dAtA[i:], *m.PodDnsSearchNamespaces)
-	}
-	if m.Lightstep != nil {
-		dAtA[i] = 0xf2
-		i++
-		dAtA[i] = 0x1
-		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Lightstep.Size()))
-		n12, err := m.Lightstep.MarshalTo(dAtA[i:])
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.EnableNamespacesByDefault.Size()))
+		n12, err := m.EnableNamespacesByDefault.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
 		i += n12
 	}
-	if m.Zipkin != nil {
-		dAtA[i] = 0xfa
+	if m.Pilot != nil {
+		dAtA[i] = 0xf2
 		i++
 		dAtA[i] = 0x1
 		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Zipkin.Size()))
-		n13, err := m.Zipkin.MarshalTo(dAtA[i:])
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Pilot.Size()))
+		n13, err := m.Pilot.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
 		i += n13
 	}
-	if m.Sds != nil {
-		dAtA[i] = 0xc2
+	if m.Proxy != nil {
+		dAtA[i] = 0xfa
 		i++
-		dAtA[i] = 0x2
+		dAtA[i] = 0x1
 		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Sds.Size()))
-		n14, err := m.Sds.MarshalTo(dAtA[i:])
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Proxy.Size()))
+		n14, err := m.Proxy.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
 		i += n14
 	}
-	if len(m.AdditionalArgs) > 0 {
-		for k, _ := range m.AdditionalArgs {
-			dAtA[i] = 0x92
-			i++
-			dAtA[i] = 0x3
-			i++
-			v := m.AdditionalArgs[k]
-			mapSize := 1 + len(k) + sovIstioinstallerTypes(uint64(len(k))) + 1 + len(v) + sovIstioinstallerTypes(uint64(len(v)))
-			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(mapSize))
-			dAtA[i] = 0xa
-			i++
-			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(k)))
-			i += copy(dAtA[i:], k)
-			dAtA[i] = 0x12
-			i++
-			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(v)))
-			i += copy(dAtA[i:], v)
-		}
-	}
-	if len(m.Env) > 0 {
-		for k, _ := range m.Env {
-			dAtA[i] = 0xe2
-			i++
-			dAtA[i] = 0x3
-			i++
-			v := m.Env[k]
-			mapSize := 1 + len(k) + sovIstioinstallerTypes(uint64(len(k))) + 1 + len(v) + sovIstioinstallerTypes(uint64(len(v)))
-			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(mapSize))
-			dAtA[i] = 0xa
-			i++
-			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(k)))
-			i += copy(dAtA[i:], k)
-			dAtA[i] = 0x12
-			i++
-			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(v)))
-			i += copy(dAtA[i:], v)
-		}
-	}
-	if m.Resources != nil {
+	if m.SidecarInjector != nil {
 		dAtA[i] = 0x82
 		i++
-		dAtA[i] = 0x5
+		dAtA[i] = 0x2
 		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Resources.Size()))
-		n15, err := m.Resources.MarshalTo(dAtA[i:])
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.SidecarInjector.Size()))
+		n15, err := m.SidecarInjector.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
 		i += n15
 	}
-	if m.ReadinessProbe != nil {
-		dAtA[i] = 0x8a
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	return i, nil
+}
+
+func (m *PolicyTelemetryConfig) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *PolicyTelemetryConfig) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if m.PolicyCheckFailOpen != nil {
+		dAtA[i] = 0x52
 		i++
-		dAtA[i] = 0x5
-		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.ReadinessProbe.Size()))
-		n16, err := m.ReadinessProbe.MarshalTo(dAtA[i:])
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.PolicyCheckFailOpen.Size()))
+		n16, err := m.PolicyCheckFailOpen.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
 		i += n16
 	}
-	if len(m.ResourceOverride) > 0 {
-		for _, msg := range m.ResourceOverride {
-			dAtA[i] = 0xa2
-			i++
-			dAtA[i] = 0x6
-			i++
-			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(msg.Size()))
-			n, err := msg.MarshalTo(dAtA[i:])
-			if err != nil {
-				return 0, err
-			}
-			i += n
-		}
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	return i, nil
-}
-
-func (m *ProxyConfig_LightstepConfig) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *ProxyConfig_LightstepConfig) MarshalTo(dAtA []byte) (int, error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	if m.Address != nil {
-		dAtA[i] = 0xa
+	if m.OutboundTrafficPolicyMode != 0 {
+		dAtA[i] = 0x58
 		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(*m.Address)))
-		i += copy(dAtA[i:], *m.Address)
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.OutboundTrafficPolicyMode))
 	}
-	if m.AccessToken != nil {
-		dAtA[i] = 0x12
+	if m.Policy != nil {
+		dAtA[i] = 0x92
 		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(*m.AccessToken)))
-		i += copy(dAtA[i:], *m.AccessToken)
-	}
-	if m.CaCertPath != nil {
-		dAtA[i] = 0x1a
+		dAtA[i] = 0x3
 		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(*m.CaCertPath)))
-		i += copy(dAtA[i:], *m.CaCertPath)
-	}
-	if m.Secure != nil {
-		dAtA[i] = 0x20
-		i++
-		if *m.Secure {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
-		}
-		i++
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	return i, nil
-}
-
-func (m *ProxyConfig_ZipkinConfig) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *ProxyConfig_ZipkinConfig) MarshalTo(dAtA []byte) (int, error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	if m.Address != nil {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(*m.Address)))
-		i += copy(dAtA[i:], *m.Address)
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	return i, nil
-}
-
-func (m *PolicyConfig) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *PolicyConfig) MarshalTo(dAtA []byte) (int, error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	if m.Enabled != nil {
-		dAtA[i] = 0x8
-		i++
-		if *m.Enabled {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
-		}
-		i++
-	}
-	if m.Namespace != nil {
-		dAtA[i] = 0x12
-		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(*m.Namespace)))
-		i += copy(dAtA[i:], *m.Namespace)
-	}
-	if len(m.Env) > 0 {
-		for k, _ := range m.Env {
-			dAtA[i] = 0xe2
-			i++
-			dAtA[i] = 0x3
-			i++
-			v := m.Env[k]
-			mapSize := 1 + len(k) + sovIstioinstallerTypes(uint64(len(k))) + 1 + len(v) + sovIstioinstallerTypes(uint64(len(v)))
-			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(mapSize))
-			dAtA[i] = 0xa
-			i++
-			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(k)))
-			i += copy(dAtA[i:], k)
-			dAtA[i] = 0x12
-			i++
-			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(v)))
-			i += copy(dAtA[i:], v)
-		}
-	}
-	if m.Resources != nil {
-		dAtA[i] = 0x82
-		i++
-		dAtA[i] = 0x5
-		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Resources.Size()))
-		n17, err := m.Resources.MarshalTo(dAtA[i:])
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Policy.Size()))
+		n17, err := m.Policy.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
 		i += n17
 	}
-	if m.ReplicaCount != nil {
-		dAtA[i] = 0xa8
+	if m.Telemetry != nil {
+		dAtA[i] = 0x9a
 		i++
-		dAtA[i] = 0x5
+		dAtA[i] = 0x3
 		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(*m.ReplicaCount))
-	}
-	if m.HpaSpec != nil {
-		dAtA[i] = 0xb2
-		i++
-		dAtA[i] = 0x5
-		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.HpaSpec.Size()))
-		n18, err := m.HpaSpec.MarshalTo(dAtA[i:])
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Telemetry.Size()))
+		n18, err := m.Telemetry.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
 		i += n18
-	}
-	if m.PodDisruptionBudget != nil {
-		dAtA[i] = 0xba
-		i++
-		dAtA[i] = 0x5
-		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.PodDisruptionBudget.Size()))
-		n19, err := m.PodDisruptionBudget.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n19
-	}
-	if len(m.ResourceOverride) > 0 {
-		for _, msg := range m.ResourceOverride {
-			dAtA[i] = 0xa2
-			i++
-			dAtA[i] = 0x6
-			i++
-			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(msg.Size()))
-			n, err := msg.MarshalTo(dAtA[i:])
-			if err != nil {
-				return 0, err
-			}
-			i += n
-		}
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	return i, nil
-}
-
-func (m *TelemetryConfig) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *TelemetryConfig) MarshalTo(dAtA []byte) (int, error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	if m.Enabled != nil {
-		dAtA[i] = 0x8
-		i++
-		if *m.Enabled {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
-		}
-		i++
-	}
-	if m.Namespace != nil {
-		dAtA[i] = 0x12
-		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(*m.Namespace)))
-		i += copy(dAtA[i:], *m.Namespace)
-	}
-	if m.SessionAffinityEnabled != nil {
-		dAtA[i] = 0x50
-		i++
-		if *m.SessionAffinityEnabled {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
-		}
-		i++
-	}
-	if m.LoadSheddingMode != nil {
-		dAtA[i] = 0x58
-		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(*m.LoadSheddingMode))
-	}
-	if m.LoadSheddingLatencyThreshold != nil {
-		dAtA[i] = 0x62
-		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(*m.LoadSheddingLatencyThreshold)))
-		i += copy(dAtA[i:], *m.LoadSheddingLatencyThreshold)
-	}
-	if m.ReplicaCount != nil {
-		dAtA[i] = 0x80
-		i++
-		dAtA[i] = 0x5
-		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(*m.ReplicaCount))
-	}
-	if len(m.PodAnnotations) > 0 {
-		for k, _ := range m.PodAnnotations {
-			dAtA[i] = 0xd2
-			i++
-			dAtA[i] = 0x5
-			i++
-			v := m.PodAnnotations[k]
-			mapSize := 1 + len(k) + sovIstioinstallerTypes(uint64(len(k))) + 1 + len(v) + sovIstioinstallerTypes(uint64(len(v)))
-			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(mapSize))
-			dAtA[i] = 0xa
-			i++
-			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(k)))
-			i += copy(dAtA[i:], k)
-			dAtA[i] = 0x12
-			i++
-			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(v)))
-			i += copy(dAtA[i:], v)
-		}
-	}
-	if len(m.NodeSelector) > 0 {
-		for k, _ := range m.NodeSelector {
-			dAtA[i] = 0xe2
-			i++
-			dAtA[i] = 0x5
-			i++
-			v := m.NodeSelector[k]
-			mapSize := 1 + len(k) + sovIstioinstallerTypes(uint64(len(k))) + 1 + len(v) + sovIstioinstallerTypes(uint64(len(v)))
-			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(mapSize))
-			dAtA[i] = 0xa
-			i++
-			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(k)))
-			i += copy(dAtA[i:], k)
-			dAtA[i] = 0x12
-			i++
-			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(v)))
-			i += copy(dAtA[i:], v)
-		}
-	}
-	if len(m.ResourceOverride) > 0 {
-		for _, msg := range m.ResourceOverride {
-			dAtA[i] = 0xa2
-			i++
-			dAtA[i] = 0x6
-			i++
-			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(msg.Size()))
-			n, err := msg.MarshalTo(dAtA[i:])
-			if err != nil {
-				return 0, err
-			}
-			i += n
-		}
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	return i, nil
-}
-
-func (m *TelemetryConfig_Adapters) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *TelemetryConfig_Adapters) MarshalTo(dAtA []byte) (int, error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	if m.UseAdapter_CRDs != nil {
-		dAtA[i] = 0x8
-		i++
-		if *m.UseAdapter_CRDs {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
-		}
-		i++
-	}
-	if m.KubernetesEnvConfig != nil {
-		dAtA[i] = 0x12
-		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.KubernetesEnvConfig.Size()))
-		n20, err := m.KubernetesEnvConfig.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n20
-	}
-	if m.Stdio != nil {
-		dAtA[i] = 0x1a
-		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Stdio.Size()))
-		n21, err := m.Stdio.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n21
-	}
-	if m.Prometheus != nil {
-		dAtA[i] = 0x22
-		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Prometheus.Size()))
-		n22, err := m.Prometheus.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n22
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	return i, nil
-}
-
-func (m *TelemetryConfig_Adapters_KubernetesEnv) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *TelemetryConfig_Adapters_KubernetesEnv) MarshalTo(dAtA []byte) (int, error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	if m.Enabled != nil {
-		dAtA[i] = 0x8
-		i++
-		if *m.Enabled {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
-		}
-		i++
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	return i, nil
-}
-
-func (m *TelemetryConfig_Adapters_Stdio) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *TelemetryConfig_Adapters_Stdio) MarshalTo(dAtA []byte) (int, error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	if m.Enabled != nil {
-		dAtA[i] = 0x8
-		i++
-		if *m.Enabled {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
-		}
-		i++
-	}
-	if m.OutputAsJson != nil {
-		dAtA[i] = 0x10
-		i++
-		if *m.OutputAsJson {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
-		}
-		i++
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	return i, nil
-}
-
-func (m *TelemetryConfig_Adapters_Prometheus) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *TelemetryConfig_Adapters_Prometheus) MarshalTo(dAtA []byte) (int, error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	if m.Enabled != nil {
-		dAtA[i] = 0x8
-		i++
-		if *m.Enabled {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
-		}
-		i++
-	}
-	if m.MetricsExpiryDuration != nil {
-		dAtA[i] = 0x12
-		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(*m.MetricsExpiryDuration)))
-		i += copy(dAtA[i:], *m.MetricsExpiryDuration)
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
@@ -4170,86 +3201,82 @@ func (m *SecurityConfig) MarshalTo(dAtA []byte) (int, error) {
 	var l int
 	_ = l
 	if m.Enabled != nil {
-		dAtA[i] = 0x8
+		dAtA[i] = 0xa
 		i++
-		if *m.Enabled {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Enabled.Size()))
+		n19, err := m.Enabled.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
-		i++
+		i += n19
 	}
-	if m.Namespace != nil {
+	if len(m.Namespace) > 0 {
 		dAtA[i] = 0x12
 		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(*m.Namespace)))
-		i += copy(dAtA[i:], *m.Namespace)
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(m.Namespace)))
+		i += copy(dAtA[i:], m.Namespace)
 	}
-	if m.Image != nil {
-		dAtA[i] = 0x52
+	if m.ControlPlaneMtls {
+		dAtA[i] = 0x68
 		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(*m.Image)))
-		i += copy(dAtA[i:], *m.Image)
-	}
-	if m.SelfSigned != nil {
-		dAtA[i] = 0x58
-		i++
-		if *m.SelfSigned {
+		if m.ControlPlaneMtls {
 			dAtA[i] = 1
 		} else {
 			dAtA[i] = 0
 		}
 		i++
 	}
-	if m.CreateMeshPolicy != nil {
-		dAtA[i] = 0x60
+	if m.DataPlaneMtls {
+		dAtA[i] = 0x70
 		i++
-		if *m.CreateMeshPolicy {
+		if m.DataPlaneMtls {
 			dAtA[i] = 1
 		} else {
 			dAtA[i] = 0
 		}
 		i++
 	}
-	if m.ReplicaCount != nil {
-		dAtA[i] = 0x80
+	if len(m.TrustDomain) > 0 {
+		dAtA[i] = 0x7a
 		i++
-		dAtA[i] = 0x5
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(m.TrustDomain)))
+		i += copy(dAtA[i:], m.TrustDomain)
+	}
+	if m.Citadel != nil {
+		dAtA[i] = 0xa2
 		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(*m.ReplicaCount))
-	}
-	if len(m.NodeSelector) > 0 {
-		for k, _ := range m.NodeSelector {
-			dAtA[i] = 0xe2
-			i++
-			dAtA[i] = 0x5
-			i++
-			v := m.NodeSelector[k]
-			mapSize := 1 + len(k) + sovIstioinstallerTypes(uint64(len(k))) + 1 + len(v) + sovIstioinstallerTypes(uint64(len(v)))
-			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(mapSize))
-			dAtA[i] = 0xa
-			i++
-			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(k)))
-			i += copy(dAtA[i:], k)
-			dAtA[i] = 0x12
-			i++
-			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(v)))
-			i += copy(dAtA[i:], v)
+		dAtA[i] = 0x1
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Citadel.Size()))
+		n20, err := m.Citadel.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
+		i += n20
 	}
-	if len(m.ResourceOverride) > 0 {
-		for _, msg := range m.ResourceOverride {
-			dAtA[i] = 0xa2
-			i++
-			dAtA[i] = 0x6
-			i++
-			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(msg.Size()))
-			n, err := msg.MarshalTo(dAtA[i:])
-			if err != nil {
-				return 0, err
-			}
-			i += n
+	if m.CertManager != nil {
+		dAtA[i] = 0xaa
+		i++
+		dAtA[i] = 0x1
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.CertManager.Size()))
+		n21, err := m.CertManager.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
+		i += n21
+	}
+	if m.NodeAgent != nil {
+		dAtA[i] = 0xb2
+		i++
+		dAtA[i] = 0x1
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.NodeAgent.Size()))
+		n22, err := m.NodeAgent.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n22
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
@@ -4257,7 +3284,7 @@ func (m *SecurityConfig) MarshalTo(dAtA []byte) (int, error) {
 	return i, nil
 }
 
-func (m *SecurityConfig_CertManager) Marshal() (dAtA []byte, err error) {
+func (m *PilotComponentConfig) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalTo(dAtA)
@@ -4267,50 +3294,303 @@ func (m *SecurityConfig_CertManager) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *SecurityConfig_CertManager) MarshalTo(dAtA []byte) (int, error) {
+func (m *PilotComponentConfig) MarshalTo(dAtA []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
 	_ = l
-	if m.Enabled != nil {
-		dAtA[i] = 0x8
+	if m.Common != nil {
+		dAtA[i] = 0xa
 		i++
-		if *m.Enabled {
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Common.Size()))
+		n23, err := m.Common.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n23
+	}
+	if m.Sidecar {
+		dAtA[i] = 0x50
+		i++
+		if m.Sidecar {
 			dAtA[i] = 1
 		} else {
 			dAtA[i] = 0
 		}
 		i++
 	}
-	if m.Namespace != nil {
-		dAtA[i] = 0x12
-		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(*m.Namespace)))
-		i += copy(dAtA[i:], *m.Namespace)
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
 	}
-	if m.Hub != nil {
-		dAtA[i] = 0x1a
-		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(*m.Hub)))
-		i += copy(dAtA[i:], *m.Hub)
+	return i, nil
+}
+
+func (m *ProxyComponentConfig) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
 	}
-	if m.Tag != nil {
-		dAtA[i] = 0x22
+	return dAtA[:n], nil
+}
+
+func (m *ProxyComponentConfig) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if m.Common != nil {
+		dAtA[i] = 0xa
 		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(*m.Tag)))
-		i += copy(dAtA[i:], *m.Tag)
-	}
-	if m.Resources != nil {
-		dAtA[i] = 0x92
-		i++
-		dAtA[i] = 0x5
-		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Resources.Size()))
-		n23, err := m.Resources.MarshalTo(dAtA[i:])
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Common.Size()))
+		n24, err := m.Common.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n23
+		i += n24
+	}
+	if m.InterceptionMode != 0 {
+		dAtA[i] = 0x60
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.InterceptionMode))
+	}
+	if len(m.ConnectTimeout) > 0 {
+		dAtA[i] = 0xa2
+		i++
+		dAtA[i] = 0x1
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(m.ConnectTimeout)))
+		i += copy(dAtA[i:], m.ConnectTimeout)
+	}
+	if len(m.DrainDuration) > 0 {
+		dAtA[i] = 0xaa
+		i++
+		dAtA[i] = 0x1
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(m.DrainDuration)))
+		i += copy(dAtA[i:], m.DrainDuration)
+	}
+	if len(m.ParentShutdownDuration) > 0 {
+		dAtA[i] = 0xb2
+		i++
+		dAtA[i] = 0x1
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(m.ParentShutdownDuration)))
+		i += copy(dAtA[i:], m.ParentShutdownDuration)
+	}
+	if m.Concurrency != 0 {
+		dAtA[i] = 0xb8
+		i++
+		dAtA[i] = 0x1
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Concurrency))
+	}
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	return i, nil
+}
+
+func (m *SidecarInjectorComponentConfig) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *SidecarInjectorComponentConfig) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if m.Common != nil {
+		dAtA[i] = 0xa
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Common.Size()))
+		n25, err := m.Common.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n25
+	}
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	return i, nil
+}
+
+func (m *PolicyComponentConfig) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *PolicyComponentConfig) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if m.Common != nil {
+		dAtA[i] = 0xa
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Common.Size()))
+		n26, err := m.Common.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n26
+	}
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	return i, nil
+}
+
+func (m *TelemetryComponentConfig) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *TelemetryComponentConfig) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if m.Common != nil {
+		dAtA[i] = 0xa
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Common.Size()))
+		n27, err := m.Common.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n27
+	}
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	return i, nil
+}
+
+func (m *CitadelComponentConfig) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *CitadelComponentConfig) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if m.Common != nil {
+		dAtA[i] = 0xa
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Common.Size()))
+		n28, err := m.Common.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n28
+	}
+	if m.SelfSigned {
+		dAtA[i] = 0x58
+		i++
+		if m.SelfSigned {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i++
+	}
+	if m.CreateMeshPolicy {
+		dAtA[i] = 0x60
+		i++
+		if m.CreateMeshPolicy {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i++
+	}
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	return i, nil
+}
+
+func (m *CertManagerComponentConfig) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *CertManagerComponentConfig) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if m.Common != nil {
+		dAtA[i] = 0xa
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Common.Size()))
+		n29, err := m.Common.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n29
+	}
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	return i, nil
+}
+
+func (m *NodeAgentComponentConfig) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *NodeAgentComponentConfig) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if m.Common != nil {
+		dAtA[i] = 0xa
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Common.Size()))
+		n30, err := m.Common.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n30
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
@@ -4333,37 +3613,232 @@ func (m *ConfigManagementConfig) MarshalTo(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.Enabled != nil {
-		dAtA[i] = 0x8
+	if m.Common != nil {
+		dAtA[i] = 0xa
 		i++
-		if *m.Enabled {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Common.Size()))
+		n31, err := m.Common.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
-		i++
+		i += n31
 	}
-	if m.Namespace != nil {
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	return i, nil
+}
+
+func (m *CommonComponentConfig) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *CommonComponentConfig) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if m.Enabled != nil {
+		dAtA[i] = 0xa
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Enabled.Size()))
+		n32, err := m.Enabled.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n32
+	}
+	if len(m.Namespace) > 0 {
 		dAtA[i] = 0x12
 		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(*m.Namespace)))
-		i += copy(dAtA[i:], *m.Namespace)
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(m.Namespace)))
+		i += copy(dAtA[i:], m.Namespace)
 	}
-	if m.Image != nil {
-		dAtA[i] = 0x52
+	if m.Debug != 0 {
+		dAtA[i] = 0x18
 		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(*m.Image)))
-		i += copy(dAtA[i:], *m.Image)
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Debug))
 	}
-	if m.ReplicaCount != nil {
-		dAtA[i] = 0x80
+	if len(m.Env) > 0 {
+		for k, _ := range m.Env {
+			dAtA[i] = 0xe2
+			i++
+			dAtA[i] = 0x3
+			i++
+			v := m.Env[k]
+			mapSize := 1 + len(k) + sovIstioinstallerTypes(uint64(len(k))) + 1 + len(v) + sovIstioinstallerTypes(uint64(len(v)))
+			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(mapSize))
+			dAtA[i] = 0xa
+			i++
+			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(k)))
+			i += copy(dAtA[i:], k)
+			dAtA[i] = 0x12
+			i++
+			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(v)))
+			i += copy(dAtA[i:], v)
+		}
+	}
+	if len(m.Args) > 0 {
+		for k, _ := range m.Args {
+			dAtA[i] = 0xea
+			i++
+			dAtA[i] = 0x3
+			i++
+			v := m.Args[k]
+			mapSize := 1 + len(k) + sovIstioinstallerTypes(uint64(len(k))) + 1 + len(v) + sovIstioinstallerTypes(uint64(len(v)))
+			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(mapSize))
+			dAtA[i] = 0xa
+			i++
+			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(k)))
+			i += copy(dAtA[i:], k)
+			dAtA[i] = 0x12
+			i++
+			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(v)))
+			i += copy(dAtA[i:], v)
+		}
+	}
+	if m.K8S != nil {
+		dAtA[i] = 0x82
 		i++
 		dAtA[i] = 0x5
 		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(*m.ReplicaCount))
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.K8S.Size()))
+		n33, err := m.K8S.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n33
 	}
-	if len(m.ResourceOverride) > 0 {
-		for _, msg := range m.ResourceOverride {
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	return i, nil
+}
+
+func (m *KubernetesResourcesConfig) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *KubernetesResourcesConfig) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if m.Resources != nil {
+		dAtA[i] = 0xa
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Resources.Size()))
+		n34, err := m.Resources.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n34
+	}
+	if m.ReadinessProbe != nil {
+		dAtA[i] = 0x12
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.ReadinessProbe.Size()))
+		n35, err := m.ReadinessProbe.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n35
+	}
+	if m.ReplicaCount != 0 {
+		dAtA[i] = 0x18
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.ReplicaCount))
+	}
+	if m.HpaSpec != nil {
+		dAtA[i] = 0x22
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.HpaSpec.Size()))
+		n36, err := m.HpaSpec.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n36
+	}
+	if m.PodDisruptionBudget != nil {
+		dAtA[i] = 0x2a
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.PodDisruptionBudget.Size()))
+		n37, err := m.PodDisruptionBudget.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n37
+	}
+	if len(m.PodAnnotations) > 0 {
+		for k, _ := range m.PodAnnotations {
+			dAtA[i] = 0x32
+			i++
+			v := m.PodAnnotations[k]
+			mapSize := 1 + len(k) + sovIstioinstallerTypes(uint64(len(k))) + 1 + len(v) + sovIstioinstallerTypes(uint64(len(v)))
+			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(mapSize))
+			dAtA[i] = 0xa
+			i++
+			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(k)))
+			i += copy(dAtA[i:], k)
+			dAtA[i] = 0x12
+			i++
+			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(v)))
+			i += copy(dAtA[i:], v)
+		}
+	}
+	if len(m.NodeSelector) > 0 {
+		for k, _ := range m.NodeSelector {
+			dAtA[i] = 0x3a
+			i++
+			v := m.NodeSelector[k]
+			mapSize := 1 + len(k) + sovIstioinstallerTypes(uint64(len(k))) + 1 + len(v) + sovIstioinstallerTypes(uint64(len(v)))
+			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(mapSize))
+			dAtA[i] = 0xa
+			i++
+			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(k)))
+			i += copy(dAtA[i:], k)
+			dAtA[i] = 0x12
+			i++
+			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(v)))
+			i += copy(dAtA[i:], v)
+		}
+	}
+	if m.NodeAffinity != nil {
+		dAtA[i] = 0x42
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.NodeAffinity.Size()))
+		n38, err := m.NodeAffinity.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n38
+	}
+	if len(m.ImagePullPolicy) > 0 {
+		dAtA[i] = 0x4a
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(m.ImagePullPolicy)))
+		i += copy(dAtA[i:], m.ImagePullPolicy)
+	}
+	if len(m.PriorityClassName) > 0 {
+		dAtA[i] = 0x52
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(m.PriorityClassName)))
+		i += copy(dAtA[i:], m.PriorityClassName)
+	}
+	if len(m.K8SObjectOverrides) > 0 {
+		for _, msg := range m.K8SObjectOverrides {
 			dAtA[i] = 0xa2
 			i++
 			dAtA[i] = 0x6
@@ -4375,6 +3850,42 @@ func (m *ConfigManagementConfig) MarshalTo(dAtA []byte) (int, error) {
 			}
 			i += n
 		}
+	}
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	return i, nil
+}
+
+func (m *KubernetesResourcesConfig_NodeAffinity) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *KubernetesResourcesConfig_NodeAffinity) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if m.ArchAmd64 != 0 {
+		dAtA[i] = 0x8
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.ArchAmd64))
+	}
+	if m.ArchS390X != 0 {
+		dAtA[i] = 0x10
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.ArchS390X))
+	}
+	if m.ArchPpc64Le != 0 {
+		dAtA[i] = 0x18
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.ArchPpc64Le))
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
@@ -4397,15 +3908,40 @@ func (m *IngressGatewayConfig) MarshalTo(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.LoadBalancerIP != nil {
-		dAtA[i] = 0x5a
+	if m.Gateway != nil {
+		dAtA[i] = 0x52
 		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(*m.LoadBalancerIP)))
-		i += copy(dAtA[i:], *m.LoadBalancerIP)
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Gateway.Size()))
+		n39, err := m.Gateway.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n39
+	}
+	if m.IngressType != 0 {
+		dAtA[i] = 0x58
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.IngressType))
+	}
+	if m.HttpsEnabled != nil {
+		dAtA[i] = 0x62
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.HttpsEnabled.Size()))
+		n40, err := m.HttpsEnabled.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n40
+	}
+	if len(m.LoadBalancerIp) > 0 {
+		dAtA[i] = 0x6a
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(m.LoadBalancerIp)))
+		i += copy(dAtA[i:], m.LoadBalancerIp)
 	}
 	if len(m.LoadBalancerSourceRanges) > 0 {
 		for _, s := range m.LoadBalancerSourceRanges {
-			dAtA[i] = 0x62
+			dAtA[i] = 0x72
 			i++
 			l = len(s)
 			for l >= 1<<7 {
@@ -4418,9 +3954,9 @@ func (m *IngressGatewayConfig) MarshalTo(dAtA []byte) (int, error) {
 			i += copy(dAtA[i:], s)
 		}
 	}
-	if len(m.ExternalIPs) > 0 {
-		for _, s := range m.ExternalIPs {
-			dAtA[i] = 0x6a
+	if len(m.ExternalIps) > 0 {
+		for _, s := range m.ExternalIps {
+			dAtA[i] = 0x7a
 			i++
 			l = len(s)
 			for l >= 1<<7 {
@@ -4433,42 +3969,24 @@ func (m *IngressGatewayConfig) MarshalTo(dAtA []byte) (int, error) {
 			i += copy(dAtA[i:], s)
 		}
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	return i, nil
-}
-
-func (m *IngressGatewayConfig_Sds) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *IngressGatewayConfig_Sds) MarshalTo(dAtA []byte) (int, error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	if m.Enabled != nil {
-		dAtA[i] = 0x8
+	if m.SdsEnabled != nil {
+		dAtA[i] = 0x82
 		i++
-		if *m.Enabled {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
+		dAtA[i] = 0x1
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.SdsEnabled.Size()))
+		n41, err := m.SdsEnabled.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
-		i++
+		i += n41
 	}
-	if m.Image != nil {
-		dAtA[i] = 0x52
+	if m.ExternalTrafficPolicy != 0 {
+		dAtA[i] = 0x88
 		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(*m.Image)))
-		i += copy(dAtA[i:], *m.Image)
+		dAtA[i] = 0x1
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.ExternalTrafficPolicy))
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
@@ -4495,11 +4013,11 @@ func (m *EgressGatewayConfig) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x52
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Gateway.Size()))
-		n24, err := m.Gateway.MarshalTo(dAtA[i:])
+		n42, err := m.Gateway.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n24
+		i += n42
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
@@ -4507,7 +4025,7 @@ func (m *EgressGatewayConfig) MarshalTo(dAtA []byte) (int, error) {
 	return i, nil
 }
 
-func (m *IlbGatewayConfig) Marshal() (dAtA []byte, err error) {
+func (m *LoadBalancingGatewayConfig) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalTo(dAtA)
@@ -4517,7 +4035,7 @@ func (m *IlbGatewayConfig) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *IlbGatewayConfig) MarshalTo(dAtA []byte) (int, error) {
+func (m *LoadBalancingGatewayConfig) MarshalTo(dAtA []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
@@ -4526,17 +4044,17 @@ func (m *IlbGatewayConfig) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x52
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Gateway.Size()))
-		n25, err := m.Gateway.MarshalTo(dAtA[i:])
+		n43, err := m.Gateway.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n25
+		i += n43
 	}
-	if m.LoadBalancerIP != nil {
+	if len(m.LoadBalancerIp) > 0 {
 		dAtA[i] = 0x5a
 		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(*m.LoadBalancerIP)))
-		i += copy(dAtA[i:], *m.LoadBalancerIP)
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(m.LoadBalancerIp)))
+		i += copy(dAtA[i:], m.LoadBalancerIp)
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
@@ -4559,146 +4077,21 @@ func (m *GatewayConfig) MarshalTo(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.Type != nil {
-		dAtA[i] = 0x52
+	if m.Common != nil {
+		dAtA[i] = 0xa
 		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(*m.Type)))
-		i += copy(dAtA[i:], *m.Type)
-	}
-	if len(m.Env) > 0 {
-		for k, _ := range m.Env {
-			dAtA[i] = 0xe2
-			i++
-			dAtA[i] = 0x3
-			i++
-			v := m.Env[k]
-			mapSize := 1 + len(k) + sovIstioinstallerTypes(uint64(len(k))) + 1 + len(v) + sovIstioinstallerTypes(uint64(len(v)))
-			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(mapSize))
-			dAtA[i] = 0xa
-			i++
-			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(k)))
-			i += copy(dAtA[i:], k)
-			dAtA[i] = 0x12
-			i++
-			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(v)))
-			i += copy(dAtA[i:], v)
-		}
-	}
-	if m.HpaSpec != nil {
-		dAtA[i] = 0xb2
-		i++
-		dAtA[i] = 0x5
-		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.HpaSpec.Size()))
-		n26, err := m.HpaSpec.MarshalTo(dAtA[i:])
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Common.Size()))
+		n44, err := m.Common.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n26
+		i += n44
 	}
-	if len(m.PodAnnotations) > 0 {
-		for k, _ := range m.PodAnnotations {
-			dAtA[i] = 0xd2
-			i++
-			dAtA[i] = 0x5
-			i++
-			v := m.PodAnnotations[k]
-			mapSize := 1 + len(k) + sovIstioinstallerTypes(uint64(len(k))) + 1 + len(v) + sovIstioinstallerTypes(uint64(len(v)))
-			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(mapSize))
-			dAtA[i] = 0xa
-			i++
-			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(k)))
-			i += copy(dAtA[i:], k)
-			dAtA[i] = 0x12
-			i++
-			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(v)))
-			i += copy(dAtA[i:], v)
-		}
-	}
-	if len(m.ServiceAnnotations) > 0 {
-		for k, _ := range m.ServiceAnnotations {
-			dAtA[i] = 0xda
-			i++
-			dAtA[i] = 0x5
-			i++
-			v := m.ServiceAnnotations[k]
-			mapSize := 1 + len(k) + sovIstioinstallerTypes(uint64(len(k))) + 1 + len(v) + sovIstioinstallerTypes(uint64(len(v)))
-			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(mapSize))
-			dAtA[i] = 0xa
-			i++
-			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(k)))
-			i += copy(dAtA[i:], k)
-			dAtA[i] = 0x12
-			i++
-			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(v)))
-			i += copy(dAtA[i:], v)
-		}
-	}
-	if len(m.NodeSelector) > 0 {
-		for k, _ := range m.NodeSelector {
-			dAtA[i] = 0xe2
-			i++
-			dAtA[i] = 0x5
-			i++
-			v := m.NodeSelector[k]
-			mapSize := 1 + len(k) + sovIstioinstallerTypes(uint64(len(k))) + 1 + len(v) + sovIstioinstallerTypes(uint64(len(v)))
-			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(mapSize))
-			dAtA[i] = 0xa
-			i++
-			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(k)))
-			i += copy(dAtA[i:], k)
-			dAtA[i] = 0x12
-			i++
-			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(v)))
-			i += copy(dAtA[i:], v)
-		}
-	}
-	if len(m.ResourceOverride) > 0 {
-		for _, msg := range m.ResourceOverride {
-			dAtA[i] = 0xa2
-			i++
-			dAtA[i] = 0x6
-			i++
-			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(msg.Size()))
-			n, err := msg.MarshalTo(dAtA[i:])
-			if err != nil {
-				return 0, err
-			}
-			i += n
-		}
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	return i, nil
-}
-
-func (m *GatewayConfig_Labels) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *GatewayConfig_Labels) MarshalTo(dAtA []byte) (int, error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	if m.App != nil {
-		dAtA[i] = 0xa
+	if len(m.Type) > 0 {
+		dAtA[i] = 0x52
 		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(*m.App)))
-		i += copy(dAtA[i:], *m.App)
-	}
-	if m.Istio != nil {
-		dAtA[i] = 0x12
-		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(*m.Istio)))
-		i += copy(dAtA[i:], *m.Istio)
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(m.Type)))
+		i += copy(dAtA[i:], m.Type)
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
@@ -4721,17 +4114,17 @@ func (m *OperatorConfig) MarshalTo(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.ManifestPath != nil {
+	if len(m.ManifestPath) > 0 {
 		dAtA[i] = 0xa
 		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(*m.ManifestPath)))
-		i += copy(dAtA[i:], *m.ManifestPath)
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(m.ManifestPath)))
+		i += copy(dAtA[i:], m.ManifestPath)
 	}
-	if m.Namespace != nil {
+	if len(m.Namespace) > 0 {
 		dAtA[i] = 0x12
 		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(*m.Namespace)))
-		i += copy(dAtA[i:], *m.Namespace)
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(m.Namespace)))
+		i += copy(dAtA[i:], m.Namespace)
 	}
 	if m.Spec != nil {
 		dAtA[i] = 0xa2
@@ -4739,11 +4132,11 @@ func (m *OperatorConfig) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x6
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Spec.Size()))
-		n27, err := m.Spec.MarshalTo(dAtA[i:])
+		n45, err := m.Spec.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n27
+		i += n45
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
@@ -4770,21 +4163,21 @@ func (m *IstioInstaller) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x1a
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Spec.Size()))
-		n28, err := m.Spec.MarshalTo(dAtA[i:])
+		n46, err := m.Spec.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n28
+		i += n46
 	}
 	if m.Status != nil {
 		dAtA[i] = 0x22
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Status.Size()))
-		n29, err := m.Status.MarshalTo(dAtA[i:])
+		n47, err := m.Status.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n29
+		i += n47
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
@@ -4792,7 +4185,7 @@ func (m *IstioInstaller) MarshalTo(dAtA []byte) (int, error) {
 	return i, nil
 }
 
-func (m *ResourceRequirements) Marshal() (dAtA []byte, err error) {
+func (m *Resources) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalTo(dAtA)
@@ -4802,7 +4195,7 @@ func (m *ResourceRequirements) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *ResourceRequirements) MarshalTo(dAtA []byte) (int, error) {
+func (m *Resources) MarshalTo(dAtA []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
@@ -4862,25 +4255,25 @@ func (m *PodDisruptionBudgetSpec) MarshalTo(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.MinAvailable != nil {
+	if m.MinAvailable != 0 {
 		dAtA[i] = 0x8
 		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(*m.MinAvailable))
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.MinAvailable))
 	}
 	if m.Selector != nil {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Selector.Size()))
-		n30, err := m.Selector.MarshalTo(dAtA[i:])
+		n48, err := m.Selector.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n30
+		i += n48
 	}
-	if m.MaxUnavailable != nil {
+	if m.MaxUnavailable != 0 {
 		dAtA[i] = 0x18
 		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(*m.MaxUnavailable))
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.MaxUnavailable))
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
@@ -4888,7 +4281,7 @@ func (m *PodDisruptionBudgetSpec) MarshalTo(dAtA []byte) (int, error) {
 	return i, nil
 }
 
-func (m *ResourceOverride) Marshal() (dAtA []byte, err error) {
+func (m *K8SObjectOverride) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalTo(dAtA)
@@ -4898,42 +4291,42 @@ func (m *ResourceOverride) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *ResourceOverride) MarshalTo(dAtA []byte) (int, error) {
+func (m *K8SObjectOverride) MarshalTo(dAtA []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
 	_ = l
-	if m.PatchType != nil {
+	if m.PatchType != 0 {
 		dAtA[i] = 0x8
 		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(*m.PatchType))
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.PatchType))
 	}
-	if m.Op != nil {
+	if m.Op != 0 {
 		dAtA[i] = 0x10
 		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(*m.Op))
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Op))
 	}
-	if m.Kind != nil {
+	if len(m.Kind) > 0 {
 		dAtA[i] = 0x1a
 		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(*m.Kind)))
-		i += copy(dAtA[i:], *m.Kind)
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(m.Kind)))
+		i += copy(dAtA[i:], m.Kind)
 	}
-	if m.ApiVersion != nil {
+	if len(m.ApiVersion) > 0 {
 		dAtA[i] = 0x22
 		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(*m.ApiVersion)))
-		i += copy(dAtA[i:], *m.ApiVersion)
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(m.ApiVersion)))
+		i += copy(dAtA[i:], m.ApiVersion)
 	}
 	if m.Metadata != nil {
 		dAtA[i] = 0x2a
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Metadata.Size()))
-		n31, err := m.Metadata.MarshalTo(dAtA[i:])
+		n49, err := m.Metadata.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n31
+		i += n49
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
@@ -4956,74 +4349,17 @@ func (m *ObjectMeta) MarshalTo(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.Name != nil {
+	if len(m.Name) > 0 {
 		dAtA[i] = 0x2a
 		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(*m.Name)))
-		i += copy(dAtA[i:], *m.Name)
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(m.Name)))
+		i += copy(dAtA[i:], m.Name)
 	}
-	if m.Namespace != nil {
+	if len(m.Namespace) > 0 {
 		dAtA[i] = 0x32
 		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(*m.Namespace)))
-		i += copy(dAtA[i:], *m.Namespace)
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	return i, nil
-}
-
-func (m *SdsConfig) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *SdsConfig) MarshalTo(dAtA []byte) (int, error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	if m.Enabled != nil {
-		dAtA[i] = 0x8
-		i++
-		if *m.Enabled {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
-		}
-		i++
-	}
-	if m.UdsPath != nil {
-		dAtA[i] = 0x12
-		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(*m.UdsPath)))
-		i += copy(dAtA[i:], *m.UdsPath)
-	}
-	if m.UseTrustworthyJwt != nil {
-		dAtA[i] = 0x18
-		i++
-		if *m.UseTrustworthyJwt {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
-		}
-		i++
-	}
-	if m.UseNormalJwt != nil {
-		dAtA[i] = 0x20
-		i++
-		if *m.UseNormalJwt {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
-		}
-		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(m.Namespace)))
+		i += copy(dAtA[i:], m.Namespace)
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
@@ -5046,29 +4382,24 @@ func (m *TestKube) MarshalTo(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.HpaSpec != nil {
-		dAtA[i] = 0x9a
-		i++
-		dAtA[i] = 0x3
-		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.HpaSpec.Size()))
-		n32, err := m.HpaSpec.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+	if len(m.Env) > 0 {
+		for k, _ := range m.Env {
+			dAtA[i] = 0xe2
+			i++
+			dAtA[i] = 0x3
+			i++
+			v := m.Env[k]
+			mapSize := 1 + len(k) + sovIstioinstallerTypes(uint64(len(k))) + 1 + len(v) + sovIstioinstallerTypes(uint64(len(v)))
+			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(mapSize))
+			dAtA[i] = 0xa
+			i++
+			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(k)))
+			i += copy(dAtA[i:], k)
+			dAtA[i] = 0x12
+			i++
+			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(v)))
+			i += copy(dAtA[i:], v)
 		}
-		i += n32
-	}
-	if m.PodDisruptionBudget != nil {
-		dAtA[i] = 0xa2
-		i++
-		dAtA[i] = 0x3
-		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.PodDisruptionBudget.Size()))
-		n33, err := m.PodDisruptionBudget.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n33
 	}
 	if m.Resources != nil {
 		dAtA[i] = 0x82
@@ -5076,11 +4407,11 @@ func (m *TestKube) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x5
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Resources.Size()))
-		n34, err := m.Resources.MarshalTo(dAtA[i:])
+		n50, err := m.Resources.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n34
+		i += n50
 	}
 	if m.ReadinessProbe != nil {
 		dAtA[i] = 0x8a
@@ -5088,14 +4419,76 @@ func (m *TestKube) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x5
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.ReadinessProbe.Size()))
-		n35, err := m.ReadinessProbe.MarshalTo(dAtA[i:])
+		n51, err := m.ReadinessProbe.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n35
+		i += n51
 	}
-	if len(m.ResourceOverride) > 0 {
-		for _, msg := range m.ResourceOverride {
+	if m.HpaSpec != nil {
+		dAtA[i] = 0xb2
+		i++
+		dAtA[i] = 0x5
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.HpaSpec.Size()))
+		n52, err := m.HpaSpec.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n52
+	}
+	if m.PodDisruptionBudget != nil {
+		dAtA[i] = 0xba
+		i++
+		dAtA[i] = 0x5
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.PodDisruptionBudget.Size()))
+		n53, err := m.PodDisruptionBudget.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n53
+	}
+	if len(m.PodAnnotations) > 0 {
+		for k, _ := range m.PodAnnotations {
+			dAtA[i] = 0xd2
+			i++
+			dAtA[i] = 0x5
+			i++
+			v := m.PodAnnotations[k]
+			mapSize := 1 + len(k) + sovIstioinstallerTypes(uint64(len(k))) + 1 + len(v) + sovIstioinstallerTypes(uint64(len(v)))
+			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(mapSize))
+			dAtA[i] = 0xa
+			i++
+			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(k)))
+			i += copy(dAtA[i:], k)
+			dAtA[i] = 0x12
+			i++
+			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(v)))
+			i += copy(dAtA[i:], v)
+		}
+	}
+	if len(m.NodeSelector) > 0 {
+		for k, _ := range m.NodeSelector {
+			dAtA[i] = 0xe2
+			i++
+			dAtA[i] = 0x5
+			i++
+			v := m.NodeSelector[k]
+			mapSize := 1 + len(k) + sovIstioinstallerTypes(uint64(len(k))) + 1 + len(v) + sovIstioinstallerTypes(uint64(len(v)))
+			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(mapSize))
+			dAtA[i] = 0xa
+			i++
+			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(k)))
+			i += copy(dAtA[i:], k)
+			dAtA[i] = 0x12
+			i++
+			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(v)))
+			i += copy(dAtA[i:], v)
+		}
+	}
+	if len(m.K8SObjectOverride) > 0 {
+		for _, msg := range m.K8SObjectOverride {
 			dAtA[i] = 0xa2
 			i++
 			dAtA[i] = 0x6
@@ -5129,40 +4522,28 @@ func (m *InstallerSpec) Size() (n int) {
 	}
 	var l int
 	_ = l
-	if m.InstallPackagePath != nil {
-		l = len(*m.InstallPackagePath)
+	l = len(m.InstallPackagePath)
+	if l > 0 {
 		n += 1 + l + sovIstioinstallerTypes(uint64(l))
 	}
-	if m.ControllerName != nil {
-		l = len(*m.ControllerName)
+	l = len(m.Hub)
+	if l > 0 {
 		n += 1 + l + sovIstioinstallerTypes(uint64(l))
 	}
-	if m.Hub != nil {
-		l = len(*m.Hub)
+	l = len(m.Tag)
+	if l > 0 {
 		n += 1 + l + sovIstioinstallerTypes(uint64(l))
 	}
-	if m.Tag != nil {
-		l = len(*m.Tag)
-		n += 1 + l + sovIstioinstallerTypes(uint64(l))
-	}
-	if m.DefaultNamespacePrefix != nil {
-		l = len(*m.DefaultNamespacePrefix)
-		n += 1 + l + sovIstioinstallerTypes(uint64(l))
-	}
-	if m.RemoteClusterConfig != nil {
-		l = m.RemoteClusterConfig.Size()
+	l = len(m.DefaultNamespacePrefix)
+	if l > 0 {
 		n += 1 + l + sovIstioinstallerTypes(uint64(l))
 	}
 	if m.TrafficManagement != nil {
 		l = m.TrafficManagement.Size()
 		n += 2 + l + sovIstioinstallerTypes(uint64(l))
 	}
-	if m.Policy != nil {
-		l = m.Policy.Size()
-		n += 2 + l + sovIstioinstallerTypes(uint64(l))
-	}
-	if m.Telemetry != nil {
-		l = m.Telemetry.Size()
+	if m.PolicyTelemetry != nil {
+		l = m.PolicyTelemetry.Size()
 		n += 2 + l + sovIstioinstallerTypes(uint64(l))
 	}
 	if m.Security != nil {
@@ -5191,6 +4572,10 @@ func (m *InstallerSpec) Size() (n int) {
 			n += 2 + l + sovIstioinstallerTypes(uint64(l))
 		}
 	}
+	if m.K8SDefaults != nil {
+		l = m.K8SDefaults.Size()
+		n += 2 + l + sovIstioinstallerTypes(uint64(l))
+	}
 	if m.XXX_unrecognized != nil {
 		n += len(m.XXX_unrecognized)
 	}
@@ -5203,13 +4588,33 @@ func (m *InstallerStatus) Size() (n int) {
 	}
 	var l int
 	_ = l
-	if m.ProxyControl != nil {
-		l = len(*m.ProxyControl)
+	if m.TrafficManagement != nil {
+		l = m.TrafficManagement.Size()
 		n += 1 + l + sovIstioinstallerTypes(uint64(l))
 	}
-	if m.SidecarInjector != nil {
-		l = len(*m.SidecarInjector)
+	if m.PolicyTelemetry != nil {
+		l = m.PolicyTelemetry.Size()
 		n += 1 + l + sovIstioinstallerTypes(uint64(l))
+	}
+	if m.Security != nil {
+		l = m.Security.Size()
+		n += 1 + l + sovIstioinstallerTypes(uint64(l))
+	}
+	if m.ConfigManagement != nil {
+		l = m.ConfigManagement.Size()
+		n += 1 + l + sovIstioinstallerTypes(uint64(l))
+	}
+	if len(m.IngressGateway) > 0 {
+		for _, e := range m.IngressGateway {
+			l = e.Size()
+			n += 1 + l + sovIstioinstallerTypes(uint64(l))
+		}
+	}
+	if len(m.EgressGateway) > 0 {
+		for _, e := range m.EgressGateway {
+			l = e.Size()
+			n += 1 + l + sovIstioinstallerTypes(uint64(l))
+		}
 	}
 	if m.XXX_unrecognized != nil {
 		n += len(m.XXX_unrecognized)
@@ -5217,14 +4622,18 @@ func (m *InstallerStatus) Size() (n int) {
 	return n
 }
 
-func (m *RemoteClusterConfig) Size() (n int) {
+func (m *InstallerStatus_VersionStatus) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if m.Enabled != nil {
-		n += 2
+	l = len(m.Version)
+	if l > 0 {
+		n += 1 + l + sovIstioinstallerTypes(uint64(l))
+	}
+	if m.Status != 0 {
+		n += 1 + sovIstioinstallerTypes(uint64(m.Status))
 	}
 	if m.XXX_unrecognized != nil {
 		n += len(m.XXX_unrecognized)
@@ -5239,22 +4648,56 @@ func (m *TrafficManagementConfig) Size() (n int) {
 	var l int
 	_ = l
 	if m.Enabled != nil {
-		n += 2
-	}
-	if m.Namespace != nil {
-		l = len(*m.Namespace)
+		l = m.Enabled.Size()
 		n += 1 + l + sovIstioinstallerTypes(uint64(l))
 	}
-	if m.AutoInjection != nil {
-		n += 2
-	}
-	if m.PilotConfig != nil {
-		l = m.PilotConfig.Size()
+	l = len(m.Namespace)
+	if l > 0 {
 		n += 1 + l + sovIstioinstallerTypes(uint64(l))
 	}
-	if m.ProxyConfig != nil {
-		l = m.ProxyConfig.Size()
-		n += 1 + l + sovIstioinstallerTypes(uint64(l))
+	l = len(m.IncludeIpRanges)
+	if l > 0 {
+		n += 2 + l + sovIstioinstallerTypes(uint64(l))
+	}
+	l = len(m.ExcludeIpRanges)
+	if l > 0 {
+		n += 2 + l + sovIstioinstallerTypes(uint64(l))
+	}
+	l = len(m.IncludeInboundPorts)
+	if l > 0 {
+		n += 2 + l + sovIstioinstallerTypes(uint64(l))
+	}
+	l = len(m.ExcludeInboundPorts)
+	if l > 0 {
+		n += 2 + l + sovIstioinstallerTypes(uint64(l))
+	}
+	l = len(m.ClusterDomain)
+	if l > 0 {
+		n += 2 + l + sovIstioinstallerTypes(uint64(l))
+	}
+	l = len(m.PodDnsSearchNamespaces)
+	if l > 0 {
+		n += 2 + l + sovIstioinstallerTypes(uint64(l))
+	}
+	if m.EnableAutoInjection != nil {
+		l = m.EnableAutoInjection.Size()
+		n += 2 + l + sovIstioinstallerTypes(uint64(l))
+	}
+	if m.EnableNamespacesByDefault != nil {
+		l = m.EnableNamespacesByDefault.Size()
+		n += 2 + l + sovIstioinstallerTypes(uint64(l))
+	}
+	if m.Pilot != nil {
+		l = m.Pilot.Size()
+		n += 2 + l + sovIstioinstallerTypes(uint64(l))
+	}
+	if m.Proxy != nil {
+		l = m.Proxy.Size()
+		n += 2 + l + sovIstioinstallerTypes(uint64(l))
+	}
+	if m.SidecarInjector != nil {
+		l = m.SidecarInjector.Size()
+		n += 2 + l + sovIstioinstallerTypes(uint64(l))
 	}
 	if m.XXX_unrecognized != nil {
 		n += len(m.XXX_unrecognized)
@@ -5262,409 +4705,26 @@ func (m *TrafficManagementConfig) Size() (n int) {
 	return n
 }
 
-func (m *PilotConfig) Size() (n int) {
+func (m *PolicyTelemetryConfig) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if m.Debug != nil {
-		n += 2
-	}
-	if m.Sidecar != nil {
-		n += 2
-	}
-	if m.TraceSampling != nil {
-		n += 5
-	}
-	if m.KeepaliveMaxServerConnectionAge != nil {
-		l = len(*m.KeepaliveMaxServerConnectionAge)
+	if m.PolicyCheckFailOpen != nil {
+		l = m.PolicyCheckFailOpen.Size()
 		n += 1 + l + sovIstioinstallerTypes(uint64(l))
 	}
-	if len(m.AdditionalArgs) > 0 {
-		for k, v := range m.AdditionalArgs {
-			_ = k
-			_ = v
-			mapEntrySize := 1 + len(k) + sovIstioinstallerTypes(uint64(len(k))) + 1 + len(v) + sovIstioinstallerTypes(uint64(len(v)))
-			n += mapEntrySize + 2 + sovIstioinstallerTypes(uint64(mapEntrySize))
-		}
+	if m.OutboundTrafficPolicyMode != 0 {
+		n += 1 + sovIstioinstallerTypes(uint64(m.OutboundTrafficPolicyMode))
 	}
-	if len(m.Env) > 0 {
-		for k, v := range m.Env {
-			_ = k
-			_ = v
-			mapEntrySize := 1 + len(k) + sovIstioinstallerTypes(uint64(len(k))) + 1 + len(v) + sovIstioinstallerTypes(uint64(len(v)))
-			n += mapEntrySize + 2 + sovIstioinstallerTypes(uint64(mapEntrySize))
-		}
-	}
-	if m.Resources != nil {
-		l = m.Resources.Size()
+	if m.Policy != nil {
+		l = m.Policy.Size()
 		n += 2 + l + sovIstioinstallerTypes(uint64(l))
 	}
-	if m.ReplicaCount != nil {
-		n += 2 + sovIstioinstallerTypes(uint64(*m.ReplicaCount))
-	}
-	if m.HpaSpec != nil {
-		l = m.HpaSpec.Size()
+	if m.Telemetry != nil {
+		l = m.Telemetry.Size()
 		n += 2 + l + sovIstioinstallerTypes(uint64(l))
-	}
-	if m.PodDisruptionBudget != nil {
-		l = m.PodDisruptionBudget.Size()
-		n += 2 + l + sovIstioinstallerTypes(uint64(l))
-	}
-	if len(m.NodeSelector) > 0 {
-		for k, v := range m.NodeSelector {
-			_ = k
-			_ = v
-			mapEntrySize := 1 + len(k) + sovIstioinstallerTypes(uint64(len(k))) + 1 + len(v) + sovIstioinstallerTypes(uint64(len(v)))
-			n += mapEntrySize + 2 + sovIstioinstallerTypes(uint64(mapEntrySize))
-		}
-	}
-	if len(m.ResourceOverride) > 0 {
-		for _, e := range m.ResourceOverride {
-			l = e.Size()
-			n += 2 + l + sovIstioinstallerTypes(uint64(l))
-		}
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
-	return n
-}
-
-func (m *ProxyConfig) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.Debug != nil {
-		n += 2
-	}
-	if m.Privileged != nil {
-		n += 2
-	}
-	if m.EnableCoredump != nil {
-		n += 2
-	}
-	if m.InterceptionMode != nil {
-		n += 1 + sovIstioinstallerTypes(uint64(*m.InterceptionMode))
-	}
-	if m.StatusPort != nil {
-		n += 1 + sovIstioinstallerTypes(uint64(*m.StatusPort))
-	}
-	if m.ImagePullPolicy != nil {
-		l = len(*m.ImagePullPolicy)
-		n += 1 + l + sovIstioinstallerTypes(uint64(l))
-	}
-	if m.ProxyInitImage != nil {
-		l = len(*m.ProxyInitImage)
-		n += 1 + l + sovIstioinstallerTypes(uint64(l))
-	}
-	if m.IncludeIpRanges != nil {
-		l = len(*m.IncludeIpRanges)
-		n += 2 + l + sovIstioinstallerTypes(uint64(l))
-	}
-	if m.ExcludeIpRanges != nil {
-		l = len(*m.ExcludeIpRanges)
-		n += 2 + l + sovIstioinstallerTypes(uint64(l))
-	}
-	if m.IncludeInboundPorts != nil {
-		l = len(*m.IncludeInboundPorts)
-		n += 2 + l + sovIstioinstallerTypes(uint64(l))
-	}
-	if m.ExcludeInboundPorts != nil {
-		l = len(*m.ExcludeInboundPorts)
-		n += 2 + l + sovIstioinstallerTypes(uint64(l))
-	}
-	if m.ConnectTimeout != nil {
-		l = len(*m.ConnectTimeout)
-		n += 2 + l + sovIstioinstallerTypes(uint64(l))
-	}
-	if m.DrainDuration != nil {
-		l = len(*m.DrainDuration)
-		n += 2 + l + sovIstioinstallerTypes(uint64(l))
-	}
-	if m.ParentShutdownDuration != nil {
-		l = len(*m.ParentShutdownDuration)
-		n += 2 + l + sovIstioinstallerTypes(uint64(l))
-	}
-	if m.Concurrency != nil {
-		n += 2 + sovIstioinstallerTypes(uint64(*m.Concurrency))
-	}
-	if m.ClusterDomain != nil {
-		l = len(*m.ClusterDomain)
-		n += 2 + l + sovIstioinstallerTypes(uint64(l))
-	}
-	if m.PodDnsSearchNamespaces != nil {
-		l = len(*m.PodDnsSearchNamespaces)
-		n += 2 + l + sovIstioinstallerTypes(uint64(l))
-	}
-	if m.Lightstep != nil {
-		l = m.Lightstep.Size()
-		n += 2 + l + sovIstioinstallerTypes(uint64(l))
-	}
-	if m.Zipkin != nil {
-		l = m.Zipkin.Size()
-		n += 2 + l + sovIstioinstallerTypes(uint64(l))
-	}
-	if m.Sds != nil {
-		l = m.Sds.Size()
-		n += 2 + l + sovIstioinstallerTypes(uint64(l))
-	}
-	if len(m.AdditionalArgs) > 0 {
-		for k, v := range m.AdditionalArgs {
-			_ = k
-			_ = v
-			mapEntrySize := 1 + len(k) + sovIstioinstallerTypes(uint64(len(k))) + 1 + len(v) + sovIstioinstallerTypes(uint64(len(v)))
-			n += mapEntrySize + 2 + sovIstioinstallerTypes(uint64(mapEntrySize))
-		}
-	}
-	if len(m.Env) > 0 {
-		for k, v := range m.Env {
-			_ = k
-			_ = v
-			mapEntrySize := 1 + len(k) + sovIstioinstallerTypes(uint64(len(k))) + 1 + len(v) + sovIstioinstallerTypes(uint64(len(v)))
-			n += mapEntrySize + 2 + sovIstioinstallerTypes(uint64(mapEntrySize))
-		}
-	}
-	if m.Resources != nil {
-		l = m.Resources.Size()
-		n += 2 + l + sovIstioinstallerTypes(uint64(l))
-	}
-	if m.ReadinessProbe != nil {
-		l = m.ReadinessProbe.Size()
-		n += 2 + l + sovIstioinstallerTypes(uint64(l))
-	}
-	if len(m.ResourceOverride) > 0 {
-		for _, e := range m.ResourceOverride {
-			l = e.Size()
-			n += 2 + l + sovIstioinstallerTypes(uint64(l))
-		}
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
-	return n
-}
-
-func (m *ProxyConfig_LightstepConfig) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.Address != nil {
-		l = len(*m.Address)
-		n += 1 + l + sovIstioinstallerTypes(uint64(l))
-	}
-	if m.AccessToken != nil {
-		l = len(*m.AccessToken)
-		n += 1 + l + sovIstioinstallerTypes(uint64(l))
-	}
-	if m.CaCertPath != nil {
-		l = len(*m.CaCertPath)
-		n += 1 + l + sovIstioinstallerTypes(uint64(l))
-	}
-	if m.Secure != nil {
-		n += 2
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
-	return n
-}
-
-func (m *ProxyConfig_ZipkinConfig) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.Address != nil {
-		l = len(*m.Address)
-		n += 1 + l + sovIstioinstallerTypes(uint64(l))
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
-	return n
-}
-
-func (m *PolicyConfig) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.Enabled != nil {
-		n += 2
-	}
-	if m.Namespace != nil {
-		l = len(*m.Namespace)
-		n += 1 + l + sovIstioinstallerTypes(uint64(l))
-	}
-	if len(m.Env) > 0 {
-		for k, v := range m.Env {
-			_ = k
-			_ = v
-			mapEntrySize := 1 + len(k) + sovIstioinstallerTypes(uint64(len(k))) + 1 + len(v) + sovIstioinstallerTypes(uint64(len(v)))
-			n += mapEntrySize + 2 + sovIstioinstallerTypes(uint64(mapEntrySize))
-		}
-	}
-	if m.Resources != nil {
-		l = m.Resources.Size()
-		n += 2 + l + sovIstioinstallerTypes(uint64(l))
-	}
-	if m.ReplicaCount != nil {
-		n += 2 + sovIstioinstallerTypes(uint64(*m.ReplicaCount))
-	}
-	if m.HpaSpec != nil {
-		l = m.HpaSpec.Size()
-		n += 2 + l + sovIstioinstallerTypes(uint64(l))
-	}
-	if m.PodDisruptionBudget != nil {
-		l = m.PodDisruptionBudget.Size()
-		n += 2 + l + sovIstioinstallerTypes(uint64(l))
-	}
-	if len(m.ResourceOverride) > 0 {
-		for _, e := range m.ResourceOverride {
-			l = e.Size()
-			n += 2 + l + sovIstioinstallerTypes(uint64(l))
-		}
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
-	return n
-}
-
-func (m *TelemetryConfig) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.Enabled != nil {
-		n += 2
-	}
-	if m.Namespace != nil {
-		l = len(*m.Namespace)
-		n += 1 + l + sovIstioinstallerTypes(uint64(l))
-	}
-	if m.SessionAffinityEnabled != nil {
-		n += 2
-	}
-	if m.LoadSheddingMode != nil {
-		n += 1 + sovIstioinstallerTypes(uint64(*m.LoadSheddingMode))
-	}
-	if m.LoadSheddingLatencyThreshold != nil {
-		l = len(*m.LoadSheddingLatencyThreshold)
-		n += 1 + l + sovIstioinstallerTypes(uint64(l))
-	}
-	if m.ReplicaCount != nil {
-		n += 2 + sovIstioinstallerTypes(uint64(*m.ReplicaCount))
-	}
-	if len(m.PodAnnotations) > 0 {
-		for k, v := range m.PodAnnotations {
-			_ = k
-			_ = v
-			mapEntrySize := 1 + len(k) + sovIstioinstallerTypes(uint64(len(k))) + 1 + len(v) + sovIstioinstallerTypes(uint64(len(v)))
-			n += mapEntrySize + 2 + sovIstioinstallerTypes(uint64(mapEntrySize))
-		}
-	}
-	if len(m.NodeSelector) > 0 {
-		for k, v := range m.NodeSelector {
-			_ = k
-			_ = v
-			mapEntrySize := 1 + len(k) + sovIstioinstallerTypes(uint64(len(k))) + 1 + len(v) + sovIstioinstallerTypes(uint64(len(v)))
-			n += mapEntrySize + 2 + sovIstioinstallerTypes(uint64(mapEntrySize))
-		}
-	}
-	if len(m.ResourceOverride) > 0 {
-		for _, e := range m.ResourceOverride {
-			l = e.Size()
-			n += 2 + l + sovIstioinstallerTypes(uint64(l))
-		}
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
-	return n
-}
-
-func (m *TelemetryConfig_Adapters) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.UseAdapter_CRDs != nil {
-		n += 2
-	}
-	if m.KubernetesEnvConfig != nil {
-		l = m.KubernetesEnvConfig.Size()
-		n += 1 + l + sovIstioinstallerTypes(uint64(l))
-	}
-	if m.Stdio != nil {
-		l = m.Stdio.Size()
-		n += 1 + l + sovIstioinstallerTypes(uint64(l))
-	}
-	if m.Prometheus != nil {
-		l = m.Prometheus.Size()
-		n += 1 + l + sovIstioinstallerTypes(uint64(l))
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
-	return n
-}
-
-func (m *TelemetryConfig_Adapters_KubernetesEnv) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.Enabled != nil {
-		n += 2
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
-	return n
-}
-
-func (m *TelemetryConfig_Adapters_Stdio) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.Enabled != nil {
-		n += 2
-	}
-	if m.OutputAsJson != nil {
-		n += 2
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
-	return n
-}
-
-func (m *TelemetryConfig_Adapters_Prometheus) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.Enabled != nil {
-		n += 2
-	}
-	if m.MetricsExpiryDuration != nil {
-		l = len(*m.MetricsExpiryDuration)
-		n += 1 + l + sovIstioinstallerTypes(uint64(l))
 	}
 	if m.XXX_unrecognized != nil {
 		n += len(m.XXX_unrecognized)
@@ -5679,38 +4739,34 @@ func (m *SecurityConfig) Size() (n int) {
 	var l int
 	_ = l
 	if m.Enabled != nil {
-		n += 2
-	}
-	if m.Namespace != nil {
-		l = len(*m.Namespace)
+		l = m.Enabled.Size()
 		n += 1 + l + sovIstioinstallerTypes(uint64(l))
 	}
-	if m.Image != nil {
-		l = len(*m.Image)
+	l = len(m.Namespace)
+	if l > 0 {
 		n += 1 + l + sovIstioinstallerTypes(uint64(l))
 	}
-	if m.SelfSigned != nil {
+	if m.ControlPlaneMtls {
 		n += 2
 	}
-	if m.CreateMeshPolicy != nil {
+	if m.DataPlaneMtls {
 		n += 2
 	}
-	if m.ReplicaCount != nil {
-		n += 2 + sovIstioinstallerTypes(uint64(*m.ReplicaCount))
+	l = len(m.TrustDomain)
+	if l > 0 {
+		n += 1 + l + sovIstioinstallerTypes(uint64(l))
 	}
-	if len(m.NodeSelector) > 0 {
-		for k, v := range m.NodeSelector {
-			_ = k
-			_ = v
-			mapEntrySize := 1 + len(k) + sovIstioinstallerTypes(uint64(len(k))) + 1 + len(v) + sovIstioinstallerTypes(uint64(len(v)))
-			n += mapEntrySize + 2 + sovIstioinstallerTypes(uint64(mapEntrySize))
-		}
+	if m.Citadel != nil {
+		l = m.Citadel.Size()
+		n += 2 + l + sovIstioinstallerTypes(uint64(l))
 	}
-	if len(m.ResourceOverride) > 0 {
-		for _, e := range m.ResourceOverride {
-			l = e.Size()
-			n += 2 + l + sovIstioinstallerTypes(uint64(l))
-		}
+	if m.CertManager != nil {
+		l = m.CertManager.Size()
+		n += 2 + l + sovIstioinstallerTypes(uint64(l))
+	}
+	if m.NodeAgent != nil {
+		l = m.NodeAgent.Size()
+		n += 2 + l + sovIstioinstallerTypes(uint64(l))
 	}
 	if m.XXX_unrecognized != nil {
 		n += len(m.XXX_unrecognized)
@@ -5718,30 +4774,154 @@ func (m *SecurityConfig) Size() (n int) {
 	return n
 }
 
-func (m *SecurityConfig_CertManager) Size() (n int) {
+func (m *PilotComponentConfig) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if m.Enabled != nil {
+	if m.Common != nil {
+		l = m.Common.Size()
+		n += 1 + l + sovIstioinstallerTypes(uint64(l))
+	}
+	if m.Sidecar {
 		n += 2
 	}
-	if m.Namespace != nil {
-		l = len(*m.Namespace)
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func (m *ProxyComponentConfig) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Common != nil {
+		l = m.Common.Size()
 		n += 1 + l + sovIstioinstallerTypes(uint64(l))
 	}
-	if m.Hub != nil {
-		l = len(*m.Hub)
-		n += 1 + l + sovIstioinstallerTypes(uint64(l))
+	if m.InterceptionMode != 0 {
+		n += 1 + sovIstioinstallerTypes(uint64(m.InterceptionMode))
 	}
-	if m.Tag != nil {
-		l = len(*m.Tag)
-		n += 1 + l + sovIstioinstallerTypes(uint64(l))
-	}
-	if m.Resources != nil {
-		l = m.Resources.Size()
+	l = len(m.ConnectTimeout)
+	if l > 0 {
 		n += 2 + l + sovIstioinstallerTypes(uint64(l))
+	}
+	l = len(m.DrainDuration)
+	if l > 0 {
+		n += 2 + l + sovIstioinstallerTypes(uint64(l))
+	}
+	l = len(m.ParentShutdownDuration)
+	if l > 0 {
+		n += 2 + l + sovIstioinstallerTypes(uint64(l))
+	}
+	if m.Concurrency != 0 {
+		n += 2 + sovIstioinstallerTypes(uint64(m.Concurrency))
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func (m *SidecarInjectorComponentConfig) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Common != nil {
+		l = m.Common.Size()
+		n += 1 + l + sovIstioinstallerTypes(uint64(l))
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func (m *PolicyComponentConfig) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Common != nil {
+		l = m.Common.Size()
+		n += 1 + l + sovIstioinstallerTypes(uint64(l))
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func (m *TelemetryComponentConfig) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Common != nil {
+		l = m.Common.Size()
+		n += 1 + l + sovIstioinstallerTypes(uint64(l))
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func (m *CitadelComponentConfig) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Common != nil {
+		l = m.Common.Size()
+		n += 1 + l + sovIstioinstallerTypes(uint64(l))
+	}
+	if m.SelfSigned {
+		n += 2
+	}
+	if m.CreateMeshPolicy {
+		n += 2
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func (m *CertManagerComponentConfig) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Common != nil {
+		l = m.Common.Size()
+		n += 1 + l + sovIstioinstallerTypes(uint64(l))
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func (m *NodeAgentComponentConfig) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Common != nil {
+		l = m.Common.Size()
+		n += 1 + l + sovIstioinstallerTypes(uint64(l))
 	}
 	if m.XXX_unrecognized != nil {
 		n += len(m.XXX_unrecognized)
@@ -5755,25 +4935,138 @@ func (m *ConfigManagementConfig) Size() (n int) {
 	}
 	var l int
 	_ = l
+	if m.Common != nil {
+		l = m.Common.Size()
+		n += 1 + l + sovIstioinstallerTypes(uint64(l))
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func (m *CommonComponentConfig) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
 	if m.Enabled != nil {
-		n += 2
-	}
-	if m.Namespace != nil {
-		l = len(*m.Namespace)
+		l = m.Enabled.Size()
 		n += 1 + l + sovIstioinstallerTypes(uint64(l))
 	}
-	if m.Image != nil {
-		l = len(*m.Image)
+	l = len(m.Namespace)
+	if l > 0 {
 		n += 1 + l + sovIstioinstallerTypes(uint64(l))
 	}
-	if m.ReplicaCount != nil {
-		n += 2 + sovIstioinstallerTypes(uint64(*m.ReplicaCount))
+	if m.Debug != 0 {
+		n += 1 + sovIstioinstallerTypes(uint64(m.Debug))
 	}
-	if len(m.ResourceOverride) > 0 {
-		for _, e := range m.ResourceOverride {
+	if len(m.Env) > 0 {
+		for k, v := range m.Env {
+			_ = k
+			_ = v
+			mapEntrySize := 1 + len(k) + sovIstioinstallerTypes(uint64(len(k))) + 1 + len(v) + sovIstioinstallerTypes(uint64(len(v)))
+			n += mapEntrySize + 2 + sovIstioinstallerTypes(uint64(mapEntrySize))
+		}
+	}
+	if len(m.Args) > 0 {
+		for k, v := range m.Args {
+			_ = k
+			_ = v
+			mapEntrySize := 1 + len(k) + sovIstioinstallerTypes(uint64(len(k))) + 1 + len(v) + sovIstioinstallerTypes(uint64(len(v)))
+			n += mapEntrySize + 2 + sovIstioinstallerTypes(uint64(mapEntrySize))
+		}
+	}
+	if m.K8S != nil {
+		l = m.K8S.Size()
+		n += 2 + l + sovIstioinstallerTypes(uint64(l))
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func (m *KubernetesResourcesConfig) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Resources != nil {
+		l = m.Resources.Size()
+		n += 1 + l + sovIstioinstallerTypes(uint64(l))
+	}
+	if m.ReadinessProbe != nil {
+		l = m.ReadinessProbe.Size()
+		n += 1 + l + sovIstioinstallerTypes(uint64(l))
+	}
+	if m.ReplicaCount != 0 {
+		n += 1 + sovIstioinstallerTypes(uint64(m.ReplicaCount))
+	}
+	if m.HpaSpec != nil {
+		l = m.HpaSpec.Size()
+		n += 1 + l + sovIstioinstallerTypes(uint64(l))
+	}
+	if m.PodDisruptionBudget != nil {
+		l = m.PodDisruptionBudget.Size()
+		n += 1 + l + sovIstioinstallerTypes(uint64(l))
+	}
+	if len(m.PodAnnotations) > 0 {
+		for k, v := range m.PodAnnotations {
+			_ = k
+			_ = v
+			mapEntrySize := 1 + len(k) + sovIstioinstallerTypes(uint64(len(k))) + 1 + len(v) + sovIstioinstallerTypes(uint64(len(v)))
+			n += mapEntrySize + 1 + sovIstioinstallerTypes(uint64(mapEntrySize))
+		}
+	}
+	if len(m.NodeSelector) > 0 {
+		for k, v := range m.NodeSelector {
+			_ = k
+			_ = v
+			mapEntrySize := 1 + len(k) + sovIstioinstallerTypes(uint64(len(k))) + 1 + len(v) + sovIstioinstallerTypes(uint64(len(v)))
+			n += mapEntrySize + 1 + sovIstioinstallerTypes(uint64(mapEntrySize))
+		}
+	}
+	if m.NodeAffinity != nil {
+		l = m.NodeAffinity.Size()
+		n += 1 + l + sovIstioinstallerTypes(uint64(l))
+	}
+	l = len(m.ImagePullPolicy)
+	if l > 0 {
+		n += 1 + l + sovIstioinstallerTypes(uint64(l))
+	}
+	l = len(m.PriorityClassName)
+	if l > 0 {
+		n += 1 + l + sovIstioinstallerTypes(uint64(l))
+	}
+	if len(m.K8SObjectOverrides) > 0 {
+		for _, e := range m.K8SObjectOverrides {
 			l = e.Size()
 			n += 2 + l + sovIstioinstallerTypes(uint64(l))
 		}
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func (m *KubernetesResourcesConfig_NodeAffinity) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.ArchAmd64 != 0 {
+		n += 1 + sovIstioinstallerTypes(uint64(m.ArchAmd64))
+	}
+	if m.ArchS390X != 0 {
+		n += 1 + sovIstioinstallerTypes(uint64(m.ArchS390X))
+	}
+	if m.ArchPpc64Le != 0 {
+		n += 1 + sovIstioinstallerTypes(uint64(m.ArchPpc64Le))
 	}
 	if m.XXX_unrecognized != nil {
 		n += len(m.XXX_unrecognized)
@@ -5787,8 +5080,19 @@ func (m *IngressGatewayConfig) Size() (n int) {
 	}
 	var l int
 	_ = l
-	if m.LoadBalancerIP != nil {
-		l = len(*m.LoadBalancerIP)
+	if m.Gateway != nil {
+		l = m.Gateway.Size()
+		n += 1 + l + sovIstioinstallerTypes(uint64(l))
+	}
+	if m.IngressType != 0 {
+		n += 1 + sovIstioinstallerTypes(uint64(m.IngressType))
+	}
+	if m.HttpsEnabled != nil {
+		l = m.HttpsEnabled.Size()
+		n += 1 + l + sovIstioinstallerTypes(uint64(l))
+	}
+	l = len(m.LoadBalancerIp)
+	if l > 0 {
 		n += 1 + l + sovIstioinstallerTypes(uint64(l))
 	}
 	if len(m.LoadBalancerSourceRanges) > 0 {
@@ -5797,30 +5101,18 @@ func (m *IngressGatewayConfig) Size() (n int) {
 			n += 1 + l + sovIstioinstallerTypes(uint64(l))
 		}
 	}
-	if len(m.ExternalIPs) > 0 {
-		for _, s := range m.ExternalIPs {
+	if len(m.ExternalIps) > 0 {
+		for _, s := range m.ExternalIps {
 			l = len(s)
 			n += 1 + l + sovIstioinstallerTypes(uint64(l))
 		}
 	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
+	if m.SdsEnabled != nil {
+		l = m.SdsEnabled.Size()
+		n += 2 + l + sovIstioinstallerTypes(uint64(l))
 	}
-	return n
-}
-
-func (m *IngressGatewayConfig_Sds) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.Enabled != nil {
-		n += 2
-	}
-	if m.Image != nil {
-		l = len(*m.Image)
-		n += 1 + l + sovIstioinstallerTypes(uint64(l))
+	if m.ExternalTrafficPolicy != 0 {
+		n += 2 + sovIstioinstallerTypes(uint64(m.ExternalTrafficPolicy))
 	}
 	if m.XXX_unrecognized != nil {
 		n += len(m.XXX_unrecognized)
@@ -5844,7 +5136,7 @@ func (m *EgressGatewayConfig) Size() (n int) {
 	return n
 }
 
-func (m *IlbGatewayConfig) Size() (n int) {
+func (m *LoadBalancingGatewayConfig) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -5854,8 +5146,8 @@ func (m *IlbGatewayConfig) Size() (n int) {
 		l = m.Gateway.Size()
 		n += 1 + l + sovIstioinstallerTypes(uint64(l))
 	}
-	if m.LoadBalancerIP != nil {
-		l = len(*m.LoadBalancerIP)
+	l = len(m.LoadBalancerIp)
+	if l > 0 {
 		n += 1 + l + sovIstioinstallerTypes(uint64(l))
 	}
 	if m.XXX_unrecognized != nil {
@@ -5870,70 +5162,12 @@ func (m *GatewayConfig) Size() (n int) {
 	}
 	var l int
 	_ = l
-	if m.Type != nil {
-		l = len(*m.Type)
+	if m.Common != nil {
+		l = m.Common.Size()
 		n += 1 + l + sovIstioinstallerTypes(uint64(l))
 	}
-	if len(m.Env) > 0 {
-		for k, v := range m.Env {
-			_ = k
-			_ = v
-			mapEntrySize := 1 + len(k) + sovIstioinstallerTypes(uint64(len(k))) + 1 + len(v) + sovIstioinstallerTypes(uint64(len(v)))
-			n += mapEntrySize + 2 + sovIstioinstallerTypes(uint64(mapEntrySize))
-		}
-	}
-	if m.HpaSpec != nil {
-		l = m.HpaSpec.Size()
-		n += 2 + l + sovIstioinstallerTypes(uint64(l))
-	}
-	if len(m.PodAnnotations) > 0 {
-		for k, v := range m.PodAnnotations {
-			_ = k
-			_ = v
-			mapEntrySize := 1 + len(k) + sovIstioinstallerTypes(uint64(len(k))) + 1 + len(v) + sovIstioinstallerTypes(uint64(len(v)))
-			n += mapEntrySize + 2 + sovIstioinstallerTypes(uint64(mapEntrySize))
-		}
-	}
-	if len(m.ServiceAnnotations) > 0 {
-		for k, v := range m.ServiceAnnotations {
-			_ = k
-			_ = v
-			mapEntrySize := 1 + len(k) + sovIstioinstallerTypes(uint64(len(k))) + 1 + len(v) + sovIstioinstallerTypes(uint64(len(v)))
-			n += mapEntrySize + 2 + sovIstioinstallerTypes(uint64(mapEntrySize))
-		}
-	}
-	if len(m.NodeSelector) > 0 {
-		for k, v := range m.NodeSelector {
-			_ = k
-			_ = v
-			mapEntrySize := 1 + len(k) + sovIstioinstallerTypes(uint64(len(k))) + 1 + len(v) + sovIstioinstallerTypes(uint64(len(v)))
-			n += mapEntrySize + 2 + sovIstioinstallerTypes(uint64(mapEntrySize))
-		}
-	}
-	if len(m.ResourceOverride) > 0 {
-		for _, e := range m.ResourceOverride {
-			l = e.Size()
-			n += 2 + l + sovIstioinstallerTypes(uint64(l))
-		}
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
-	return n
-}
-
-func (m *GatewayConfig_Labels) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.App != nil {
-		l = len(*m.App)
-		n += 1 + l + sovIstioinstallerTypes(uint64(l))
-	}
-	if m.Istio != nil {
-		l = len(*m.Istio)
+	l = len(m.Type)
+	if l > 0 {
 		n += 1 + l + sovIstioinstallerTypes(uint64(l))
 	}
 	if m.XXX_unrecognized != nil {
@@ -5948,12 +5182,12 @@ func (m *OperatorConfig) Size() (n int) {
 	}
 	var l int
 	_ = l
-	if m.ManifestPath != nil {
-		l = len(*m.ManifestPath)
+	l = len(m.ManifestPath)
+	if l > 0 {
 		n += 1 + l + sovIstioinstallerTypes(uint64(l))
 	}
-	if m.Namespace != nil {
-		l = len(*m.Namespace)
+	l = len(m.Namespace)
+	if l > 0 {
 		n += 1 + l + sovIstioinstallerTypes(uint64(l))
 	}
 	if m.Spec != nil {
@@ -5986,7 +5220,7 @@ func (m *IstioInstaller) Size() (n int) {
 	return n
 }
 
-func (m *ResourceRequirements) Size() (n int) {
+func (m *Resources) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -6020,15 +5254,15 @@ func (m *PodDisruptionBudgetSpec) Size() (n int) {
 	}
 	var l int
 	_ = l
-	if m.MinAvailable != nil {
-		n += 1 + sovIstioinstallerTypes(uint64(*m.MinAvailable))
+	if m.MinAvailable != 0 {
+		n += 1 + sovIstioinstallerTypes(uint64(m.MinAvailable))
 	}
 	if m.Selector != nil {
 		l = m.Selector.Size()
 		n += 1 + l + sovIstioinstallerTypes(uint64(l))
 	}
-	if m.MaxUnavailable != nil {
-		n += 1 + sovIstioinstallerTypes(uint64(*m.MaxUnavailable))
+	if m.MaxUnavailable != 0 {
+		n += 1 + sovIstioinstallerTypes(uint64(m.MaxUnavailable))
 	}
 	if m.XXX_unrecognized != nil {
 		n += len(m.XXX_unrecognized)
@@ -6036,24 +5270,24 @@ func (m *PodDisruptionBudgetSpec) Size() (n int) {
 	return n
 }
 
-func (m *ResourceOverride) Size() (n int) {
+func (m *K8SObjectOverride) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if m.PatchType != nil {
-		n += 1 + sovIstioinstallerTypes(uint64(*m.PatchType))
+	if m.PatchType != 0 {
+		n += 1 + sovIstioinstallerTypes(uint64(m.PatchType))
 	}
-	if m.Op != nil {
-		n += 1 + sovIstioinstallerTypes(uint64(*m.Op))
+	if m.Op != 0 {
+		n += 1 + sovIstioinstallerTypes(uint64(m.Op))
 	}
-	if m.Kind != nil {
-		l = len(*m.Kind)
+	l = len(m.Kind)
+	if l > 0 {
 		n += 1 + l + sovIstioinstallerTypes(uint64(l))
 	}
-	if m.ApiVersion != nil {
-		l = len(*m.ApiVersion)
+	l = len(m.ApiVersion)
+	if l > 0 {
 		n += 1 + l + sovIstioinstallerTypes(uint64(l))
 	}
 	if m.Metadata != nil {
@@ -6072,38 +5306,13 @@ func (m *ObjectMeta) Size() (n int) {
 	}
 	var l int
 	_ = l
-	if m.Name != nil {
-		l = len(*m.Name)
+	l = len(m.Name)
+	if l > 0 {
 		n += 1 + l + sovIstioinstallerTypes(uint64(l))
 	}
-	if m.Namespace != nil {
-		l = len(*m.Namespace)
+	l = len(m.Namespace)
+	if l > 0 {
 		n += 1 + l + sovIstioinstallerTypes(uint64(l))
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
-	return n
-}
-
-func (m *SdsConfig) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.Enabled != nil {
-		n += 2
-	}
-	if m.UdsPath != nil {
-		l = len(*m.UdsPath)
-		n += 1 + l + sovIstioinstallerTypes(uint64(l))
-	}
-	if m.UseTrustworthyJwt != nil {
-		n += 2
-	}
-	if m.UseNormalJwt != nil {
-		n += 2
 	}
 	if m.XXX_unrecognized != nil {
 		n += len(m.XXX_unrecognized)
@@ -6117,13 +5326,13 @@ func (m *TestKube) Size() (n int) {
 	}
 	var l int
 	_ = l
-	if m.HpaSpec != nil {
-		l = m.HpaSpec.Size()
-		n += 2 + l + sovIstioinstallerTypes(uint64(l))
-	}
-	if m.PodDisruptionBudget != nil {
-		l = m.PodDisruptionBudget.Size()
-		n += 2 + l + sovIstioinstallerTypes(uint64(l))
+	if len(m.Env) > 0 {
+		for k, v := range m.Env {
+			_ = k
+			_ = v
+			mapEntrySize := 1 + len(k) + sovIstioinstallerTypes(uint64(len(k))) + 1 + len(v) + sovIstioinstallerTypes(uint64(len(v)))
+			n += mapEntrySize + 2 + sovIstioinstallerTypes(uint64(mapEntrySize))
+		}
 	}
 	if m.Resources != nil {
 		l = m.Resources.Size()
@@ -6133,8 +5342,32 @@ func (m *TestKube) Size() (n int) {
 		l = m.ReadinessProbe.Size()
 		n += 2 + l + sovIstioinstallerTypes(uint64(l))
 	}
-	if len(m.ResourceOverride) > 0 {
-		for _, e := range m.ResourceOverride {
+	if m.HpaSpec != nil {
+		l = m.HpaSpec.Size()
+		n += 2 + l + sovIstioinstallerTypes(uint64(l))
+	}
+	if m.PodDisruptionBudget != nil {
+		l = m.PodDisruptionBudget.Size()
+		n += 2 + l + sovIstioinstallerTypes(uint64(l))
+	}
+	if len(m.PodAnnotations) > 0 {
+		for k, v := range m.PodAnnotations {
+			_ = k
+			_ = v
+			mapEntrySize := 1 + len(k) + sovIstioinstallerTypes(uint64(len(k))) + 1 + len(v) + sovIstioinstallerTypes(uint64(len(v)))
+			n += mapEntrySize + 2 + sovIstioinstallerTypes(uint64(mapEntrySize))
+		}
+	}
+	if len(m.NodeSelector) > 0 {
+		for k, v := range m.NodeSelector {
+			_ = k
+			_ = v
+			mapEntrySize := 1 + len(k) + sovIstioinstallerTypes(uint64(len(k))) + 1 + len(v) + sovIstioinstallerTypes(uint64(len(v)))
+			n += mapEntrySize + 2 + sovIstioinstallerTypes(uint64(mapEntrySize))
+		}
+	}
+	if len(m.K8SObjectOverride) > 0 {
+		for _, e := range m.K8SObjectOverride {
 			l = e.Size()
 			n += 2 + l + sovIstioinstallerTypes(uint64(l))
 		}
@@ -6217,41 +5450,7 @@ func (m *InstallerSpec) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			s := string(dAtA[iNdEx:postIndex])
-			m.InstallPackagePath = &s
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ControllerName", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			s := string(dAtA[iNdEx:postIndex])
-			m.ControllerName = &s
+			m.InstallPackagePath = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 3:
 			if wireType != 2 {
@@ -6283,8 +5482,7 @@ func (m *InstallerSpec) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			s := string(dAtA[iNdEx:postIndex])
-			m.Hub = &s
+			m.Hub = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 4:
 			if wireType != 2 {
@@ -6316,8 +5514,7 @@ func (m *InstallerSpec) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			s := string(dAtA[iNdEx:postIndex])
-			m.Tag = &s
+			m.Tag = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 5:
 			if wireType != 2 {
@@ -6349,46 +5546,9 @@ func (m *InstallerSpec) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			s := string(dAtA[iNdEx:postIndex])
-			m.DefaultNamespacePrefix = &s
+			m.DefaultNamespacePrefix = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 10:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field RemoteClusterConfig", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.RemoteClusterConfig == nil {
-				m.RemoteClusterConfig = &RemoteClusterConfig{}
-			}
-			if err := m.RemoteClusterConfig.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 20:
+		case 25:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field TrafficManagement", wireType)
 			}
@@ -6424,9 +5584,9 @@ func (m *InstallerSpec) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		case 21:
+		case 26:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Policy", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field PolicyTelemetry", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -6453,50 +5613,14 @@ func (m *InstallerSpec) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.Policy == nil {
-				m.Policy = &PolicyConfig{}
+			if m.PolicyTelemetry == nil {
+				m.PolicyTelemetry = &PolicyTelemetryConfig{}
 			}
-			if err := m.Policy.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.PolicyTelemetry.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
-		case 22:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Telemetry", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Telemetry == nil {
-				m.Telemetry = &TelemetryConfig{}
-			}
-			if err := m.Telemetry.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 23:
+		case 28:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Security", wireType)
 			}
@@ -6532,7 +5656,7 @@ func (m *InstallerSpec) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		case 24:
+		case 29:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field ConfigManagement", wireType)
 			}
@@ -6670,6 +5794,42 @@ func (m *InstallerSpec) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
+		case 80:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field K8SDefaults", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.K8SDefaults == nil {
+				m.K8SDefaults = &KubernetesResourcesConfig{}
+			}
+			if err := m.K8SDefaults.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipIstioinstallerTypes(dAtA[iNdEx:])
@@ -6726,9 +5886,9 @@ func (m *InstallerStatus) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ProxyControl", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field TrafficManagement", wireType)
 			}
-			var stringLen uint64
+			var msglen int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowIstioinstallerTypes
@@ -6738,30 +5898,33 @@ func (m *InstallerStatus) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
+				msglen |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
+			if msglen < 0 {
 				return ErrInvalidLengthIstioinstallerTypes
 			}
-			postIndex := iNdEx + intStringLen
+			postIndex := iNdEx + msglen
 			if postIndex < 0 {
 				return ErrInvalidLengthIstioinstallerTypes
 			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			s := string(dAtA[iNdEx:postIndex])
-			m.ProxyControl = &s
+			if m.TrafficManagement == nil {
+				m.TrafficManagement = &InstallerStatus_VersionStatus{}
+			}
+			if err := m.TrafficManagement.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field SidecarInjector", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field PolicyTelemetry", wireType)
 			}
-			var stringLen uint64
+			var msglen int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowIstioinstallerTypes
@@ -6771,24 +5934,167 @@ func (m *InstallerStatus) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
+				msglen |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
+			if msglen < 0 {
 				return ErrInvalidLengthIstioinstallerTypes
 			}
-			postIndex := iNdEx + intStringLen
+			postIndex := iNdEx + msglen
 			if postIndex < 0 {
 				return ErrInvalidLengthIstioinstallerTypes
 			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			s := string(dAtA[iNdEx:postIndex])
-			m.SidecarInjector = &s
+			if m.PolicyTelemetry == nil {
+				m.PolicyTelemetry = &InstallerStatus_VersionStatus{}
+			}
+			if err := m.PolicyTelemetry.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Security", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Security == nil {
+				m.Security = &InstallerStatus_VersionStatus{}
+			}
+			if err := m.Security.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ConfigManagement", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.ConfigManagement == nil {
+				m.ConfigManagement = &InstallerStatus_VersionStatus{}
+			}
+			if err := m.ConfigManagement.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field IngressGateway", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.IngressGateway = append(m.IngressGateway, &InstallerStatus_VersionStatus{})
+			if err := m.IngressGateway[len(m.IngressGateway)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 6:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field EgressGateway", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.EgressGateway = append(m.EgressGateway, &InstallerStatus_VersionStatus{})
+			if err := m.EgressGateway[len(m.EgressGateway)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -6815,7 +6121,7 @@ func (m *InstallerStatus) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *RemoteClusterConfig) Unmarshal(dAtA []byte) error {
+func (m *InstallerStatus_VersionStatus) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -6838,17 +6144,17 @@ func (m *RemoteClusterConfig) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: RemoteClusterConfig: wiretype end group for non-group")
+			return fmt.Errorf("proto: VersionStatus: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: RemoteClusterConfig: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: VersionStatus: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Enabled", wireType)
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Version", wireType)
 			}
-			var v int
+			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowIstioinstallerTypes
@@ -6858,13 +6164,43 @@ func (m *RemoteClusterConfig) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				v |= int(b&0x7F) << shift
+				stringLen |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			b := bool(v != 0)
-			m.Enabled = &b
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Version = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Status", wireType)
+			}
+			m.Status = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Status |= InstallerStatus_Status(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipIstioinstallerTypes(dAtA[iNdEx:])
@@ -6920,10 +6256,10 @@ func (m *TrafficManagementConfig) Unmarshal(dAtA []byte) error {
 		}
 		switch fieldNum {
 		case 1:
-			if wireType != 0 {
+			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Enabled", wireType)
 			}
-			var v int
+			var msglen int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowIstioinstallerTypes
@@ -6933,13 +6269,28 @@ func (m *TrafficManagementConfig) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				v |= int(b&0x7F) << shift
+				msglen |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			b := bool(v != 0)
-			m.Enabled = &b
+			if msglen < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Enabled == nil {
+				m.Enabled = &protobuf.BoolValue{}
+			}
+			if err := m.Enabled.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Namespace", wireType)
@@ -6970,1008 +6321,7 @@ func (m *TrafficManagementConfig) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			s := string(dAtA[iNdEx:postIndex])
-			m.Namespace = &s
-			iNdEx = postIndex
-		case 3:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field AutoInjection", wireType)
-			}
-			var v int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			b := bool(v != 0)
-			m.AutoInjection = &b
-		case 4:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field PilotConfig", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.PilotConfig == nil {
-				m.PilotConfig = &PilotConfig{}
-			}
-			if err := m.PilotConfig.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 5:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ProxyConfig", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.ProxyConfig == nil {
-				m.ProxyConfig = &ProxyConfig{}
-			}
-			if err := m.ProxyConfig.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipIstioinstallerTypes(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if (iNdEx + skippy) < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *PilotConfig) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowIstioinstallerTypes
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: PilotConfig: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: PilotConfig: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Debug", wireType)
-			}
-			var v int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			b := bool(v != 0)
-			m.Debug = &b
-		case 10:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Sidecar", wireType)
-			}
-			var v int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			b := bool(v != 0)
-			m.Sidecar = &b
-		case 11:
-			if wireType != 5 {
-				return fmt.Errorf("proto: wrong wireType = %d for field TraceSampling", wireType)
-			}
-			var v uint32
-			if (iNdEx + 4) > l {
-				return io.ErrUnexpectedEOF
-			}
-			v = uint32(encoding_binary.LittleEndian.Uint32(dAtA[iNdEx:]))
-			iNdEx += 4
-			v2 := float32(math.Float32frombits(v))
-			m.TraceSampling = &v2
-		case 12:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field KeepaliveMaxServerConnectionAge", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			s := string(dAtA[iNdEx:postIndex])
-			m.KeepaliveMaxServerConnectionAge = &s
-			iNdEx = postIndex
-		case 50:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field AdditionalArgs", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.AdditionalArgs == nil {
-				m.AdditionalArgs = make(map[string]string)
-			}
-			var mapkey string
-			var mapvalue string
-			for iNdEx < postIndex {
-				entryPreIndex := iNdEx
-				var wire uint64
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return ErrIntOverflowIstioinstallerTypes
-					}
-					if iNdEx >= l {
-						return io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					wire |= uint64(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				fieldNum := int32(wire >> 3)
-				if fieldNum == 1 {
-					var stringLenmapkey uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return ErrIntOverflowIstioinstallerTypes
-						}
-						if iNdEx >= l {
-							return io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						stringLenmapkey |= uint64(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					intStringLenmapkey := int(stringLenmapkey)
-					if intStringLenmapkey < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					postStringIndexmapkey := iNdEx + intStringLenmapkey
-					if postStringIndexmapkey < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					if postStringIndexmapkey > l {
-						return io.ErrUnexpectedEOF
-					}
-					mapkey = string(dAtA[iNdEx:postStringIndexmapkey])
-					iNdEx = postStringIndexmapkey
-				} else if fieldNum == 2 {
-					var stringLenmapvalue uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return ErrIntOverflowIstioinstallerTypes
-						}
-						if iNdEx >= l {
-							return io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						stringLenmapvalue |= uint64(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					intStringLenmapvalue := int(stringLenmapvalue)
-					if intStringLenmapvalue < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					postStringIndexmapvalue := iNdEx + intStringLenmapvalue
-					if postStringIndexmapvalue < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					if postStringIndexmapvalue > l {
-						return io.ErrUnexpectedEOF
-					}
-					mapvalue = string(dAtA[iNdEx:postStringIndexmapvalue])
-					iNdEx = postStringIndexmapvalue
-				} else {
-					iNdEx = entryPreIndex
-					skippy, err := skipIstioinstallerTypes(dAtA[iNdEx:])
-					if err != nil {
-						return err
-					}
-					if skippy < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					if (iNdEx + skippy) > postIndex {
-						return io.ErrUnexpectedEOF
-					}
-					iNdEx += skippy
-				}
-			}
-			m.AdditionalArgs[mapkey] = mapvalue
-			iNdEx = postIndex
-		case 60:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Env", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Env == nil {
-				m.Env = make(map[string]string)
-			}
-			var mapkey string
-			var mapvalue string
-			for iNdEx < postIndex {
-				entryPreIndex := iNdEx
-				var wire uint64
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return ErrIntOverflowIstioinstallerTypes
-					}
-					if iNdEx >= l {
-						return io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					wire |= uint64(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				fieldNum := int32(wire >> 3)
-				if fieldNum == 1 {
-					var stringLenmapkey uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return ErrIntOverflowIstioinstallerTypes
-						}
-						if iNdEx >= l {
-							return io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						stringLenmapkey |= uint64(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					intStringLenmapkey := int(stringLenmapkey)
-					if intStringLenmapkey < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					postStringIndexmapkey := iNdEx + intStringLenmapkey
-					if postStringIndexmapkey < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					if postStringIndexmapkey > l {
-						return io.ErrUnexpectedEOF
-					}
-					mapkey = string(dAtA[iNdEx:postStringIndexmapkey])
-					iNdEx = postStringIndexmapkey
-				} else if fieldNum == 2 {
-					var stringLenmapvalue uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return ErrIntOverflowIstioinstallerTypes
-						}
-						if iNdEx >= l {
-							return io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						stringLenmapvalue |= uint64(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					intStringLenmapvalue := int(stringLenmapvalue)
-					if intStringLenmapvalue < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					postStringIndexmapvalue := iNdEx + intStringLenmapvalue
-					if postStringIndexmapvalue < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					if postStringIndexmapvalue > l {
-						return io.ErrUnexpectedEOF
-					}
-					mapvalue = string(dAtA[iNdEx:postStringIndexmapvalue])
-					iNdEx = postStringIndexmapvalue
-				} else {
-					iNdEx = entryPreIndex
-					skippy, err := skipIstioinstallerTypes(dAtA[iNdEx:])
-					if err != nil {
-						return err
-					}
-					if skippy < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					if (iNdEx + skippy) > postIndex {
-						return io.ErrUnexpectedEOF
-					}
-					iNdEx += skippy
-				}
-			}
-			m.Env[mapkey] = mapvalue
-			iNdEx = postIndex
-		case 80:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Resources", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Resources == nil {
-				m.Resources = &ResourceRequirements{}
-			}
-			if err := m.Resources.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 85:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ReplicaCount", wireType)
-			}
-			var v uint32
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= uint32(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			m.ReplicaCount = &v
-		case 86:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field HpaSpec", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.HpaSpec == nil {
-				m.HpaSpec = &v1.HorizontalPodAutoscalerSpec{}
-			}
-			if err := m.HpaSpec.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 87:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field PodDisruptionBudget", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.PodDisruptionBudget == nil {
-				m.PodDisruptionBudget = &PodDisruptionBudgetSpec{}
-			}
-			if err := m.PodDisruptionBudget.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 92:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field NodeSelector", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.NodeSelector == nil {
-				m.NodeSelector = make(map[string]string)
-			}
-			var mapkey string
-			var mapvalue string
-			for iNdEx < postIndex {
-				entryPreIndex := iNdEx
-				var wire uint64
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return ErrIntOverflowIstioinstallerTypes
-					}
-					if iNdEx >= l {
-						return io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					wire |= uint64(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				fieldNum := int32(wire >> 3)
-				if fieldNum == 1 {
-					var stringLenmapkey uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return ErrIntOverflowIstioinstallerTypes
-						}
-						if iNdEx >= l {
-							return io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						stringLenmapkey |= uint64(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					intStringLenmapkey := int(stringLenmapkey)
-					if intStringLenmapkey < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					postStringIndexmapkey := iNdEx + intStringLenmapkey
-					if postStringIndexmapkey < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					if postStringIndexmapkey > l {
-						return io.ErrUnexpectedEOF
-					}
-					mapkey = string(dAtA[iNdEx:postStringIndexmapkey])
-					iNdEx = postStringIndexmapkey
-				} else if fieldNum == 2 {
-					var stringLenmapvalue uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return ErrIntOverflowIstioinstallerTypes
-						}
-						if iNdEx >= l {
-							return io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						stringLenmapvalue |= uint64(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					intStringLenmapvalue := int(stringLenmapvalue)
-					if intStringLenmapvalue < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					postStringIndexmapvalue := iNdEx + intStringLenmapvalue
-					if postStringIndexmapvalue < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					if postStringIndexmapvalue > l {
-						return io.ErrUnexpectedEOF
-					}
-					mapvalue = string(dAtA[iNdEx:postStringIndexmapvalue])
-					iNdEx = postStringIndexmapvalue
-				} else {
-					iNdEx = entryPreIndex
-					skippy, err := skipIstioinstallerTypes(dAtA[iNdEx:])
-					if err != nil {
-						return err
-					}
-					if skippy < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					if (iNdEx + skippy) > postIndex {
-						return io.ErrUnexpectedEOF
-					}
-					iNdEx += skippy
-				}
-			}
-			m.NodeSelector[mapkey] = mapvalue
-			iNdEx = postIndex
-		case 100:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ResourceOverride", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.ResourceOverride = append(m.ResourceOverride, &ResourceOverride{})
-			if err := m.ResourceOverride[len(m.ResourceOverride)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipIstioinstallerTypes(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if (iNdEx + skippy) < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *ProxyConfig) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowIstioinstallerTypes
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: ProxyConfig: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: ProxyConfig: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Debug", wireType)
-			}
-			var v int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			b := bool(v != 0)
-			m.Debug = &b
-		case 10:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Privileged", wireType)
-			}
-			var v int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			b := bool(v != 0)
-			m.Privileged = &b
-		case 11:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field EnableCoredump", wireType)
-			}
-			var v int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			b := bool(v != 0)
-			m.EnableCoredump = &b
-		case 12:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field InterceptionMode", wireType)
-			}
-			var v ProxyConfig_InterceptionMode
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= ProxyConfig_InterceptionMode(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			m.InterceptionMode = &v
-		case 13:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field StatusPort", wireType)
-			}
-			var v uint32
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= uint32(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			m.StatusPort = &v
-		case 14:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ImagePullPolicy", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			s := string(dAtA[iNdEx:postIndex])
-			m.ImagePullPolicy = &s
-			iNdEx = postIndex
-		case 15:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ProxyInitImage", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			s := string(dAtA[iNdEx:postIndex])
-			m.ProxyInitImage = &s
+			m.Namespace = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 16:
 			if wireType != 2 {
@@ -8003,8 +6353,7 @@ func (m *ProxyConfig) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			s := string(dAtA[iNdEx:postIndex])
-			m.IncludeIpRanges = &s
+			m.IncludeIpRanges = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 17:
 			if wireType != 2 {
@@ -8036,8 +6385,7 @@ func (m *ProxyConfig) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			s := string(dAtA[iNdEx:postIndex])
-			m.ExcludeIpRanges = &s
+			m.ExcludeIpRanges = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 18:
 			if wireType != 2 {
@@ -8069,8 +6417,7 @@ func (m *ProxyConfig) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			s := string(dAtA[iNdEx:postIndex])
-			m.IncludeInboundPorts = &s
+			m.IncludeInboundPorts = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 19:
 			if wireType != 2 {
@@ -8102,128 +6449,8 @@ func (m *ProxyConfig) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			s := string(dAtA[iNdEx:postIndex])
-			m.ExcludeInboundPorts = &s
+			m.ExcludeInboundPorts = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 20:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ConnectTimeout", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			s := string(dAtA[iNdEx:postIndex])
-			m.ConnectTimeout = &s
-			iNdEx = postIndex
-		case 21:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field DrainDuration", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			s := string(dAtA[iNdEx:postIndex])
-			m.DrainDuration = &s
-			iNdEx = postIndex
-		case 22:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ParentShutdownDuration", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			s := string(dAtA[iNdEx:postIndex])
-			m.ParentShutdownDuration = &s
-			iNdEx = postIndex
-		case 23:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Concurrency", wireType)
-			}
-			var v uint32
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= uint32(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			m.Concurrency = &v
 		case 24:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field ClusterDomain", wireType)
@@ -8254,8 +6481,7 @@ func (m *ProxyConfig) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			s := string(dAtA[iNdEx:postIndex])
-			m.ClusterDomain = &s
+			m.ClusterDomain = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 25:
 			if wireType != 2 {
@@ -8287,12 +6513,11 @@ func (m *ProxyConfig) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			s := string(dAtA[iNdEx:postIndex])
-			m.PodDnsSearchNamespaces = &s
+			m.PodDnsSearchNamespaces = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 30:
+		case 26:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Lightstep", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field EnableAutoInjection", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -8319,16 +6544,88 @@ func (m *ProxyConfig) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.Lightstep == nil {
-				m.Lightstep = &ProxyConfig_LightstepConfig{}
+			if m.EnableAutoInjection == nil {
+				m.EnableAutoInjection = &protobuf.BoolValue{}
 			}
-			if err := m.Lightstep.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.EnableAutoInjection.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 27:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field EnableNamespacesByDefault", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.EnableNamespacesByDefault == nil {
+				m.EnableNamespacesByDefault = &protobuf.BoolValue{}
+			}
+			if err := m.EnableNamespacesByDefault.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 30:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Pilot", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Pilot == nil {
+				m.Pilot = &PilotComponentConfig{}
+			}
+			if err := m.Pilot.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
 		case 31:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Zipkin", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Proxy", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -8355,16 +6652,16 @@ func (m *ProxyConfig) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.Zipkin == nil {
-				m.Zipkin = &ProxyConfig_ZipkinConfig{}
+			if m.Proxy == nil {
+				m.Proxy = &ProxyComponentConfig{}
 			}
-			if err := m.Zipkin.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.Proxy.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
-		case 40:
+		case 32:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Sds", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field SidecarInjector", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -8391,16 +6688,125 @@ func (m *ProxyConfig) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.Sds == nil {
-				m.Sds = &SdsConfig{}
+			if m.SidecarInjector == nil {
+				m.SidecarInjector = &SidecarInjectorComponentConfig{}
 			}
-			if err := m.Sds.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.SidecarInjector.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipIstioinstallerTypes(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *PolicyTelemetryConfig) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowIstioinstallerTypes
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: PolicyTelemetryConfig: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: PolicyTelemetryConfig: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 10:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PolicyCheckFailOpen", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.PolicyCheckFailOpen == nil {
+				m.PolicyCheckFailOpen = &protobuf.BoolValue{}
+			}
+			if err := m.PolicyCheckFailOpen.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 11:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field OutboundTrafficPolicyMode", wireType)
+			}
+			m.OutboundTrafficPolicyMode = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.OutboundTrafficPolicyMode |= PolicyTelemetryConfig_OutboundPolicy(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		case 50:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field AdditionalArgs", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Policy", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -8427,270 +6833,16 @@ func (m *ProxyConfig) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.AdditionalArgs == nil {
-				m.AdditionalArgs = make(map[string]string)
+			if m.Policy == nil {
+				m.Policy = &PolicyComponentConfig{}
 			}
-			var mapkey string
-			var mapvalue string
-			for iNdEx < postIndex {
-				entryPreIndex := iNdEx
-				var wire uint64
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return ErrIntOverflowIstioinstallerTypes
-					}
-					if iNdEx >= l {
-						return io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					wire |= uint64(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				fieldNum := int32(wire >> 3)
-				if fieldNum == 1 {
-					var stringLenmapkey uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return ErrIntOverflowIstioinstallerTypes
-						}
-						if iNdEx >= l {
-							return io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						stringLenmapkey |= uint64(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					intStringLenmapkey := int(stringLenmapkey)
-					if intStringLenmapkey < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					postStringIndexmapkey := iNdEx + intStringLenmapkey
-					if postStringIndexmapkey < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					if postStringIndexmapkey > l {
-						return io.ErrUnexpectedEOF
-					}
-					mapkey = string(dAtA[iNdEx:postStringIndexmapkey])
-					iNdEx = postStringIndexmapkey
-				} else if fieldNum == 2 {
-					var stringLenmapvalue uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return ErrIntOverflowIstioinstallerTypes
-						}
-						if iNdEx >= l {
-							return io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						stringLenmapvalue |= uint64(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					intStringLenmapvalue := int(stringLenmapvalue)
-					if intStringLenmapvalue < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					postStringIndexmapvalue := iNdEx + intStringLenmapvalue
-					if postStringIndexmapvalue < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					if postStringIndexmapvalue > l {
-						return io.ErrUnexpectedEOF
-					}
-					mapvalue = string(dAtA[iNdEx:postStringIndexmapvalue])
-					iNdEx = postStringIndexmapvalue
-				} else {
-					iNdEx = entryPreIndex
-					skippy, err := skipIstioinstallerTypes(dAtA[iNdEx:])
-					if err != nil {
-						return err
-					}
-					if skippy < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					if (iNdEx + skippy) > postIndex {
-						return io.ErrUnexpectedEOF
-					}
-					iNdEx += skippy
-				}
-			}
-			m.AdditionalArgs[mapkey] = mapvalue
-			iNdEx = postIndex
-		case 60:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Env", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Env == nil {
-				m.Env = make(map[string]string)
-			}
-			var mapkey string
-			var mapvalue string
-			for iNdEx < postIndex {
-				entryPreIndex := iNdEx
-				var wire uint64
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return ErrIntOverflowIstioinstallerTypes
-					}
-					if iNdEx >= l {
-						return io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					wire |= uint64(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				fieldNum := int32(wire >> 3)
-				if fieldNum == 1 {
-					var stringLenmapkey uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return ErrIntOverflowIstioinstallerTypes
-						}
-						if iNdEx >= l {
-							return io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						stringLenmapkey |= uint64(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					intStringLenmapkey := int(stringLenmapkey)
-					if intStringLenmapkey < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					postStringIndexmapkey := iNdEx + intStringLenmapkey
-					if postStringIndexmapkey < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					if postStringIndexmapkey > l {
-						return io.ErrUnexpectedEOF
-					}
-					mapkey = string(dAtA[iNdEx:postStringIndexmapkey])
-					iNdEx = postStringIndexmapkey
-				} else if fieldNum == 2 {
-					var stringLenmapvalue uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return ErrIntOverflowIstioinstallerTypes
-						}
-						if iNdEx >= l {
-							return io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						stringLenmapvalue |= uint64(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					intStringLenmapvalue := int(stringLenmapvalue)
-					if intStringLenmapvalue < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					postStringIndexmapvalue := iNdEx + intStringLenmapvalue
-					if postStringIndexmapvalue < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					if postStringIndexmapvalue > l {
-						return io.ErrUnexpectedEOF
-					}
-					mapvalue = string(dAtA[iNdEx:postStringIndexmapvalue])
-					iNdEx = postStringIndexmapvalue
-				} else {
-					iNdEx = entryPreIndex
-					skippy, err := skipIstioinstallerTypes(dAtA[iNdEx:])
-					if err != nil {
-						return err
-					}
-					if skippy < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					if (iNdEx + skippy) > postIndex {
-						return io.ErrUnexpectedEOF
-					}
-					iNdEx += skippy
-				}
-			}
-			m.Env[mapkey] = mapvalue
-			iNdEx = postIndex
-		case 80:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Resources", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Resources == nil {
-				m.Resources = &ResourceRequirements{}
-			}
-			if err := m.Resources.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.Policy.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
-		case 81:
+		case 51:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ReadinessProbe", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Telemetry", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -8717,44 +6869,10 @@ func (m *ProxyConfig) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.ReadinessProbe == nil {
-				m.ReadinessProbe = &v11.Probe{}
+			if m.Telemetry == nil {
+				m.Telemetry = &TelemetryComponentConfig{}
 			}
-			if err := m.ReadinessProbe.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 100:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ResourceOverride", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.ResourceOverride = append(m.ResourceOverride, &ResourceOverride{})
-			if err := m.ResourceOverride[len(m.ResourceOverride)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.Telemetry.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -8783,7 +6901,7 @@ func (m *ProxyConfig) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *ProxyConfig_LightstepConfig) Unmarshal(dAtA []byte) error {
+func (m *SecurityConfig) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -8806,278 +6924,17 @@ func (m *ProxyConfig_LightstepConfig) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: LightstepConfig: wiretype end group for non-group")
+			return fmt.Errorf("proto: SecurityConfig: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: LightstepConfig: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: SecurityConfig: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Address", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			s := string(dAtA[iNdEx:postIndex])
-			m.Address = &s
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field AccessToken", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			s := string(dAtA[iNdEx:postIndex])
-			m.AccessToken = &s
-			iNdEx = postIndex
-		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field CaCertPath", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			s := string(dAtA[iNdEx:postIndex])
-			m.CaCertPath = &s
-			iNdEx = postIndex
-		case 4:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Secure", wireType)
-			}
-			var v int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			b := bool(v != 0)
-			m.Secure = &b
-		default:
-			iNdEx = preIndex
-			skippy, err := skipIstioinstallerTypes(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if (iNdEx + skippy) < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *ProxyConfig_ZipkinConfig) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowIstioinstallerTypes
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: ZipkinConfig: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: ZipkinConfig: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Address", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			s := string(dAtA[iNdEx:postIndex])
-			m.Address = &s
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipIstioinstallerTypes(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if (iNdEx + skippy) < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *PolicyConfig) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowIstioinstallerTypes
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: PolicyConfig: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: PolicyConfig: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Enabled", wireType)
 			}
-			var v int
+			var msglen int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowIstioinstallerTypes
@@ -9087,13 +6944,28 @@ func (m *PolicyConfig) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				v |= int(b&0x7F) << shift
+				msglen |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			b := bool(v != 0)
-			m.Enabled = &b
+			if msglen < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Enabled == nil {
+				m.Enabled = &protobuf.BoolValue{}
+			}
+			if err := m.Enabled.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Namespace", wireType)
@@ -9124,9 +6996,1333 @@ func (m *PolicyConfig) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			s := string(dAtA[iNdEx:postIndex])
-			m.Namespace = &s
+			m.Namespace = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
+		case 13:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ControlPlaneMtls", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.ControlPlaneMtls = bool(v != 0)
+		case 14:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field DataPlaneMtls", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.DataPlaneMtls = bool(v != 0)
+		case 15:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field TrustDomain", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.TrustDomain = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 20:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Citadel", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Citadel == nil {
+				m.Citadel = &CitadelComponentConfig{}
+			}
+			if err := m.Citadel.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 21:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CertManager", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.CertManager == nil {
+				m.CertManager = &CertManagerComponentConfig{}
+			}
+			if err := m.CertManager.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 22:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field NodeAgent", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.NodeAgent == nil {
+				m.NodeAgent = &NodeAgentComponentConfig{}
+			}
+			if err := m.NodeAgent.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipIstioinstallerTypes(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *PilotComponentConfig) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowIstioinstallerTypes
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: PilotComponentConfig: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: PilotComponentConfig: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Common", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Common == nil {
+				m.Common = &CommonComponentConfig{}
+			}
+			if err := m.Common.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 10:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Sidecar", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.Sidecar = bool(v != 0)
+		default:
+			iNdEx = preIndex
+			skippy, err := skipIstioinstallerTypes(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *ProxyComponentConfig) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowIstioinstallerTypes
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: ProxyComponentConfig: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: ProxyComponentConfig: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Common", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Common == nil {
+				m.Common = &CommonComponentConfig{}
+			}
+			if err := m.Common.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 12:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field InterceptionMode", wireType)
+			}
+			m.InterceptionMode = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.InterceptionMode |= ProxyComponentConfig_InterceptionMode(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 20:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ConnectTimeout", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ConnectTimeout = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 21:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field DrainDuration", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.DrainDuration = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 22:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ParentShutdownDuration", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ParentShutdownDuration = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 23:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Concurrency", wireType)
+			}
+			m.Concurrency = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Concurrency |= uint32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		default:
+			iNdEx = preIndex
+			skippy, err := skipIstioinstallerTypes(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *SidecarInjectorComponentConfig) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowIstioinstallerTypes
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: SidecarInjectorComponentConfig: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: SidecarInjectorComponentConfig: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Common", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Common == nil {
+				m.Common = &CommonComponentConfig{}
+			}
+			if err := m.Common.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipIstioinstallerTypes(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *PolicyComponentConfig) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowIstioinstallerTypes
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: PolicyComponentConfig: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: PolicyComponentConfig: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Common", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Common == nil {
+				m.Common = &CommonComponentConfig{}
+			}
+			if err := m.Common.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipIstioinstallerTypes(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *TelemetryComponentConfig) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowIstioinstallerTypes
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: TelemetryComponentConfig: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: TelemetryComponentConfig: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Common", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Common == nil {
+				m.Common = &CommonComponentConfig{}
+			}
+			if err := m.Common.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipIstioinstallerTypes(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *CitadelComponentConfig) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowIstioinstallerTypes
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: CitadelComponentConfig: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: CitadelComponentConfig: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Common", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Common == nil {
+				m.Common = &CommonComponentConfig{}
+			}
+			if err := m.Common.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 11:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SelfSigned", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.SelfSigned = bool(v != 0)
+		case 12:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CreateMeshPolicy", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.CreateMeshPolicy = bool(v != 0)
+		default:
+			iNdEx = preIndex
+			skippy, err := skipIstioinstallerTypes(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *CertManagerComponentConfig) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowIstioinstallerTypes
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: CertManagerComponentConfig: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: CertManagerComponentConfig: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Common", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Common == nil {
+				m.Common = &CommonComponentConfig{}
+			}
+			if err := m.Common.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipIstioinstallerTypes(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *NodeAgentComponentConfig) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowIstioinstallerTypes
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: NodeAgentComponentConfig: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: NodeAgentComponentConfig: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Common", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Common == nil {
+				m.Common = &CommonComponentConfig{}
+			}
+			if err := m.Common.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipIstioinstallerTypes(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *ConfigManagementConfig) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowIstioinstallerTypes
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: ConfigManagementConfig: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: ConfigManagementConfig: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Common", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Common == nil {
+				m.Common = &CommonComponentConfig{}
+			}
+			if err := m.Common.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipIstioinstallerTypes(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *CommonComponentConfig) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowIstioinstallerTypes
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: CommonComponentConfig: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: CommonComponentConfig: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Enabled", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Enabled == nil {
+				m.Enabled = &protobuf.BoolValue{}
+			}
+			if err := m.Enabled.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Namespace", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Namespace = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Debug", wireType)
+			}
+			m.Debug = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Debug |= CommonComponentConfig_LogLevel(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		case 60:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Env", wireType)
@@ -9254,7 +8450,224 @@ func (m *PolicyConfig) Unmarshal(dAtA []byte) error {
 			}
 			m.Env[mapkey] = mapvalue
 			iNdEx = postIndex
+		case 61:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Args", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Args == nil {
+				m.Args = make(map[string]string)
+			}
+			var mapkey string
+			var mapvalue string
+			for iNdEx < postIndex {
+				entryPreIndex := iNdEx
+				var wire uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowIstioinstallerTypes
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					wire |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				fieldNum := int32(wire >> 3)
+				if fieldNum == 1 {
+					var stringLenmapkey uint64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowIstioinstallerTypes
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						stringLenmapkey |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					intStringLenmapkey := int(stringLenmapkey)
+					if intStringLenmapkey < 0 {
+						return ErrInvalidLengthIstioinstallerTypes
+					}
+					postStringIndexmapkey := iNdEx + intStringLenmapkey
+					if postStringIndexmapkey < 0 {
+						return ErrInvalidLengthIstioinstallerTypes
+					}
+					if postStringIndexmapkey > l {
+						return io.ErrUnexpectedEOF
+					}
+					mapkey = string(dAtA[iNdEx:postStringIndexmapkey])
+					iNdEx = postStringIndexmapkey
+				} else if fieldNum == 2 {
+					var stringLenmapvalue uint64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowIstioinstallerTypes
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						stringLenmapvalue |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					intStringLenmapvalue := int(stringLenmapvalue)
+					if intStringLenmapvalue < 0 {
+						return ErrInvalidLengthIstioinstallerTypes
+					}
+					postStringIndexmapvalue := iNdEx + intStringLenmapvalue
+					if postStringIndexmapvalue < 0 {
+						return ErrInvalidLengthIstioinstallerTypes
+					}
+					if postStringIndexmapvalue > l {
+						return io.ErrUnexpectedEOF
+					}
+					mapvalue = string(dAtA[iNdEx:postStringIndexmapvalue])
+					iNdEx = postStringIndexmapvalue
+				} else {
+					iNdEx = entryPreIndex
+					skippy, err := skipIstioinstallerTypes(dAtA[iNdEx:])
+					if err != nil {
+						return err
+					}
+					if skippy < 0 {
+						return ErrInvalidLengthIstioinstallerTypes
+					}
+					if (iNdEx + skippy) > postIndex {
+						return io.ErrUnexpectedEOF
+					}
+					iNdEx += skippy
+				}
+			}
+			m.Args[mapkey] = mapvalue
+			iNdEx = postIndex
 		case 80:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field K8S", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.K8S == nil {
+				m.K8S = &KubernetesResourcesConfig{}
+			}
+			if err := m.K8S.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipIstioinstallerTypes(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *KubernetesResourcesConfig) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowIstioinstallerTypes
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: KubernetesResourcesConfig: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: KubernetesResourcesConfig: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Resources", wireType)
 			}
@@ -9284,17 +8697,17 @@ func (m *PolicyConfig) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Resources == nil {
-				m.Resources = &ResourceRequirements{}
+				m.Resources = &Resources{}
 			}
 			if err := m.Resources.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
-		case 85:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ReplicaCount", wireType)
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ReadinessProbe", wireType)
 			}
-			var v uint32
+			var msglen int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowIstioinstallerTypes
@@ -9304,13 +8717,48 @@ func (m *PolicyConfig) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				v |= uint32(b&0x7F) << shift
+				msglen |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			m.ReplicaCount = &v
-		case 86:
+			if msglen < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.ReadinessProbe == nil {
+				m.ReadinessProbe = &v1.Probe{}
+			}
+			if err := m.ReadinessProbe.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ReplicaCount", wireType)
+			}
+			m.ReplicaCount = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.ReplicaCount |= uint32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 4:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field HpaSpec", wireType)
 			}
@@ -9340,13 +8788,13 @@ func (m *PolicyConfig) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.HpaSpec == nil {
-				m.HpaSpec = &v1.HorizontalPodAutoscalerSpec{}
+				m.HpaSpec = &v11.HorizontalPodAutoscalerSpec{}
 			}
 			if err := m.HpaSpec.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
-		case 87:
+		case 5:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field PodDisruptionBudget", wireType)
 			}
@@ -9382,243 +8830,7 @@ func (m *PolicyConfig) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		case 100:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ResourceOverride", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.ResourceOverride = append(m.ResourceOverride, &ResourceOverride{})
-			if err := m.ResourceOverride[len(m.ResourceOverride)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipIstioinstallerTypes(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if (iNdEx + skippy) < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *TelemetryConfig) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowIstioinstallerTypes
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: TelemetryConfig: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: TelemetryConfig: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Enabled", wireType)
-			}
-			var v int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			b := bool(v != 0)
-			m.Enabled = &b
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Namespace", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			s := string(dAtA[iNdEx:postIndex])
-			m.Namespace = &s
-			iNdEx = postIndex
-		case 10:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field SessionAffinityEnabled", wireType)
-			}
-			var v int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			b := bool(v != 0)
-			m.SessionAffinityEnabled = &b
-		case 11:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field LoadSheddingMode", wireType)
-			}
-			var v TelemetryConfig_LoadSheddingMode
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= TelemetryConfig_LoadSheddingMode(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			m.LoadSheddingMode = &v
-		case 12:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field LoadSheddingLatencyThreshold", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			s := string(dAtA[iNdEx:postIndex])
-			m.LoadSheddingLatencyThreshold = &s
-			iNdEx = postIndex
-		case 80:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ReplicaCount", wireType)
-			}
-			var v uint32
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= uint32(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			m.ReplicaCount = &v
-		case 90:
+		case 6:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field PodAnnotations", wireType)
 			}
@@ -9745,7 +8957,7 @@ func (m *TelemetryConfig) Unmarshal(dAtA []byte) error {
 			}
 			m.PodAnnotations[mapkey] = mapvalue
 			iNdEx = postIndex
-		case 92:
+		case 7:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field NodeSelector", wireType)
 			}
@@ -9872,9 +9084,9 @@ func (m *TelemetryConfig) Unmarshal(dAtA []byte) error {
 			}
 			m.NodeSelector[mapkey] = mapvalue
 			iNdEx = postIndex
-		case 100:
+		case 8:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ResourceOverride", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field NodeAffinity", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -9901,443 +9113,16 @@ func (m *TelemetryConfig) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.ResourceOverride = append(m.ResourceOverride, &ResourceOverride{})
-			if err := m.ResourceOverride[len(m.ResourceOverride)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if m.NodeAffinity == nil {
+				m.NodeAffinity = &KubernetesResourcesConfig_NodeAffinity{}
+			}
+			if err := m.NodeAffinity.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipIstioinstallerTypes(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if (iNdEx + skippy) < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *TelemetryConfig_Adapters) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowIstioinstallerTypes
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: Adapters: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: Adapters: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field UseAdapter_CRDs", wireType)
-			}
-			var v int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			b := bool(v != 0)
-			m.UseAdapter_CRDs = &b
-		case 2:
+		case 9:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field KubernetesEnvConfig", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.KubernetesEnvConfig == nil {
-				m.KubernetesEnvConfig = &TelemetryConfig_Adapters_KubernetesEnv{}
-			}
-			if err := m.KubernetesEnvConfig.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Stdio", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Stdio == nil {
-				m.Stdio = &TelemetryConfig_Adapters_Stdio{}
-			}
-			if err := m.Stdio.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 4:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Prometheus", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Prometheus == nil {
-				m.Prometheus = &TelemetryConfig_Adapters_Prometheus{}
-			}
-			if err := m.Prometheus.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipIstioinstallerTypes(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if (iNdEx + skippy) < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *TelemetryConfig_Adapters_KubernetesEnv) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowIstioinstallerTypes
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: KubernetesEnv: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: KubernetesEnv: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Enabled", wireType)
-			}
-			var v int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			b := bool(v != 0)
-			m.Enabled = &b
-		default:
-			iNdEx = preIndex
-			skippy, err := skipIstioinstallerTypes(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if (iNdEx + skippy) < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *TelemetryConfig_Adapters_Stdio) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowIstioinstallerTypes
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: Stdio: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: Stdio: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Enabled", wireType)
-			}
-			var v int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			b := bool(v != 0)
-			m.Enabled = &b
-		case 2:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field OutputAsJson", wireType)
-			}
-			var v int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			b := bool(v != 0)
-			m.OutputAsJson = &b
-		default:
-			iNdEx = preIndex
-			skippy, err := skipIstioinstallerTypes(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if (iNdEx + skippy) < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *TelemetryConfig_Adapters_Prometheus) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowIstioinstallerTypes
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: Prometheus: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: Prometheus: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Enabled", wireType)
-			}
-			var v int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			b := bool(v != 0)
-			m.Enabled = &b
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field MetricsExpiryDuration", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ImagePullPolicy", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -10365,120 +9150,11 @@ func (m *TelemetryConfig_Adapters_Prometheus) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			s := string(dAtA[iNdEx:postIndex])
-			m.MetricsExpiryDuration = &s
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipIstioinstallerTypes(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if (iNdEx + skippy) < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *SecurityConfig) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowIstioinstallerTypes
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: SecurityConfig: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: SecurityConfig: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Enabled", wireType)
-			}
-			var v int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			b := bool(v != 0)
-			m.Enabled = &b
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Namespace", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			s := string(dAtA[iNdEx:postIndex])
-			m.Namespace = &s
+			m.ImagePullPolicy = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 10:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Image", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field PriorityClassName", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -10506,201 +9182,11 @@ func (m *SecurityConfig) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			s := string(dAtA[iNdEx:postIndex])
-			m.Image = &s
-			iNdEx = postIndex
-		case 11:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field SelfSigned", wireType)
-			}
-			var v int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			b := bool(v != 0)
-			m.SelfSigned = &b
-		case 12:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field CreateMeshPolicy", wireType)
-			}
-			var v int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			b := bool(v != 0)
-			m.CreateMeshPolicy = &b
-		case 80:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ReplicaCount", wireType)
-			}
-			var v uint32
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= uint32(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			m.ReplicaCount = &v
-		case 92:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field NodeSelector", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.NodeSelector == nil {
-				m.NodeSelector = make(map[string]string)
-			}
-			var mapkey string
-			var mapvalue string
-			for iNdEx < postIndex {
-				entryPreIndex := iNdEx
-				var wire uint64
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return ErrIntOverflowIstioinstallerTypes
-					}
-					if iNdEx >= l {
-						return io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					wire |= uint64(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				fieldNum := int32(wire >> 3)
-				if fieldNum == 1 {
-					var stringLenmapkey uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return ErrIntOverflowIstioinstallerTypes
-						}
-						if iNdEx >= l {
-							return io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						stringLenmapkey |= uint64(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					intStringLenmapkey := int(stringLenmapkey)
-					if intStringLenmapkey < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					postStringIndexmapkey := iNdEx + intStringLenmapkey
-					if postStringIndexmapkey < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					if postStringIndexmapkey > l {
-						return io.ErrUnexpectedEOF
-					}
-					mapkey = string(dAtA[iNdEx:postStringIndexmapkey])
-					iNdEx = postStringIndexmapkey
-				} else if fieldNum == 2 {
-					var stringLenmapvalue uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return ErrIntOverflowIstioinstallerTypes
-						}
-						if iNdEx >= l {
-							return io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						stringLenmapvalue |= uint64(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					intStringLenmapvalue := int(stringLenmapvalue)
-					if intStringLenmapvalue < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					postStringIndexmapvalue := iNdEx + intStringLenmapvalue
-					if postStringIndexmapvalue < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					if postStringIndexmapvalue > l {
-						return io.ErrUnexpectedEOF
-					}
-					mapvalue = string(dAtA[iNdEx:postStringIndexmapvalue])
-					iNdEx = postStringIndexmapvalue
-				} else {
-					iNdEx = entryPreIndex
-					skippy, err := skipIstioinstallerTypes(dAtA[iNdEx:])
-					if err != nil {
-						return err
-					}
-					if skippy < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					if (iNdEx + skippy) > postIndex {
-						return io.ErrUnexpectedEOF
-					}
-					iNdEx += skippy
-				}
-			}
-			m.NodeSelector[mapkey] = mapvalue
+			m.PriorityClassName = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 100:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ResourceOverride", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field K8SObjectOverrides", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -10727,8 +9213,8 @@ func (m *SecurityConfig) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.ResourceOverride = append(m.ResourceOverride, &ResourceOverride{})
-			if err := m.ResourceOverride[len(m.ResourceOverride)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			m.K8SObjectOverrides = append(m.K8SObjectOverrides, &K8SObjectOverride{})
+			if err := m.K8SObjectOverrides[len(m.K8SObjectOverrides)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -10757,7 +9243,7 @@ func (m *SecurityConfig) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *SecurityConfig_CertManager) Unmarshal(dAtA []byte) error {
+func (m *KubernetesResourcesConfig_NodeAffinity) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -10780,17 +9266,17 @@ func (m *SecurityConfig_CertManager) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: CertManager: wiretype end group for non-group")
+			return fmt.Errorf("proto: NodeAffinity: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: CertManager: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: NodeAffinity: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Enabled", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ArchAmd64", wireType)
 			}
-			var v int
+			m.ArchAmd64 = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowIstioinstallerTypes
@@ -10800,18 +9286,16 @@ func (m *SecurityConfig_CertManager) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				v |= int(b&0x7F) << shift
+				m.ArchAmd64 |= uint32(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			b := bool(v != 0)
-			m.Enabled = &b
 		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Namespace", wireType)
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ArchS390X", wireType)
 			}
-			var stringLen uint64
+			m.ArchS390X = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowIstioinstallerTypes
@@ -10821,186 +9305,16 @@ func (m *SecurityConfig_CertManager) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
+				m.ArchS390X |= uint32(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			s := string(dAtA[iNdEx:postIndex])
-			m.Namespace = &s
-			iNdEx = postIndex
 		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Hub", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			s := string(dAtA[iNdEx:postIndex])
-			m.Hub = &s
-			iNdEx = postIndex
-		case 4:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Tag", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			s := string(dAtA[iNdEx:postIndex])
-			m.Tag = &s
-			iNdEx = postIndex
-		case 82:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Resources", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Resources == nil {
-				m.Resources = &ResourceRequirements{}
-			}
-			if err := m.Resources.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipIstioinstallerTypes(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if (iNdEx + skippy) < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *ConfigManagementConfig) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowIstioinstallerTypes
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: ConfigManagementConfig: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: ConfigManagementConfig: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Enabled", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ArchPpc64Le", wireType)
 			}
-			var v int
+			m.ArchPpc64Le = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowIstioinstallerTypes
@@ -11010,133 +9324,11 @@ func (m *ConfigManagementConfig) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				v |= int(b&0x7F) << shift
+				m.ArchPpc64Le |= uint32(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			b := bool(v != 0)
-			m.Enabled = &b
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Namespace", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			s := string(dAtA[iNdEx:postIndex])
-			m.Namespace = &s
-			iNdEx = postIndex
-		case 10:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Image", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			s := string(dAtA[iNdEx:postIndex])
-			m.Image = &s
-			iNdEx = postIndex
-		case 80:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ReplicaCount", wireType)
-			}
-			var v uint32
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= uint32(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			m.ReplicaCount = &v
-		case 100:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ResourceOverride", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.ResourceOverride = append(m.ResourceOverride, &ResourceOverride{})
-			if err := m.ResourceOverride[len(m.ResourceOverride)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipIstioinstallerTypes(dAtA[iNdEx:])
@@ -11191,9 +9383,100 @@ func (m *IngressGatewayConfig) Unmarshal(dAtA []byte) error {
 			return fmt.Errorf("proto: IngressGatewayConfig: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
-		case 11:
+		case 10:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field LoadBalancerIP", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Gateway", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Gateway == nil {
+				m.Gateway = &GatewayConfig{}
+			}
+			if err := m.Gateway.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 11:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field IngressType", wireType)
+			}
+			m.IngressType = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.IngressType |= IngressGatewayConfig_IngressType(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 12:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field HttpsEnabled", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.HttpsEnabled == nil {
+				m.HttpsEnabled = &protobuf.BoolValue{}
+			}
+			if err := m.HttpsEnabled.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 13:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field LoadBalancerIp", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -11221,10 +9504,9 @@ func (m *IngressGatewayConfig) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			s := string(dAtA[iNdEx:postIndex])
-			m.LoadBalancerIP = &s
+			m.LoadBalancerIp = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 12:
+		case 14:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field LoadBalancerSourceRanges", wireType)
 			}
@@ -11256,9 +9538,9 @@ func (m *IngressGatewayConfig) Unmarshal(dAtA []byte) error {
 			}
 			m.LoadBalancerSourceRanges = append(m.LoadBalancerSourceRanges, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
-		case 13:
+		case 15:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ExternalIPs", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ExternalIps", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -11286,116 +9568,63 @@ func (m *IngressGatewayConfig) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.ExternalIPs = append(m.ExternalIPs, string(dAtA[iNdEx:postIndex]))
+			m.ExternalIps = append(m.ExternalIps, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipIstioinstallerTypes(dAtA[iNdEx:])
-			if err != nil {
+		case 16:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SdsEnabled", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.SdsEnabled == nil {
+				m.SdsEnabled = &protobuf.BoolValue{}
+			}
+			if err := m.SdsEnabled.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if (iNdEx + skippy) < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *IngressGatewayConfig_Sds) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowIstioinstallerTypes
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: Sds: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: Sds: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Enabled", wireType)
-			}
-			var v int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			b := bool(v != 0)
-			m.Enabled = &b
-		case 10:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Image", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			s := string(dAtA[iNdEx:postIndex])
-			m.Image = &s
 			iNdEx = postIndex
+		case 17:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ExternalTrafficPolicy", wireType)
+			}
+			m.ExternalTrafficPolicy = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.ExternalTrafficPolicy |= IngressGatewayConfig_ExternalTrafficPolicy(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipIstioinstallerTypes(dAtA[iNdEx:])
@@ -11511,7 +9740,7 @@ func (m *EgressGatewayConfig) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *IlbGatewayConfig) Unmarshal(dAtA []byte) error {
+func (m *LoadBalancingGatewayConfig) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -11534,10 +9763,10 @@ func (m *IlbGatewayConfig) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: IlbGatewayConfig: wiretype end group for non-group")
+			return fmt.Errorf("proto: LoadBalancingGatewayConfig: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: IlbGatewayConfig: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: LoadBalancingGatewayConfig: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 10:
@@ -11578,7 +9807,7 @@ func (m *IlbGatewayConfig) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 11:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field LoadBalancerIP", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field LoadBalancerIp", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -11606,8 +9835,7 @@ func (m *IlbGatewayConfig) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			s := string(dAtA[iNdEx:postIndex])
-			m.LoadBalancerIP = &s
+			m.LoadBalancerIp = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -11663,6 +9891,42 @@ func (m *GatewayConfig) Unmarshal(dAtA []byte) error {
 			return fmt.Errorf("proto: GatewayConfig: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Common", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Common == nil {
+				m.Common = &CommonComponentConfig{}
+			}
+			if err := m.Common.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		case 10:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Type", wireType)
@@ -11693,706 +9957,7 @@ func (m *GatewayConfig) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			s := string(dAtA[iNdEx:postIndex])
-			m.Type = &s
-			iNdEx = postIndex
-		case 60:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Env", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Env == nil {
-				m.Env = make(map[string]string)
-			}
-			var mapkey string
-			var mapvalue string
-			for iNdEx < postIndex {
-				entryPreIndex := iNdEx
-				var wire uint64
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return ErrIntOverflowIstioinstallerTypes
-					}
-					if iNdEx >= l {
-						return io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					wire |= uint64(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				fieldNum := int32(wire >> 3)
-				if fieldNum == 1 {
-					var stringLenmapkey uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return ErrIntOverflowIstioinstallerTypes
-						}
-						if iNdEx >= l {
-							return io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						stringLenmapkey |= uint64(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					intStringLenmapkey := int(stringLenmapkey)
-					if intStringLenmapkey < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					postStringIndexmapkey := iNdEx + intStringLenmapkey
-					if postStringIndexmapkey < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					if postStringIndexmapkey > l {
-						return io.ErrUnexpectedEOF
-					}
-					mapkey = string(dAtA[iNdEx:postStringIndexmapkey])
-					iNdEx = postStringIndexmapkey
-				} else if fieldNum == 2 {
-					var stringLenmapvalue uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return ErrIntOverflowIstioinstallerTypes
-						}
-						if iNdEx >= l {
-							return io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						stringLenmapvalue |= uint64(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					intStringLenmapvalue := int(stringLenmapvalue)
-					if intStringLenmapvalue < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					postStringIndexmapvalue := iNdEx + intStringLenmapvalue
-					if postStringIndexmapvalue < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					if postStringIndexmapvalue > l {
-						return io.ErrUnexpectedEOF
-					}
-					mapvalue = string(dAtA[iNdEx:postStringIndexmapvalue])
-					iNdEx = postStringIndexmapvalue
-				} else {
-					iNdEx = entryPreIndex
-					skippy, err := skipIstioinstallerTypes(dAtA[iNdEx:])
-					if err != nil {
-						return err
-					}
-					if skippy < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					if (iNdEx + skippy) > postIndex {
-						return io.ErrUnexpectedEOF
-					}
-					iNdEx += skippy
-				}
-			}
-			m.Env[mapkey] = mapvalue
-			iNdEx = postIndex
-		case 86:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field HpaSpec", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.HpaSpec == nil {
-				m.HpaSpec = &v1.HorizontalPodAutoscalerSpec{}
-			}
-			if err := m.HpaSpec.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 90:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field PodAnnotations", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.PodAnnotations == nil {
-				m.PodAnnotations = make(map[string]string)
-			}
-			var mapkey string
-			var mapvalue string
-			for iNdEx < postIndex {
-				entryPreIndex := iNdEx
-				var wire uint64
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return ErrIntOverflowIstioinstallerTypes
-					}
-					if iNdEx >= l {
-						return io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					wire |= uint64(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				fieldNum := int32(wire >> 3)
-				if fieldNum == 1 {
-					var stringLenmapkey uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return ErrIntOverflowIstioinstallerTypes
-						}
-						if iNdEx >= l {
-							return io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						stringLenmapkey |= uint64(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					intStringLenmapkey := int(stringLenmapkey)
-					if intStringLenmapkey < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					postStringIndexmapkey := iNdEx + intStringLenmapkey
-					if postStringIndexmapkey < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					if postStringIndexmapkey > l {
-						return io.ErrUnexpectedEOF
-					}
-					mapkey = string(dAtA[iNdEx:postStringIndexmapkey])
-					iNdEx = postStringIndexmapkey
-				} else if fieldNum == 2 {
-					var stringLenmapvalue uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return ErrIntOverflowIstioinstallerTypes
-						}
-						if iNdEx >= l {
-							return io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						stringLenmapvalue |= uint64(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					intStringLenmapvalue := int(stringLenmapvalue)
-					if intStringLenmapvalue < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					postStringIndexmapvalue := iNdEx + intStringLenmapvalue
-					if postStringIndexmapvalue < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					if postStringIndexmapvalue > l {
-						return io.ErrUnexpectedEOF
-					}
-					mapvalue = string(dAtA[iNdEx:postStringIndexmapvalue])
-					iNdEx = postStringIndexmapvalue
-				} else {
-					iNdEx = entryPreIndex
-					skippy, err := skipIstioinstallerTypes(dAtA[iNdEx:])
-					if err != nil {
-						return err
-					}
-					if skippy < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					if (iNdEx + skippy) > postIndex {
-						return io.ErrUnexpectedEOF
-					}
-					iNdEx += skippy
-				}
-			}
-			m.PodAnnotations[mapkey] = mapvalue
-			iNdEx = postIndex
-		case 91:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ServiceAnnotations", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.ServiceAnnotations == nil {
-				m.ServiceAnnotations = make(map[string]string)
-			}
-			var mapkey string
-			var mapvalue string
-			for iNdEx < postIndex {
-				entryPreIndex := iNdEx
-				var wire uint64
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return ErrIntOverflowIstioinstallerTypes
-					}
-					if iNdEx >= l {
-						return io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					wire |= uint64(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				fieldNum := int32(wire >> 3)
-				if fieldNum == 1 {
-					var stringLenmapkey uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return ErrIntOverflowIstioinstallerTypes
-						}
-						if iNdEx >= l {
-							return io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						stringLenmapkey |= uint64(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					intStringLenmapkey := int(stringLenmapkey)
-					if intStringLenmapkey < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					postStringIndexmapkey := iNdEx + intStringLenmapkey
-					if postStringIndexmapkey < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					if postStringIndexmapkey > l {
-						return io.ErrUnexpectedEOF
-					}
-					mapkey = string(dAtA[iNdEx:postStringIndexmapkey])
-					iNdEx = postStringIndexmapkey
-				} else if fieldNum == 2 {
-					var stringLenmapvalue uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return ErrIntOverflowIstioinstallerTypes
-						}
-						if iNdEx >= l {
-							return io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						stringLenmapvalue |= uint64(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					intStringLenmapvalue := int(stringLenmapvalue)
-					if intStringLenmapvalue < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					postStringIndexmapvalue := iNdEx + intStringLenmapvalue
-					if postStringIndexmapvalue < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					if postStringIndexmapvalue > l {
-						return io.ErrUnexpectedEOF
-					}
-					mapvalue = string(dAtA[iNdEx:postStringIndexmapvalue])
-					iNdEx = postStringIndexmapvalue
-				} else {
-					iNdEx = entryPreIndex
-					skippy, err := skipIstioinstallerTypes(dAtA[iNdEx:])
-					if err != nil {
-						return err
-					}
-					if skippy < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					if (iNdEx + skippy) > postIndex {
-						return io.ErrUnexpectedEOF
-					}
-					iNdEx += skippy
-				}
-			}
-			m.ServiceAnnotations[mapkey] = mapvalue
-			iNdEx = postIndex
-		case 92:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field NodeSelector", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.NodeSelector == nil {
-				m.NodeSelector = make(map[string]string)
-			}
-			var mapkey string
-			var mapvalue string
-			for iNdEx < postIndex {
-				entryPreIndex := iNdEx
-				var wire uint64
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return ErrIntOverflowIstioinstallerTypes
-					}
-					if iNdEx >= l {
-						return io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					wire |= uint64(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				fieldNum := int32(wire >> 3)
-				if fieldNum == 1 {
-					var stringLenmapkey uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return ErrIntOverflowIstioinstallerTypes
-						}
-						if iNdEx >= l {
-							return io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						stringLenmapkey |= uint64(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					intStringLenmapkey := int(stringLenmapkey)
-					if intStringLenmapkey < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					postStringIndexmapkey := iNdEx + intStringLenmapkey
-					if postStringIndexmapkey < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					if postStringIndexmapkey > l {
-						return io.ErrUnexpectedEOF
-					}
-					mapkey = string(dAtA[iNdEx:postStringIndexmapkey])
-					iNdEx = postStringIndexmapkey
-				} else if fieldNum == 2 {
-					var stringLenmapvalue uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return ErrIntOverflowIstioinstallerTypes
-						}
-						if iNdEx >= l {
-							return io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						stringLenmapvalue |= uint64(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					intStringLenmapvalue := int(stringLenmapvalue)
-					if intStringLenmapvalue < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					postStringIndexmapvalue := iNdEx + intStringLenmapvalue
-					if postStringIndexmapvalue < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					if postStringIndexmapvalue > l {
-						return io.ErrUnexpectedEOF
-					}
-					mapvalue = string(dAtA[iNdEx:postStringIndexmapvalue])
-					iNdEx = postStringIndexmapvalue
-				} else {
-					iNdEx = entryPreIndex
-					skippy, err := skipIstioinstallerTypes(dAtA[iNdEx:])
-					if err != nil {
-						return err
-					}
-					if skippy < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					if (iNdEx + skippy) > postIndex {
-						return io.ErrUnexpectedEOF
-					}
-					iNdEx += skippy
-				}
-			}
-			m.NodeSelector[mapkey] = mapvalue
-			iNdEx = postIndex
-		case 100:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ResourceOverride", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.ResourceOverride = append(m.ResourceOverride, &ResourceOverride{})
-			if err := m.ResourceOverride[len(m.ResourceOverride)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipIstioinstallerTypes(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if (iNdEx + skippy) < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *GatewayConfig_Labels) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowIstioinstallerTypes
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: Labels: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: Labels: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field App", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			s := string(dAtA[iNdEx:postIndex])
-			m.App = &s
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Istio", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			s := string(dAtA[iNdEx:postIndex])
-			m.Istio = &s
+			m.Type = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -12478,8 +10043,7 @@ func (m *OperatorConfig) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			s := string(dAtA[iNdEx:postIndex])
-			m.ManifestPath = &s
+			m.ManifestPath = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
@@ -12511,8 +10075,7 @@ func (m *OperatorConfig) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			s := string(dAtA[iNdEx:postIndex])
-			m.Namespace = &s
+			m.Namespace = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 100:
 			if wireType != 2 {
@@ -12544,7 +10107,7 @@ func (m *OperatorConfig) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Spec == nil {
-				m.Spec = &ResourceOverride{}
+				m.Spec = &K8SObjectOverride{}
 			}
 			if err := m.Spec.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -12701,7 +10264,7 @@ func (m *IstioInstaller) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *ResourceRequirements) Unmarshal(dAtA []byte) error {
+func (m *Resources) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -12724,10 +10287,10 @@ func (m *ResourceRequirements) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: ResourceRequirements: wiretype end group for non-group")
+			return fmt.Errorf("proto: Resources: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: ResourceRequirements: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: Resources: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -13042,7 +10605,7 @@ func (m *PodDisruptionBudgetSpec) Unmarshal(dAtA []byte) error {
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field MinAvailable", wireType)
 			}
-			var v uint32
+			m.MinAvailable = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowIstioinstallerTypes
@@ -13052,12 +10615,11 @@ func (m *PodDisruptionBudgetSpec) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				v |= uint32(b&0x7F) << shift
+				m.MinAvailable |= uint32(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			m.MinAvailable = &v
 		case 2:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Selector", wireType)
@@ -13098,7 +10660,7 @@ func (m *PodDisruptionBudgetSpec) Unmarshal(dAtA []byte) error {
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field MaxUnavailable", wireType)
 			}
-			var v uint32
+			m.MaxUnavailable = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowIstioinstallerTypes
@@ -13108,12 +10670,11 @@ func (m *PodDisruptionBudgetSpec) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				v |= uint32(b&0x7F) << shift
+				m.MaxUnavailable |= uint32(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			m.MaxUnavailable = &v
 		default:
 			iNdEx = preIndex
 			skippy, err := skipIstioinstallerTypes(dAtA[iNdEx:])
@@ -13139,7 +10700,7 @@ func (m *PodDisruptionBudgetSpec) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *ResourceOverride) Unmarshal(dAtA []byte) error {
+func (m *K8SObjectOverride) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -13162,17 +10723,17 @@ func (m *ResourceOverride) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: ResourceOverride: wiretype end group for non-group")
+			return fmt.Errorf("proto: k8sObjectOverride: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: ResourceOverride: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: k8sObjectOverride: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field PatchType", wireType)
 			}
-			var v ResourceOverride_PatchType
+			m.PatchType = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowIstioinstallerTypes
@@ -13182,17 +10743,16 @@ func (m *ResourceOverride) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				v |= ResourceOverride_PatchType(b&0x7F) << shift
+				m.PatchType |= K8SObjectOverride_PatchType(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			m.PatchType = &v
 		case 2:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Op", wireType)
 			}
-			var v ResourceOverride_Op
+			m.Op = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowIstioinstallerTypes
@@ -13202,12 +10762,11 @@ func (m *ResourceOverride) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				v |= ResourceOverride_Op(b&0x7F) << shift
+				m.Op |= K8SObjectOverride_Op(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			m.Op = &v
 		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Kind", wireType)
@@ -13238,8 +10797,7 @@ func (m *ResourceOverride) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			s := string(dAtA[iNdEx:postIndex])
-			m.Kind = &s
+			m.Kind = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 4:
 			if wireType != 2 {
@@ -13271,8 +10829,7 @@ func (m *ResourceOverride) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			s := string(dAtA[iNdEx:postIndex])
-			m.ApiVersion = &s
+			m.ApiVersion = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 5:
 			if wireType != 2 {
@@ -13394,8 +10951,7 @@ func (m *ObjectMeta) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			s := string(dAtA[iNdEx:postIndex])
-			m.Name = &s
+			m.Name = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 6:
 			if wireType != 2 {
@@ -13427,159 +10983,8 @@ func (m *ObjectMeta) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			s := string(dAtA[iNdEx:postIndex])
-			m.Namespace = &s
+			m.Namespace = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipIstioinstallerTypes(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if (iNdEx + skippy) < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *SdsConfig) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowIstioinstallerTypes
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: SdsConfig: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: SdsConfig: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Enabled", wireType)
-			}
-			var v int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			b := bool(v != 0)
-			m.Enabled = &b
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field UdsPath", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			s := string(dAtA[iNdEx:postIndex])
-			m.UdsPath = &s
-			iNdEx = postIndex
-		case 3:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field UseTrustworthyJwt", wireType)
-			}
-			var v int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			b := bool(v != 0)
-			m.UseTrustworthyJwt = &b
-		case 4:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field UseNormalJwt", wireType)
-			}
-			var v int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			b := bool(v != 0)
-			m.UseNormalJwt = &b
 		default:
 			iNdEx = preIndex
 			skippy, err := skipIstioinstallerTypes(dAtA[iNdEx:])
@@ -13634,9 +11039,9 @@ func (m *TestKube) Unmarshal(dAtA []byte) error {
 			return fmt.Errorf("proto: TestKube: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
-		case 51:
+		case 60:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field HpaSpec", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Env", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -13663,48 +11068,103 @@ func (m *TestKube) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.HpaSpec == nil {
-				m.HpaSpec = &v1.HorizontalPodAutoscalerSpec{}
+			if m.Env == nil {
+				m.Env = make(map[string]string)
 			}
-			if err := m.HpaSpec.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 52:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field PodDisruptionBudget", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
+			var mapkey string
+			var mapvalue string
+			for iNdEx < postIndex {
+				entryPreIndex := iNdEx
+				var wire uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowIstioinstallerTypes
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					wire |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
 				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
+				fieldNum := int32(wire >> 3)
+				if fieldNum == 1 {
+					var stringLenmapkey uint64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowIstioinstallerTypes
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						stringLenmapkey |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					intStringLenmapkey := int(stringLenmapkey)
+					if intStringLenmapkey < 0 {
+						return ErrInvalidLengthIstioinstallerTypes
+					}
+					postStringIndexmapkey := iNdEx + intStringLenmapkey
+					if postStringIndexmapkey < 0 {
+						return ErrInvalidLengthIstioinstallerTypes
+					}
+					if postStringIndexmapkey > l {
+						return io.ErrUnexpectedEOF
+					}
+					mapkey = string(dAtA[iNdEx:postStringIndexmapkey])
+					iNdEx = postStringIndexmapkey
+				} else if fieldNum == 2 {
+					var stringLenmapvalue uint64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowIstioinstallerTypes
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						stringLenmapvalue |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					intStringLenmapvalue := int(stringLenmapvalue)
+					if intStringLenmapvalue < 0 {
+						return ErrInvalidLengthIstioinstallerTypes
+					}
+					postStringIndexmapvalue := iNdEx + intStringLenmapvalue
+					if postStringIndexmapvalue < 0 {
+						return ErrInvalidLengthIstioinstallerTypes
+					}
+					if postStringIndexmapvalue > l {
+						return io.ErrUnexpectedEOF
+					}
+					mapvalue = string(dAtA[iNdEx:postStringIndexmapvalue])
+					iNdEx = postStringIndexmapvalue
+				} else {
+					iNdEx = entryPreIndex
+					skippy, err := skipIstioinstallerTypes(dAtA[iNdEx:])
+					if err != nil {
+						return err
+					}
+					if skippy < 0 {
+						return ErrInvalidLengthIstioinstallerTypes
+					}
+					if (iNdEx + skippy) > postIndex {
+						return io.ErrUnexpectedEOF
+					}
+					iNdEx += skippy
 				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
 			}
-			if msglen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.PodDisruptionBudget == nil {
-				m.PodDisruptionBudget = &PodDisruptionBudgetSpec{}
-			}
-			if err := m.PodDisruptionBudget.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
+			m.Env[mapkey] = mapvalue
 			iNdEx = postIndex
 		case 80:
 			if wireType != 2 {
@@ -13736,7 +11196,7 @@ func (m *TestKube) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Resources == nil {
-				m.Resources = &ResourceRequirements{}
+				m.Resources = &Resources{}
 			}
 			if err := m.Resources.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -13772,15 +11232,15 @@ func (m *TestKube) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.ReadinessProbe == nil {
-				m.ReadinessProbe = &v11.Probe{}
+				m.ReadinessProbe = &v1.Probe{}
 			}
 			if err := m.ReadinessProbe.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
-		case 100:
+		case 86:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ResourceOverride", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field HpaSpec", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -13807,8 +11267,334 @@ func (m *TestKube) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.ResourceOverride = append(m.ResourceOverride, &ResourceOverride{})
-			if err := m.ResourceOverride[len(m.ResourceOverride)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if m.HpaSpec == nil {
+				m.HpaSpec = &v11.HorizontalPodAutoscalerSpec{}
+			}
+			if err := m.HpaSpec.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 87:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PodDisruptionBudget", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.PodDisruptionBudget == nil {
+				m.PodDisruptionBudget = &PodDisruptionBudgetSpec{}
+			}
+			if err := m.PodDisruptionBudget.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 90:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PodAnnotations", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.PodAnnotations == nil {
+				m.PodAnnotations = make(map[string]string)
+			}
+			var mapkey string
+			var mapvalue string
+			for iNdEx < postIndex {
+				entryPreIndex := iNdEx
+				var wire uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowIstioinstallerTypes
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					wire |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				fieldNum := int32(wire >> 3)
+				if fieldNum == 1 {
+					var stringLenmapkey uint64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowIstioinstallerTypes
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						stringLenmapkey |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					intStringLenmapkey := int(stringLenmapkey)
+					if intStringLenmapkey < 0 {
+						return ErrInvalidLengthIstioinstallerTypes
+					}
+					postStringIndexmapkey := iNdEx + intStringLenmapkey
+					if postStringIndexmapkey < 0 {
+						return ErrInvalidLengthIstioinstallerTypes
+					}
+					if postStringIndexmapkey > l {
+						return io.ErrUnexpectedEOF
+					}
+					mapkey = string(dAtA[iNdEx:postStringIndexmapkey])
+					iNdEx = postStringIndexmapkey
+				} else if fieldNum == 2 {
+					var stringLenmapvalue uint64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowIstioinstallerTypes
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						stringLenmapvalue |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					intStringLenmapvalue := int(stringLenmapvalue)
+					if intStringLenmapvalue < 0 {
+						return ErrInvalidLengthIstioinstallerTypes
+					}
+					postStringIndexmapvalue := iNdEx + intStringLenmapvalue
+					if postStringIndexmapvalue < 0 {
+						return ErrInvalidLengthIstioinstallerTypes
+					}
+					if postStringIndexmapvalue > l {
+						return io.ErrUnexpectedEOF
+					}
+					mapvalue = string(dAtA[iNdEx:postStringIndexmapvalue])
+					iNdEx = postStringIndexmapvalue
+				} else {
+					iNdEx = entryPreIndex
+					skippy, err := skipIstioinstallerTypes(dAtA[iNdEx:])
+					if err != nil {
+						return err
+					}
+					if skippy < 0 {
+						return ErrInvalidLengthIstioinstallerTypes
+					}
+					if (iNdEx + skippy) > postIndex {
+						return io.ErrUnexpectedEOF
+					}
+					iNdEx += skippy
+				}
+			}
+			m.PodAnnotations[mapkey] = mapvalue
+			iNdEx = postIndex
+		case 92:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field NodeSelector", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.NodeSelector == nil {
+				m.NodeSelector = make(map[string]string)
+			}
+			var mapkey string
+			var mapvalue string
+			for iNdEx < postIndex {
+				entryPreIndex := iNdEx
+				var wire uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowIstioinstallerTypes
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					wire |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				fieldNum := int32(wire >> 3)
+				if fieldNum == 1 {
+					var stringLenmapkey uint64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowIstioinstallerTypes
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						stringLenmapkey |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					intStringLenmapkey := int(stringLenmapkey)
+					if intStringLenmapkey < 0 {
+						return ErrInvalidLengthIstioinstallerTypes
+					}
+					postStringIndexmapkey := iNdEx + intStringLenmapkey
+					if postStringIndexmapkey < 0 {
+						return ErrInvalidLengthIstioinstallerTypes
+					}
+					if postStringIndexmapkey > l {
+						return io.ErrUnexpectedEOF
+					}
+					mapkey = string(dAtA[iNdEx:postStringIndexmapkey])
+					iNdEx = postStringIndexmapkey
+				} else if fieldNum == 2 {
+					var stringLenmapvalue uint64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowIstioinstallerTypes
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						stringLenmapvalue |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					intStringLenmapvalue := int(stringLenmapvalue)
+					if intStringLenmapvalue < 0 {
+						return ErrInvalidLengthIstioinstallerTypes
+					}
+					postStringIndexmapvalue := iNdEx + intStringLenmapvalue
+					if postStringIndexmapvalue < 0 {
+						return ErrInvalidLengthIstioinstallerTypes
+					}
+					if postStringIndexmapvalue > l {
+						return io.ErrUnexpectedEOF
+					}
+					mapvalue = string(dAtA[iNdEx:postStringIndexmapvalue])
+					iNdEx = postStringIndexmapvalue
+				} else {
+					iNdEx = entryPreIndex
+					skippy, err := skipIstioinstallerTypes(dAtA[iNdEx:])
+					if err != nil {
+						return err
+					}
+					if skippy < 0 {
+						return ErrInvalidLengthIstioinstallerTypes
+					}
+					if (iNdEx + skippy) > postIndex {
+						return io.ErrUnexpectedEOF
+					}
+					iNdEx += skippy
+				}
+			}
+			m.NodeSelector[mapkey] = mapvalue
+			iNdEx = postIndex
+		case 100:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field K8SObjectOverride", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.K8SObjectOverride = append(m.K8SObjectOverride, &K8SObjectOverride{})
+			if err := m.K8SObjectOverride[len(m.K8SObjectOverride)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex

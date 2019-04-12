@@ -1,10 +1,10 @@
---- pkg/apis/installer/v1alpha1/istioinstaller_types.pb.go.old	2019-03-15 17:04:29.753909030 -0700
-+++ pkg/apis/installer/v1alpha1/istioinstaller_types.pb.go	2019-03-15 17:05:11.433685985 -0700
-@@ -2431,6 +2431,7 @@
- 	Kind                 *string     `protobuf:"bytes,3,opt,name=kind" json:"kind,omitempty"`
- 	ApiVersion           *string     `protobuf:"bytes,4,opt,name=api_version,json=apiVersion" json:"api_version,omitempty"`
- 	Metadata             *ObjectMeta `protobuf:"bytes,5,opt,name=metadata" json:"metadata,omitempty"`
-+    Data map[string]interface{}      `protobuf:"bytes,6,opt,name=data" json:"data,omitempty"`
- 	XXX_NoUnkeyedLiteral struct{}    `json:"-"`
- 	XXX_unrecognized     []byte      `json:"-"`
- 	XXX_sizecache        int32       `json:"-"`
+--- pkg/apis/installer/v1alpha1/istioinstaller_types.pb.go.orig	2019-04-11 13:24:02.445305560 -0700
++++ pkg/apis/installer/v1alpha1/istioinstaller_types.pb.go	2019-04-11 13:24:52.229095244 -0700
+@@ -1557,6 +1557,7 @@
+ 	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
+ 	XXX_unrecognized     []byte               `json:"-"`
+ 	XXX_sizecache        int32                `json:"-"`
++	ValuesOverrides map[string]interface{}    `protobuf:"bytes,6,opt,name=data" json:"values_overrides,omitempty"`
+ }
+ 
+ func (m *CommonComponentConfig) Reset()         { *m = CommonComponentConfig{} }

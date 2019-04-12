@@ -157,9 +157,9 @@ readinessProbe:
 `,
 		},
 		{
-			desc: "resourceOverride",
+			desc: "k8sObjectOverride",
 			yamlStr: `
-resourceOverride:
+k8sObjectOverride:
 - patchType: JSON
   op: PATCH
   apiVersion: v1
@@ -241,115 +241,68 @@ func TestProtoToValues(t *testing.T) {
 			desc: "PilotConfig",
 			yamlStr: `
 trafficManagement:
-  pilotConfig:
-    debug: true
+  pilot:
     sidecar: true
-    traceSampling: 111.1
-    additionalArgs:
-      b: b
-      c: d
-    env:
-      PILOT_PUSH_THROTTLE: "100"
-      GODEBUG: gctrace=1
-    resources:
-      requests:
-        memory: "111Mi"
-        cpu: "222m"
-      limits:
-        memory: "333Mi"
-        cpu: "444m"
-    replicaCount: 555
-    hpaSpec:
-      scaleTargetRef:
-        apiVersion: apps/v1
-        kind: Deployment
-        name: php-apache
-      minReplicas: 1
-      maxReplicas: 10
-      targetCPUUtilizationPercentage: 80
-    nodeSelector:
-      disktype: ssd
 `,
 			want: `
 global:
   pilot:
-    additionalArgs:
-      b: b
-      c: d
-    autoscaleMax: 10
-    autoscaleMin: 1
-    debug: true
-    env:
-      gODEBUG: gctrace=1
-      pILOT_PUSH_THROTTLE: "100"
-    replicaCount: 555
-    resources:
-      limits:
-        cpu: 444m
-        memory: 333Mi
-      requests:
-        cpu: 222m
-        memory: 111Mi
     sidecar: true
-    traceSampling: 111.1
 `,
 		},
 		{
 			desc: "ProxyConfig",
 			yamlStr: `
 trafficManagement:
-  proxyConfig:
-    debug: true
-    privileged: true
-    enableCoredump: true
+  includeIpRanges: "1.1.0.0/16,2.2.0.0/16"
+  excludeIpRanges: "3.3.0.0/16,4.4.0.0/16"
+  includeInboundPorts: "111,222"
+  excludeInboundPorts: "333,444"
+  clusterDomain: "my.domain"
+  podDnsSearchNamespaces: "my-namespace"
+  enableAutoInjection: true
+  enableNamespacesByDefault: true
+  proxy:
     interceptionMode: TPROXY
-    statusPort: 1234
-    imagePullPolicy: IfNotPresent
-    proxyInitImage: "proxy_init_image"
-    includeIpRanges: "1.1.0.0/16,2.2.0.0/16"
-    excludeIpRanges: "3.3.0.0/16,4.4.0.0/16"
-    includeInboundPorts: "111,222"
-    excludeInboundPorts: "333,444"
     connectTimeout: "11s"
     drainDuration: "22s"
     parentShutdownDuration : "33s"
     concurrency: 5
-    clusterDomain: "my.domain"
-    podDnsSearchNamespaces: "my-namespace"
-    lightstep:
-      address: "5.5.5.5"
-      accessToken: "abc"
-      caCertPath: "a/b/c"
-      secure: true
-    zipkin:
-      address: "6.6.6.6"
-    sds:
+    common:
       enabled: true
-      udsPath: "a/b/c"
-      useTrustworthyJwt: true
-      useNormalJwt: true
-    additionalArgs:
-      b: b
-      c: d
-    env:
-      aa: bb
-      cc: dd
-    resources:
-      requests:
-        memory: "64Mi"
-        cpu: "250m"
-      limits:
-        memory: "128Mi"
-        cpu: "500m"
-    readinessProbe:
-      initialDelaySeconds: 11
-      periodSeconds: 22
-      successThreshold: 33
-      failureThreshold: 44
+      namespace: istio-control-system
+      debug: INFO
+      env:
+        aa: bb
+        cc: dd
+      args:
+        b: b
+        c: d
+      resources:
+        requests:
+          memory: "64Mi"
+          cpu: "250m"
+        limits:
+          memory: "128Mi"
+          cpu: "500m"
+      readinessProbe:
+        initialDelaySeconds: 11
+        periodSeconds: 22
+        successThreshold: 33
+        failureThreshold: 44
+      hpaSpec:
+        scaleTargetRef:
+          apiVersion: apps/v1
+          kind: Deployment
+          name: php-apache
+        minReplicas: 1
+        maxReplicas: 10
+        targetCPUUtilizationPercentage: 80
+      nodeSelector:
+        disktype: ssd
 `,
 			want: `
 global:
-  monitoringPort: 1234
   proxy:
     additionalArgs:
       b: b
