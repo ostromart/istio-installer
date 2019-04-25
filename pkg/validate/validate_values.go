@@ -8,10 +8,10 @@ import (
 var (
 	// defaultValidations maps a data path to a validation function.
 	defaultValuesValidations = map[string]ValidateFunc{
-		"global/proxy/includeIpRanges":     validateStringList(validateCIDR),
-		"global/proxy/excludeIpRanges":     validateStringList(validateCIDR),
-		"global/proxy/includeInboundPorts": validateStringList(validatePortNumberString),
-		"global/proxy/excludeInboundPorts": validateStringList(validatePortNumberString),
+		"global.proxy.includeIpRanges":     validateStringList(validateCIDR),
+		"global.proxy.excludeIpRanges":     validateStringList(validateCIDR),
+		"global.proxy.includeInboundPorts": validateStringList(validatePortNumberString),
+		"global.proxy.excludeInboundPorts": validateStringList(validatePortNumberString),
 	}
 
 	// requiredValues lists all the values that must be non-empty.
@@ -36,7 +36,6 @@ func validateValues(validations map[string]ValidateFunc, node interface{}, path 
 	if !ok {
 		nn, ok = node.(map[string]interface{})
 		if !ok {
-			fmt.Printf("Leaf type %T\n", node)
 			// Leaf, nothing more to recurse.
 			return
 		}

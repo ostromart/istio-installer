@@ -25,16 +25,25 @@ type Translation struct {
 
 var (
 	defaultMappings = map[string]*Translation{
-		"TrafficManagement/Proxy": { "global/proxy", "", nil },
-		"TrafficManagement/Proxy/Common": { "global/proxy", "", nil },
-		"TrafficManagement/Proxy/Common/K8s": { "global/proxy", "", nil },
+		"Hub": { "global.hub", "", nil },
+		"Tag": { "global.tag", "", nil },
+		"K8SDefaults.Resources.Requests.cpu": { "global.defaultResources.requests.cpu", "", nil },
 
-		"TrafficManagement/Pilot/Sidecar/Value": { "global/pilot/sidecar", "", nil	},
-		"TrafficManagement/Pilot/HpaSpec/MinReplicas": { "global/pilot/autoscaleMin", "", nil	},
-		"TrafficManagement/Pilot/HpaSpec/MaxReplicas": { "global/pilot/autoscaleMax", "", nil	},
-		"TrafficManagement/Pilot/HpaSpec": { "", "HorizontalPodAutoscaler/istio-pilot/spec", nil	},
-		"TrafficManagement/Pilot/NodeSelector": { "", "Deployment/istio-pilot/spec/template/spec", nil	},
-		"TrafficManagement/Pilot": {"global/pilot", "", nil},
+		"TrafficManagement.ClusterDomain": { "global.clusterDomain", "", nil },
+		"TrafficManagement.SidecarInjector.EnableNamespacesByDefault.Value": { "sidecarInjectorWebhook.enableNamespacesByDefault", "", nil },
+		"TrafficManagement.Proxy.Common.Resources.Requests.cpu": { "global.proxy.resources.requests.cpu", "", nil },
+		"TrafficManagement.Proxy.Common.Resources.Requests.memory": { "global.proxy.resources.requests.memory", "", nil },
+		"TrafficManagement.Proxy.Common.Resources.Limits.cpu": { "global.proxy.resources.limits.cpu", "", nil },
+		"TrafficManagement.Proxy.Common.Resources.Limits.memory": { "global.proxy.resources.limits.memory", "", nil },
+
+		"PolicyTelemetry.PolicyCheckFailOpen": { "global.policyCheckFailOpen", "", nil	},
+		"PolicyTelemetry.OutboundTrafficPolicyMode": { "global.outboundTrafficPolicy.mode", "", nil	},
+
+		"Security.ControlPlaneMtls.Value": { "global.controlPlaneSecurityEnabled", "", nil	},
+		"Security.DataPlaneMtls.Value": { "global.mtls.enabled", "", nil	},
+		"Security.TrustDomain": { "global.trustDomain", "", nil	},
+		"Security.SelfSigned.Value": { "security.selfSigned", "", nil	},
+		"Security.CreateMeshPolicy.Value": { "security.createMeshPolicy", "", nil	},
 	}
 )
 
@@ -42,6 +51,10 @@ var (
 func defaultTranslationFunc(m *Translation, root util.Tree, valuesPath string, value interface{}) error {
 	var path []string
 
+	if util.IsEmptyString(value) {
+		fmt.Printf("Skip empty string value for path %s\n", m.k8sPath)
+		return nil
+	}
 	if valuesPath == "" {
 		fmt.Printf("Not mapping to values, resources path is %s\n", m.k8sPath)
 		return nil

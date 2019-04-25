@@ -1,10 +1,39 @@
---- pkg/apis/installer/v1alpha1/istioinstaller_types.pb.go.orig	2019-04-11 13:24:02.445305560 -0700
-+++ pkg/apis/installer/v1alpha1/istioinstaller_types.pb.go	2019-04-11 13:24:52.229095244 -0700
-@@ -1557,6 +1557,7 @@
- 	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
- 	XXX_unrecognized     []byte               `json:"-"`
- 	XXX_sizecache        int32                `json:"-"`
-+	ValuesOverrides map[string]interface{}    `protobuf:"bytes,6,opt,name=data" json:"values_overrides,omitempty"`
- }
+--- pkg/apis/installer/v1alpha1/istioinstaller_types.pb.go.orig	2019-04-25 13:20:09.552551941 -0700
++++ pkg/apis/installer/v1alpha1/istioinstaller_types.pb.go	2019-04-25 13:23:02.223917366 -0700
+@@ -4,14 +4,15 @@
+ package v1alpha1
  
- func (m *CommonComponentConfig) Reset()         { *m = CommonComponentConfig{} }
+ import (
+-	fmt "fmt"
++	"fmt"
+ 	protobuf "github.com/gogo/protobuf/types"
+-	proto "github.com/golang/protobuf/proto"
+-	io "io"
++	"github.com/golang/protobuf/proto"
++	"io"
+ 	v11 "k8s.io/api/autoscaling/v1"
+-	v1 "k8s.io/api/core/v1"
++	"k8s.io/api/core/v1"
+ 	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
+-	math "math"
++	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
++	"math"
+ )
+ 
+ // Reference imports to suppress errors if they are not otherwise used.
+@@ -1198,6 +1199,7 @@
+ 	Args map[string]string `protobuf:"bytes,61,rep,name=args,proto3" json:"args,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+ 	// Kubernetes resource spec.
+ 	K8S                  *KubernetesResourcesConfig `protobuf:"bytes,80,opt,name=k8s,proto3" json:"k8s,omitempty"`
++    ValuesOverrides      map[string]interface{}     `protobuf:"bytes,6,opt,name=data" json:"valuesOverrides,omitempty"`
+ 	XXX_NoUnkeyedLiteral struct{}                   `json:"-"`
+ 	XXX_unrecognized     []byte                     `json:"-"`
+ 	XXX_sizecache        int32                      `json:"-"`
+@@ -1846,6 +1848,7 @@
+ type K8SObjectOverlay struct {
+ 	PatchType            K8SObjectOverlay_PatchType `protobuf:"varint,1,opt,name=patch_type,json=patchType,proto3,enum=v1alpha1.K8SObjectOverlay_PatchType" json:"patch_type,omitempty"`
+ 	Op                   K8SObjectOverlay_Op        `protobuf:"varint,2,opt,name=op,proto3,enum=v1alpha1.K8SObjectOverlay_Op" json:"op,omitempty"`
++	Data                 *unstructured.Unstructured `protobuf:"bytes,6,opt,name=data" json:"data,omitempty"`
+ 	XXX_NoUnkeyedLiteral struct{}                   `json:"-"`
+ 	XXX_unrecognized     []byte                     `json:"-"`
+ 	XXX_sizecache        int32                      `json:"-"`

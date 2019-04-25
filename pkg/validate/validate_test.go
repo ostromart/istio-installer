@@ -14,8 +14,8 @@ import (
 
 func TestValidate(t *testing.T) {
 	tests := []struct {
-		desc    string
-		yamlStr string
+		desc     string
+		yamlStr  string
 		wantErrs util.Errors
 	}{
 		{
@@ -26,9 +26,8 @@ func TestValidate(t *testing.T) {
 			yamlStr: `
 trafficManagement:
   enabled: true
+  namespace: istio-system-traffic
   clusterDomain: "my.domain"
-  enableAutoInjection: true
-  enableNamespacesByDefault: true
 `,
 		},
 		{
@@ -40,8 +39,18 @@ trafficManagement:
 `,
 		},
 		{
+			desc: "SidecarInjectorConfig",
+			yamlStr: `
+trafficManagement:
+  sidecarInjector:
+    enableNamespacesByDefault: true
+`,
+		},
+		{
 			desc: "CommonConfig",
 			yamlStr: `
+hub: docker.io/istio
+tag: v1.2.3
 trafficManagement:
   proxy:
     common:
@@ -78,6 +87,33 @@ trafficManagement:
         nodeSelector:
           disktype: ssd
 `,
+		},
+		{
+			desc: "BadTag",
+			yamlStr: `
+hub: ?illegal-tag!
+`,
+			wantErrs: makeErrors([]string{`invalid value Hub:?illegal-tag!`}),
+		},
+		{
+			desc: "BadHub",
+			yamlStr: `
+hub: docker.io:tag/istio
+`,
+			wantErrs: makeErrors([]string{`invalid value Hub:docker.io:tag/istio`}),
+		},
+		{
+			desc: "GoodURL",
+			yamlStr: `
+installPackagePath: file://local/file/path
+`,
+		},
+		{
+			desc: "BadURL",
+			yamlStr: `
+installPackagePath: bad_schema://local/file/path
+`,
+			wantErrs: makeErrors([]string{`invalid value InstallPackagePath:bad_schema://local/file/path`}),
 		},
 	}
 

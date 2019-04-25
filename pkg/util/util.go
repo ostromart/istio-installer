@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/ghodss/yaml"
 	"strings"
 	"math/rand"
 	"reflect"
@@ -84,4 +85,24 @@ func IsEmptyString(value interface{}) bool {
 // IsNilOrInvalidValue reports whether v is nil or reflect.Zero.
 func IsNilOrInvalidValue(v reflect.Value) bool {
 	return !v.IsValid() || (v.Kind() == reflect.Ptr && v.IsNil()) || IsValueNil(v.Interface())
+}
+
+
+func IsYAMLEqual(a, b string) bool {
+	if strings.TrimSpace(a) == "" && strings.TrimSpace(b) == "" {
+		return true
+	}
+	ajb, err := yaml.YAMLToJSON([]byte(a))
+	if err != nil {
+		fmt.Printf("bad YAML in isYAMLEqual:\n%s\n", a)
+		return false
+	}
+	bjb, err := yaml.YAMLToJSON([]byte(b))
+	if err != nil {
+		fmt.Printf("bad YAML in isYAMLEqual:\n%s\n", b)
+		return false
+	}
+
+	//fmt.Printf("a:\n%s\nb:\n%s\n", string(ajb), string(bjb))
+	return string(ajb) == string(bjb)
 }

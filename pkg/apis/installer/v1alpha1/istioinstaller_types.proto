@@ -65,11 +65,6 @@ message TrafficManagementConfig {
 
     string cluster_domain = 24;
 
-    // Selects whether auto-injection is enabled.
-    google.protobuf.BoolValue enable_auto_injection = 26;
-    // Selects whether auto-injection is enabled in namespaces by default.
-    google.protobuf.BoolValue enable_namespaces_by_default = 27;
-
     // Component specific config.
     PilotComponentConfig pilot = 30;
     ProxyComponentConfig proxy = 31;
@@ -114,6 +109,9 @@ message SecurityConfig {
 
     string trust_domain = 15;
 
+    google.protobuf.BoolValue self_signed = 16;
+    google.protobuf.BoolValue create_mesh_policy = 17;
+
     CitadelComponentConfig citadel = 20;
     CertManagerComponentConfig cert_manager = 21;
     NodeAgentComponentConfig node_agent = 22;
@@ -135,6 +133,9 @@ message ProxyComponentConfig {
 // Configuration options for the sidecar injector component.
 message SidecarInjectorComponentConfig {
     CommonComponentConfig common = 1;
+
+    // Selects whether auto-injection is enabled in namespaces by default.
+    google.protobuf.BoolValue enable_namespaces_by_default = 10;
 }
 
 // Configuration options for the policy enforcement component.
@@ -150,8 +151,6 @@ message TelemetryComponentConfig {
 // Configuration options for Citadel component.
 message CitadelComponentConfig {
     CommonComponentConfig common = 1;
-    bool self_signed = 11;
-    bool create_mesh_policy = 12;
 }
 
 // Configuration options for certificate manager component.
@@ -242,7 +241,7 @@ message KubernetesResourcesConfig {
     string priority_class_name = 10;
 
     // Kustomize style overrides for k8s resources in rendered manifests.
-    repeated k8sObjectOverride k8s_object_overrides = 100;
+    repeated k8sObjectOverlay overlays = 100;
 }
 
 // Configuration options for ingress gateways.
@@ -319,31 +318,26 @@ message OperatorConfig {
     string namespace = 2;
 
     // spec is the initial CR for the operator.
-    k8sObjectOverride spec = 100;
+    k8sObjectOverlay spec = 100;
 }
 
 // Patch for an existing k8s resource.
-message k8sObjectOverride {
+message k8sObjectOverlay {
     enum PatchType {
         STRATEGIC = 0;
         JSON = 1;
     }
     enum Op {
         ADD = 0;
-        DELETE = 1;
-        PATCH = 2;
+        REMOVE = 1;
+        REPLACE = 2;
+        MERGE = 3;
     }
 
     PatchType patch_type = 1;
     Op op = 2;
-
-    // From k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta.TypeMeta
-    string kind = 3;
-    string api_version = 4;
-
-    ObjectMeta metadata = 5;
     // google.protobuf.Struct Data = 6;
-    // Data map[string]interface{} `protobuf:"bytes,6,opt,name=data" json:"data,omitempty"`
+//    	Data                 *unstructured.Unstructured  `protobuf:"bytes,6,opt,name=data" json:"data,omitempty"`
 }
 
 // Observed state of IstioInstaller.
@@ -366,4 +360,39 @@ message InstallerStatus {
 
     repeated VersionStatus ingress_gateway = 5;
     repeated VersionStatus egress_gateway = 6;
+}
+
+// Mirrors k8s.io.api.core.v1.ResourceRequirements for unmarshaling.
+message Resources {
+    map<string, string> limits = 1;
+    map<string, string> requests = 2;
+}
+
+// Mirrors k8s.io.api.policy.v1beta1.PodDisruptionBudget for unmarshaling.
+message PodDisruptionBudgetSpec {
+    uint32 min_available = 1;
+    k8s.io.apimachinery.pkg.apis.meta.v1.LabelSelector selector = 2;
+    uint32 max_unavailable = 3;
+}
+
+message ObjectMeta {
+    // From k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta
+    string name = 5;
+    string namespace = 6;
+}
+
+// TESTING ONLY
+message TestKube {
+    map<string, string> env = 60;
+
+    Resources resources = 80;
+    k8s.io.api.core.v1.Probe readiness_probe = 81;
+    k8s.io.api.autoscaling.v1.HorizontalPodAutoscalerSpec hpa_spec = 86;
+    PodDisruptionBudgetSpec pod_disruption_budget = 87;
+
+    map<string, string> pod_annotations = 90;
+    map<string, string> node_selector = 92;
+
+    // Kustomize style overrides for k8s resources in rendered manifests.
+    repeated k8sObjectOverlay k8s_object_override = 100;
 }

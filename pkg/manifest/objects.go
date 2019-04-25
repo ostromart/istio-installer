@@ -7,10 +7,10 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/ghodss/yaml"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	k8syaml "k8s.io/apimachinery/pkg/util/yaml"
-	"github.com/ghodss/yaml"
 
 	"istio.io/istio/pkg/log"
 )
@@ -26,6 +26,7 @@ type Object struct {
 	Group string
 	Kind  string
 	Name  string
+	Namespace string
 
 	json []byte
 	yaml []byte
@@ -199,6 +200,7 @@ func (o *Object) YAML() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	o.json = oj
 	y, err := yaml.JSONToYAML(oj)
 	if err != nil {
 		return nil, err
@@ -229,7 +231,7 @@ func (o *Object) GroupVersionKind() schema.GroupVersionKind {
 }
 
 func (o *Object) Hash() string {
-	return strings.Join([]string{o.Group, o.Kind, o.Name}, "/")
+	return strings.Join([]string{o.Group, o.Kind, o.Namespace, o.Name}, "/")
 }
 
 func (o *Objects) JSONManifest() (string, error) {
@@ -325,7 +327,7 @@ func ParseObjectsFromYAMLManifest(ctx context.Context, manifest string) (*Object
 		var json []byte
 		// We don't reuse the manifest because it's probably yaml, and we want to use json
 		// json = yaml
-		o := newObject(out, json, []byte(yaml))
+		o := NewObject(out, json, []byte(yaml))
 		objects.Items = append(objects.Items, o)
 	}
 
@@ -335,12 +337,12 @@ func ParseObjectsFromYAMLManifest(ctx context.Context, manifest string) (*Object
 func ObjectsFromUnstructuredSlice(objs []*unstructured.Unstructured) (*Objects, error) {
 	ret := &Objects{}
 	for _, o := range objs {
-		ret.Items = append(ret.Items, newObject(o, nil, nil))
+		ret.Items = append(ret.Items, NewObject(o, nil, nil))
 	}
 	return ret, nil
 }
 
-func newObject(u *unstructured.Unstructured, json, yaml []byte) *Object {
+func NewObject(u *unstructured.Unstructured, json, yaml []byte) *Object {
 	o := &Object{
 		object: u,
 		json:   json,
@@ -351,6 +353,11 @@ func newObject(u *unstructured.Unstructured, json, yaml []byte) *Object {
 	o.Group = gvk.Group
 	o.Kind = gvk.Kind
 	o.Name = u.GetName()
+	o.Namespace = u.GetNamespace()
 
 	return o
+}
+
+func Hash(u *unstructured.Unstructured) string {
+	return NewObject(u, nil, nil).Hash()
 }

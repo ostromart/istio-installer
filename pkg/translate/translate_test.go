@@ -38,7 +38,7 @@ func TestSetYAML(t *testing.T) {
 		},
 		{
 			desc:  "insert empty",
-			path:  "a/b/c",
+			path:  "a.b.c",
 			value: "val1",
 			want: `a:
   b:
@@ -54,7 +54,7 @@ func TestSetYAML(t *testing.T) {
 					},
 				},
 			},
-			path:  "a/b/c",
+			path:  "a.b.c",
 			value: "val2",
 			want: `a:
   b:
@@ -70,7 +70,7 @@ func TestSetYAML(t *testing.T) {
 					},
 				},
 			},
-			path:  "a/b/d",
+			path:  "a.b.d",
 			value: "val2",
 			want: `a:
   b:
@@ -207,23 +207,6 @@ k8sObjectOverride:
 func stripNL(s string) string {
 	return strings.Trim(s, "\n")
 }
-
-func isYAMLEqual(a, b string) bool {
-	ajb, err := yaml.YAMLToJSON([]byte(a))
-	if err != nil {
-		fmt.Printf("bad YAML in isYAMLEqual:\n%s\n", a)
-		return false
-	}
-	bjb, err := yaml.YAMLToJSON([]byte(b))
-	if err != nil {
-		fmt.Printf("bad YAML in isYAMLEqual:\n%s\n", b)
-		return false
-	}
-
-	//fmt.Printf("a:\n%s\nb:\n%s\n", string(ajb), string(bjb))
-	return string(ajb) == string(bjb)
-}
-
 func TestProtoToValues(t *testing.T) {
 	tests := []struct {
 		desc string
@@ -238,110 +221,69 @@ func TestProtoToValues(t *testing.T) {
 			want: "",
 		},
 		{
-			desc: "PilotConfig",
+			desc: "IstioInstaller",
 			yamlStr: `
-trafficManagement:
-  pilot:
-    sidecar: true
+hub: docker.io/istio
+tag: 1.2.3
+k8sDefaults:
+  resources:
+    requests:
+      cpu: "250m"
 `,
 			want: `
 global:
-  pilot:
-    sidecar: true
+  hub: docker.io/istio
+  tag: 1.2.3
+  defaultResources:
+    requests:
+      cpu: "250m"
 `,
 		},
 		{
-			desc: "ProxyConfig",
+			desc: "TrafficManagement",
 			yamlStr: `
 trafficManagement:
-  includeIpRanges: "1.1.0.0/16,2.2.0.0/16"
-  excludeIpRanges: "3.3.0.0/16,4.4.0.0/16"
-  includeInboundPorts: "111,222"
-  excludeInboundPorts: "333,444"
-  clusterDomain: "my.domain"
-  podDnsSearchNamespaces: "my-namespace"
-  enableAutoInjection: true
-  enableNamespacesByDefault: true
-  proxy:
-    interceptionMode: TPROXY
-    connectTimeout: "11s"
-    drainDuration: "22s"
-    parentShutdownDuration : "33s"
-    concurrency: 5
-    common:
-      enabled: true
-      namespace: istio-control-system
-      debug: INFO
-      env:
-        aa: bb
-        cc: dd
-      args:
-        b: b
-        c: d
-      k8s:
-        resources:
-          requests:
-            memory: "64Mi"
-            cpu: "250m"
-          limits:
-            memory: "128Mi"
-            cpu: "500m"
-        readinessProbe:
-          initialDelaySeconds: 11
-          periodSeconds: 22
-          successThreshold: 33
-          failureThreshold: 44
-        hpaSpec:
-          scaleTargetRef:
-            apiVersion: apps/v1
-            kind: Deployment
-            name: php-apache
-          minReplicas: 1
-          maxReplicas: 10
-          targetCPUUtilizationPercentage: 80
-        nodeSelector:
-          disktype: ssd
+  clusterDomain: custom.domain
 `,
 			want: `
 global:
-  proxy: 
-    additionalArgs:
-      b: b
-      c: d
-    clusterDomain: my.domain
-    concurrency: 5
-    debug: true
-    drainDuration: 22s
-    enableCoredump: true
-    env:
-      aa: bb
-      cc: dd
-    excludeInboundPorts: 333,444
-    excludeIpRanges: 3.3.0.0/16,4.4.0.0/16
-    imagePullPolicy: IfNotPresent
-    includeInboundPorts: 111,222
-    includeIpRanges: 1.1.0.0/16,2.2.0.0/16
-    interceptionMode: 1
-    parentShutdownDuration: 33s
-    podDnsSearchNamespaces: my-namespace
-    privileged: true
-    proxyInitImage: proxy_init_image
-    readinessProbe:
-      failureThreshold: 44
-      initialDelaySeconds: 11
-      periodSeconds: 22
-      successThreshold: 33
-      timeoutSeconds: 0
-    resources:
-      limits:
-        cpu: 500m
-        memory: 128Mi
-      requests:
-        cpu: 250m
-        memory: 64Mi
-
+  clusterDomain: custom.domain
 `,
 		},
+		{
+			desc: "Security",
+			yamlStr: `
+security:
+  controlPlaneMtls: true
+  dataPlaneMtls: false
+  trustDomain: trust-domain
+  selfSigned: true
+  createMeshPolicy: false
+`,
+			want: `
+global:
+  controlPlaneSecurityEnabled: true
+  mtls:
+    enabled: false
+  trustDomain: trust-domain
+security:
+  selfSigned: true
+  createMeshPolicy: false
+`,
+		},
+		{
+			desc: "SidecarInjector",
+			yamlStr: `
+trafficManagement:
+  sidecarInjector:
+    enableNamespacesByDefault: false
+`,
+			want: `
+sidecarInjectorWebhook:
+  enableNamespacesByDefault: false
+`,
+		},
+
 	}
 
 	for _, tt := range tests {
@@ -362,7 +304,7 @@ global:
 			if gotErr, wantErr := errToString(err), tt.wantErr; gotErr != wantErr {
 				t.Errorf("ProtoToValues(%s)(%v): gotErr:%s, wantErr:%s", tt.desc, tt.yamlStr, gotErr, wantErr)
 			}
-			if got, want := stripNL(got), stripNL(tt.want); err == nil && !isYAMLEqual(got, want) {
+			if got, want := stripNL(got), stripNL(tt.want); err == nil && !util.IsYAMLEqual(got, want) {
 				t.Errorf("ProtoToValues(%s) got:\n%s\nwant:\n%s\n", tt.desc, got, want)
 			}
 		})

@@ -44,10 +44,10 @@ global:
     includeIpRanges: "1.1.0.256/16,2.2.0.257/16"
     excludeIpRanges: "3.3.0.0/33,4.4.0.0/34"
 `,
-			wantErrs: makeErrors([]string{`global/proxy/excludeIpRanges invalid CIDR address: 3.3.0.0/33`,
-				`global/proxy/excludeIpRanges invalid CIDR address: 4.4.0.0/34`,
-				`global/proxy/includeIpRanges invalid CIDR address: 1.1.0.256/16`,
-				`global/proxy/includeIpRanges invalid CIDR address: 2.2.0.257/16`}),
+			wantErrs: makeErrors([]string{`global.proxy.excludeIpRanges invalid CIDR address: 3.3.0.0/33`,
+				`global.proxy.excludeIpRanges invalid CIDR address: 4.4.0.0/34`,
+				`global.proxy.includeIpRanges invalid CIDR address: 1.1.0.256/16`,
+				`global.proxy.includeIpRanges invalid CIDR address: 2.2.0.257/16`}),
 		},
 		{
 			desc: "BadIPMalformed",
@@ -56,8 +56,8 @@ global:
   proxy:
     includeIpRanges: "1.2.3/16,1.2.3.x/16"
 `,
-			wantErrs: makeErrors([]string{`global/proxy/includeIpRanges invalid CIDR address: 1.2.3/16`,
-				`global/proxy/includeIpRanges invalid CIDR address: 1.2.3.x/16`}),
+			wantErrs: makeErrors([]string{`global.proxy.includeIpRanges invalid CIDR address: 1.2.3/16`,
+				`global.proxy.includeIpRanges invalid CIDR address: 1.2.3.x/16`}),
 		},
 		{
 			desc: "BadPortRange",
@@ -67,8 +67,8 @@ global:
     includeInboundPorts: "111,65536"
     excludeInboundPorts: "-1,444"
 `,
-			wantErrs: makeErrors([]string{`value global/proxy/excludeInboundPorts:-1 falls outside range [0, 65535]`,
-				`value global/proxy/includeInboundPorts:65536 falls outside range [0, 65535]`}),
+			wantErrs: makeErrors([]string{`value global.proxy.excludeInboundPorts:-1 falls outside range [0, 65535]`,
+				`value global.proxy.includeInboundPorts:65536 falls outside range [0, 65535]`}),
 		},
 		{
 			desc: "BadPortMalformed",
@@ -77,7 +77,7 @@ global:
   proxy:
     includeInboundPorts: "111,222x"
 `,
-			wantErrs: makeErrors([]string{`global/proxy/includeInboundPorts : strconv.ParseInt: parsing "222x": invalid syntax`}),
+			wantErrs: makeErrors([]string{`global.proxy.includeInboundPorts : strconv.ParseInt: parsing "222x": invalid syntax`}),
 		},
 	}
 

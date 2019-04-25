@@ -4,20 +4,21 @@ import (
 	"fmt"
 	"github.com/ostromart/istio-installer/pkg/apis/installer/v1alpha1"
 	"github.com/ostromart/istio-installer/pkg/util"
+	"net/url"
 	"reflect"
 )
 
 var (
 	// defaultValidations maps a data path to a validation function.
 	defaultValidations = map[string]ValidateFunc{
-		"TrafficManagement/IncludeIpRanges":  validateStringList(validateCIDR),
-		"TrafficManagement/ExcludeIpRanges":  validateStringList(validateCIDR),
-		"TrafficManagement/IncludeInboundPorts":  validateStringList(validatePortNumberString),
-		"TrafficManagement/ExcludeInboundPorts":  validateStringList(validatePortNumberString),
+		"Hub":                    validateHub,
+		"Tag":                    validateTag,
+		"InstallPackagePath":     validateInstallPackagePath,
+		"DefaultNamespacePrefix": validateDefaultNamespacePrefix,
 	}
 
 	// requiredValues lists all the values that must be non-empty.
-	requiredValues = map[string]bool {
+	requiredValues = map[string]bool{
 	}
 )
 
@@ -110,3 +111,26 @@ func validateLeaf(validations map[string]ValidateFunc, path util.Path, val inter
 	return vf(path, val)
 }
 
+func validateHub(path util.Path, val interface{}) util.Errors {
+	return validateWithRegex(path, val, ReferenceRegexp)
+}
+
+func validateTag(path util.Path, val interface{}) util.Errors {
+	return validateWithRegex(path, val, TagRegexp)
+}
+
+func validateDefaultNamespacePrefix(path util.Path, val interface{}) util.Errors {
+	return validateWithRegex(path, val, ObjectNameRegexp)
+}
+
+func validateInstallPackagePath(path util.Path, val interface{}) util.Errors {
+	if !isString(val) {
+		return util.NewErrs(fmt.Errorf("validateDefaultNamespacePrefix(%s) bad type %T, want string", path, val))
+	}
+
+	if _, err := url.ParseRequestURI(val.(string)); err != nil {
+		return util.NewErrs(fmt.Errorf("invalid value %s:%s", path, val))
+	}
+
+	return nil
+}
