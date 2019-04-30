@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/kr/pretty"
 	"github.com/ostromart/istio-installer/pkg/util"
 	"testing"
 
@@ -13,13 +14,107 @@ import (
 	"github.com/ostromart/istio-installer/pkg/apis/installer/v1alpha1"
 )
 
+/*
+apiVersion: v1
+kind: Deployment
+name: istio-galley
+namespace: istio-system
+- op: replace
+  path: spec/template/spec/containers[name: galley]/imagePullPolicy
+  value: Always
+- op: replace
+  path: spec/template/spec/containers[name: galley]/ports[containerPort: 443]
+  value: 123
+- op: add
+  path: spec/template/spec/containers[name: galley]/ports
+  value: --newFlag=true
+- op: add
+  path: spec/template/spec/containers
+  value:
+    name: newContainer
+    command:
+    - /bin/bash
+    - echo "Hello world"
+*/
+
+func TestGetNode(t *testing.T) {
+	tr := map[string]interface {}{
+		"a": map[string]interface {}{
+			"b": map[string]interface {}{
+				"c": []interface {}{
+					map[string]interface {}{
+						"d":  "1",
+						"dd": "11",
+					},
+					map[string]interface {}{
+						"e":  "2",
+						"ee": "22",
+					},
+				},
+			},
+		},
+	}
+
+	tests := []struct {
+		desc    string
+		yAML    string
+		path    string
+		createNodes bool
+		want    interface{}
+		wantErr string
+	}{
+		{
+			desc: "simple path",
+			yAML: `
+a:
+  b:
+    c: d
+`,
+			path: "a.b.c",
+			want: "d",
+		},
+		{
+			desc: "leaf list",
+			yAML: `a:
+  b:
+    c:
+    - d: 1
+      dd: 11
+    - e: 2
+      ee: 22
+`,
+			path: "a.b.c[d:1]",
+			want: "0",
+		},
+	}
+
+	for _, tt := range tests {
+		fmt.Println(tt.desc)
+		t.Run(tt.desc, func(t *testing.T) {
+			root := make(map[string]interface{})
+			err := yaml.Unmarshal([]byte(tt.yAML), &root)
+			fmt.Println(pretty.Sprint(root))
+			if err != nil {
+				t.Fatalf("yaml.Unmarshal(%s): got error %s", tt.desc, err)
+			}
+			_, gotNode, err := getNode(nil, root, util.PathFromString(tt.path), tt.createNodes)
+			if gotErr, wantErr := errToString(err), tt.wantErr; gotErr != wantErr {
+				t.Fatalf("%s: gotErr:%s, wantErr:%s", tt.desc, gotErr, wantErr)
+			}
+			if got, want := fmt.Sprint(gotNode), tt.want; got != want {
+				t.Errorf("%s: got:\n%s\n\nwant:\n%s", tt.desc, got, want)
+			}
+		})
+	}
+}
+
 func TestPatchYAMLManifest(t *testing.T) {
 	tests := []struct {
-		desc     string
-		base     string
-		overlay  string
-		want     string
-		wantErr  string
+		desc    string
+		base    string
+		overlay string
+		want    string
+		wantErr string
 	}{
 		{
 			desc: "nil success",
@@ -76,7 +171,7 @@ metadata:
 				t.Fatalf("unmarshalWithJSONPB(%s): got error %s", tt.desc, err)
 			}
 			got, err := PatchYAMLManifest(tt.base, rc.Overlays)
-			if gotErr, wantErr := errToString(err), tt.wantErr; gotErr != wantErr  {
+			if gotErr, wantErr := errToString(err), tt.wantErr; gotErr != wantErr {
 				t.Fatalf("PatchYAMLManifest(%s): gotErr:%s, wantErr:%s", tt.desc, gotErr, wantErr)
 			}
 			if want := tt.want; !util.IsYAMLEqual(got, want) {
@@ -112,6 +207,7 @@ func unmarshalWithJSON(y string, out proto.Message) error {
 	}
 	return nil
 }
+
 // errToString returns the string representation of err and the empty string if
 // err is nil.
 func errToString(err error) string {

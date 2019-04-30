@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/ghodss/yaml"
+	"regexp"
 	"strings"
 	"math/rand"
 	"reflect"
@@ -15,7 +16,10 @@ func init() {
 	rand.Seed(time.Now().UnixNano())
 }
 
-var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+var (
+	letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+	ValidKeyRegex = regexp.MustCompile("^[a-zA-Z0-9_-]*$")
+)
 
 func GetPathVal(tree map[string]interface{}, path string) (string, bool) {
 	path = strings.TrimPrefix(path, "/")
@@ -80,6 +84,11 @@ func IsEmptyString(value interface{}) bool {
 		return value.(string) == ""
 	}
 	return false
+}
+
+// IsEmptyString returns true if value is an empty string.
+func IsSlice(value interface{}) bool {
+	return reflect.TypeOf(value).Kind() == reflect.Slice
 }
 
 // IsNilOrInvalidValue reports whether v is nil or reflect.Zero.
