@@ -186,10 +186,14 @@ message CommonComponentConfig {
     }
     LogLevel debug = 3;
 
+    message UpdateSpec {
+        string old = 1;
+        string new = 2;
+    }
     // Additional environment variables for the container.
-    map<string, string> env = 60;
+    map<string, UpdateSpec> env = 60;
     // Additional command line arguments for the container.
-    map<string, string> args = 61;
+    map<string, UpdateSpec> args = 61;
 
     // Kubernetes resource spec.
     KubernetesResourcesConfig k8s = 80;
@@ -255,19 +259,15 @@ message IngressGatewayConfig {
         KUBERNETES = 1;
     }
     IngressType ingress_type = 11;
+
     // enableHttps will add port 443 on the ingress.
     // It REQUIRES that the certificates are installed  in the
     // expected secrets - enabling this option without certificates
     // will result in LDS rejection and the ingress will not work.
     google.protobuf.BoolValue https_enabled = 12;
-    // Sets the IP address for the load balancer.
-    // If unset, IP address will be allocated automatically if the provider
-    // platform supports auto allocation.
-    string load_balancer_ip = 13;
-    // ???
-    repeated string load_balancer_source_ranges = 14;
-    // ???
-    repeated string external_ips = 15;
+
+    LoadBalancerConfig load_balancer = 13;
+
     // If true, ingress gateway fetches credentials from SDS server to handle TLS connections.
     google.protobuf.BoolValue sds_enabled = 16;
 
@@ -293,12 +293,9 @@ message EgressGatewayConfig {
 message LoadBalancingGatewayConfig {
     // Common gateway configuration.
     GatewayConfig gateway = 10;
-    // Sets the IP address for the load balancer.
-    // If unset, IP address will be allocated automatically if the provider
-    // platform supports auto allocation.
-    // TODO: create IP type here and elsewhere.
-    // TODO: look into tagging these
-    string load_balancer_ip = 11;
+
+    // Load balancer config.
+    LoadBalancerConfig load_balancer = 11;
 }
 
 // Common config for all gateway types.
@@ -307,6 +304,72 @@ message GatewayConfig {
 
     // NodePort, ClusterIP or LoadBalancer.
     string type = 10;
+}
+
+// Configuration options for internal load balancer gateways.
+// Subset of k8s.io/api/core/v1 ServiceSpec.
+message LoadBalancerConfig {
+    // The list of ports that are exposed by this service.
+    // More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies
+    repeated k8s.io.api.core.v1.ServicePort ports = 1;
+
+    // clusterIP is the IP address of the service and is usually assigned
+    // randomly by the master. If an address is specified manually and is not in
+    // use by others, it will be allocated to the service; otherwise, creation
+    // of the service will fail. This field can not be changed through updates.
+    // Valid values are "None", empty string (""), or a valid IP address. "None"
+    // can be specified for headless services when proxying is not required.
+    // Only applies to types ClusterIP, NodePort, and LoadBalancer. Ignored if
+    // type is ExternalName.
+    // More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies
+    // +optional
+    string clusterIP = 3;
+
+    // externalIPs is a list of IP addresses for which nodes in the cluster
+    // will also accept traffic for this service.  These IPs are not managed by
+    // Kubernetes.  The user is responsible for ensuring that traffic arrives
+    // at a node with this IP.  A common example is external load-balancers
+    // that are not part of the Kubernetes system.
+    // +optional
+    repeated string externalIPs = 5;
+
+    // Supports "ClientIP" and "None". Used to maintain session affinity.
+    // Enable client IP based session affinity.
+    // Must be ClientIP or None.
+    // Defaults to None.
+    // More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies
+    // +optional
+    string sessionAffinity = 7;
+
+    // LoadBalancer will get created with the IP specified in this field.
+    // This feature depends on whether the underlying cloud-provider supports specifying
+    // the loadBalancerIP when a load balancer is created.
+    // This field will be ignored if the cloud-provider does not support the feature.
+    // +optional
+    string loadBalancerIP = 8;
+
+    // If specified and supported by the platform, this will restrict traffic through the cloud-provider
+    // load-balancer will be restricted to the specified client IPs. This field will be ignored if the
+    // cloud-provider does not support the feature."
+    // More info: https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/
+    // +optional
+    repeated string loadBalancerSourceRanges = 9;
+
+    // externalName is the external reference that kubedns or equivalent will
+    // return as a CNAME record for this service. No proxying will be involved.
+    // Must be a valid RFC-1123 hostname (https://tools.ietf.org/html/rfc1123)
+    // and requires Type to be ExternalName.
+    // +optional
+    string externalName = 10;
+
+    // externalTrafficPolicy denotes if this Service desires to route external
+    // traffic to node-local or cluster-wide endpoints. "Local" preserves the
+    // client source IP and avoids a second hop for LoadBalancer and Nodeport
+    // type services, but risks potentially imbalanced traffic spreading.
+    // "Cluster" obscures the client source IP and may cause a second hop to
+    // another node, but should have good overall load-spreading.
+    // +optional
+    string externalTrafficPolicy = 11;
 }
 
 // OperatorConfig defines a config used to install an external operator.
@@ -331,13 +394,12 @@ message k8sObjectOverlay {
         ADD = 0;
         REMOVE = 1;
         REPLACE = 2;
-        MERGE = 3;
     }
 
     PatchType patch_type = 1;
     Op op = 2;
     // google.protobuf.Struct Data = 6;
-//    	Data                 *unstructured.Unstructured  `protobuf:"bytes,6,opt,name=data" json:"data,omitempty"`
+    //    	Data                 *unstructured.Unstructured  `protobuf:"bytes,6,opt,name=data" json:"data,omitempty"`
 }
 
 // Observed state of IstioInstaller.
