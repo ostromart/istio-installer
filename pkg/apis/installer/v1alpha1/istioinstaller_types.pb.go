@@ -4,15 +4,14 @@
 package v1alpha1
 
 import (
-	"fmt"
+	fmt "fmt"
 	protobuf "github.com/gogo/protobuf/types"
-	"github.com/golang/protobuf/proto"
-	"io"
+	proto "github.com/golang/protobuf/proto"
+	io "io"
 	v11 "k8s.io/api/autoscaling/v1"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"math"
+	math "math"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -27,48 +26,48 @@ var _ = math.Inf
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
 // Default behavior of the sidecar for handling outbound traffic from the application.
-type PolicyTelemetryConfig_OutboundPolicy int32
+type PolicyTelemetryFeatureSpec_OutboundPolicy int32
 
 const (
 	// Outbound traffic to unknown destinations will be allowed, in case there are no
 	// services or ServiceEntries for the destination port
-	PolicyTelemetryConfig_ALLOW_ANY PolicyTelemetryConfig_OutboundPolicy = 0
+	PolicyTelemetryFeatureSpec_ALLOW_ANY PolicyTelemetryFeatureSpec_OutboundPolicy = 0
 	// Restrict outbound traffic to services defined in the service registry as well
 	// as those defined through ServiceEntries
-	PolicyTelemetryConfig_REGISTRY_ONLY PolicyTelemetryConfig_OutboundPolicy = 1
+	PolicyTelemetryFeatureSpec_REGISTRY_ONLY PolicyTelemetryFeatureSpec_OutboundPolicy = 1
 )
 
-var PolicyTelemetryConfig_OutboundPolicy_name = map[int32]string{
+var PolicyTelemetryFeatureSpec_OutboundPolicy_name = map[int32]string{
 	0: "ALLOW_ANY",
 	1: "REGISTRY_ONLY",
 }
 
-var PolicyTelemetryConfig_OutboundPolicy_value = map[string]int32{
+var PolicyTelemetryFeatureSpec_OutboundPolicy_value = map[string]int32{
 	"ALLOW_ANY":     0,
 	"REGISTRY_ONLY": 1,
 }
 
-func (x PolicyTelemetryConfig_OutboundPolicy) String() string {
-	return proto.EnumName(PolicyTelemetryConfig_OutboundPolicy_name, int32(x))
+func (x PolicyTelemetryFeatureSpec_OutboundPolicy) String() string {
+	return proto.EnumName(PolicyTelemetryFeatureSpec_OutboundPolicy_name, int32(x))
 }
 
-func (PolicyTelemetryConfig_OutboundPolicy) EnumDescriptor() ([]byte, []int) {
+func (PolicyTelemetryFeatureSpec_OutboundPolicy) EnumDescriptor() ([]byte, []int) {
 	return fileDescriptor_d0a1188b3d395975, []int{3, 0}
 }
 
 // LogLevel sets the component log level. Mappings to underlying log levels are not necessarily 1:1 and depend on
 // component support of these levels e.g. DEBUG or INFO may result in the same log verbosity.
-type CommonComponentConfig_LogLevel int32
+type CommonComponentSpec_LogLevel int32
 
 const (
-	CommonComponentConfig_NONE  CommonComponentConfig_LogLevel = 0
-	CommonComponentConfig_ERROR CommonComponentConfig_LogLevel = 1
-	CommonComponentConfig_WARN  CommonComponentConfig_LogLevel = 2
-	CommonComponentConfig_DEBUG CommonComponentConfig_LogLevel = 3
-	CommonComponentConfig_INFO  CommonComponentConfig_LogLevel = 4
+	CommonComponentSpec_NONE  CommonComponentSpec_LogLevel = 0
+	CommonComponentSpec_ERROR CommonComponentSpec_LogLevel = 1
+	CommonComponentSpec_WARN  CommonComponentSpec_LogLevel = 2
+	CommonComponentSpec_DEBUG CommonComponentSpec_LogLevel = 3
+	CommonComponentSpec_INFO  CommonComponentSpec_LogLevel = 4
 )
 
-var CommonComponentConfig_LogLevel_name = map[int32]string{
+var CommonComponentSpec_LogLevel_name = map[int32]string{
 	0: "NONE",
 	1: "ERROR",
 	2: "WARN",
@@ -76,7 +75,7 @@ var CommonComponentConfig_LogLevel_name = map[int32]string{
 	4: "INFO",
 }
 
-var CommonComponentConfig_LogLevel_value = map[string]int32{
+var CommonComponentSpec_LogLevel_value = map[string]int32{
 	"NONE":  0,
 	"ERROR": 1,
 	"WARN":  2,
@@ -84,124 +83,71 @@ var CommonComponentConfig_LogLevel_value = map[string]int32{
 	"INFO":  4,
 }
 
-func (x CommonComponentConfig_LogLevel) String() string {
-	return proto.EnumName(CommonComponentConfig_LogLevel_name, int32(x))
+func (x CommonComponentSpec_LogLevel) String() string {
+	return proto.EnumName(CommonComponentSpec_LogLevel_name, int32(x))
 }
 
-func (CommonComponentConfig_LogLevel) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{14, 0}
+func (CommonComponentSpec_LogLevel) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_d0a1188b3d395975, []int{15, 0}
 }
 
 // Selects the type of ingress.
 // Ingress type.
-type IngressGatewayConfig_IngressType int32
+type IngressGatewaySpec_IngressType int32
 
 const (
-	IngressGatewayConfig_ISTIO      IngressGatewayConfig_IngressType = 0
-	IngressGatewayConfig_KUBERNETES IngressGatewayConfig_IngressType = 1
+	IngressGatewaySpec_ISTIO      IngressGatewaySpec_IngressType = 0
+	IngressGatewaySpec_KUBERNETES IngressGatewaySpec_IngressType = 1
 )
 
-var IngressGatewayConfig_IngressType_name = map[int32]string{
+var IngressGatewaySpec_IngressType_name = map[int32]string{
 	0: "ISTIO",
 	1: "KUBERNETES",
 }
 
-var IngressGatewayConfig_IngressType_value = map[string]int32{
+var IngressGatewaySpec_IngressType_value = map[string]int32{
 	"ISTIO":      0,
 	"KUBERNETES": 1,
 }
 
-func (x IngressGatewayConfig_IngressType) String() string {
-	return proto.EnumName(IngressGatewayConfig_IngressType_name, int32(x))
+func (x IngressGatewaySpec_IngressType) String() string {
+	return proto.EnumName(IngressGatewaySpec_IngressType_name, int32(x))
 }
 
-func (IngressGatewayConfig_IngressType) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{16, 0}
+func (IngressGatewaySpec_IngressType) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_d0a1188b3d395975, []int{17, 0}
 }
 
 // change to Local to preserve source IP or Cluster for default behaviour or leave commented out
 // ???
 // External traffic policy.
-type IngressGatewayConfig_ExternalTrafficPolicy int32
+type IngressGatewaySpec_ExternalTrafficPolicy int32
 
 const (
-	IngressGatewayConfig_NONE IngressGatewayConfig_ExternalTrafficPolicy = 0
+	IngressGatewaySpec_NONE IngressGatewaySpec_ExternalTrafficPolicy = 0
 	// Preserves source IP.
-	IngressGatewayConfig_LOCAL   IngressGatewayConfig_ExternalTrafficPolicy = 1
-	IngressGatewayConfig_CLUSTER IngressGatewayConfig_ExternalTrafficPolicy = 2
+	IngressGatewaySpec_LOCAL   IngressGatewaySpec_ExternalTrafficPolicy = 1
+	IngressGatewaySpec_CLUSTER IngressGatewaySpec_ExternalTrafficPolicy = 2
 )
 
-var IngressGatewayConfig_ExternalTrafficPolicy_name = map[int32]string{
+var IngressGatewaySpec_ExternalTrafficPolicy_name = map[int32]string{
 	0: "NONE",
 	1: "LOCAL",
 	2: "CLUSTER",
 }
 
-var IngressGatewayConfig_ExternalTrafficPolicy_value = map[string]int32{
+var IngressGatewaySpec_ExternalTrafficPolicy_value = map[string]int32{
 	"NONE":    0,
 	"LOCAL":   1,
 	"CLUSTER": 2,
 }
 
-func (x IngressGatewayConfig_ExternalTrafficPolicy) String() string {
-	return proto.EnumName(IngressGatewayConfig_ExternalTrafficPolicy_name, int32(x))
+func (x IngressGatewaySpec_ExternalTrafficPolicy) String() string {
+	return proto.EnumName(IngressGatewaySpec_ExternalTrafficPolicy_name, int32(x))
 }
 
-func (IngressGatewayConfig_ExternalTrafficPolicy) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{16, 1}
-}
-
-type K8SObjectOverlay_PatchType int32
-
-const (
-	K8SObjectOverlay_STRATEGIC K8SObjectOverlay_PatchType = 0
-	K8SObjectOverlay_JSON      K8SObjectOverlay_PatchType = 1
-)
-
-var K8SObjectOverlay_PatchType_name = map[int32]string{
-	0: "STRATEGIC",
-	1: "JSON",
-}
-
-var K8SObjectOverlay_PatchType_value = map[string]int32{
-	"STRATEGIC": 0,
-	"JSON":      1,
-}
-
-func (x K8SObjectOverlay_PatchType) String() string {
-	return proto.EnumName(K8SObjectOverlay_PatchType_name, int32(x))
-}
-
-func (K8SObjectOverlay_PatchType) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{22, 0}
-}
-
-type K8SObjectOverlay_Op int32
-
-const (
-	K8SObjectOverlay_ADD     K8SObjectOverlay_Op = 0
-	K8SObjectOverlay_REMOVE  K8SObjectOverlay_Op = 1
-	K8SObjectOverlay_REPLACE K8SObjectOverlay_Op = 2
-)
-
-var K8SObjectOverlay_Op_name = map[int32]string{
-	0: "ADD",
-	1: "REMOVE",
-	2: "REPLACE",
-}
-
-var K8SObjectOverlay_Op_value = map[string]int32{
-	"ADD":     0,
-	"REMOVE":  1,
-	"REPLACE": 2,
-}
-
-func (x K8SObjectOverlay_Op) String() string {
-	return proto.EnumName(K8SObjectOverlay_Op_name, int32(x))
-}
-
-func (K8SObjectOverlay_Op) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{22, 1}
+func (IngressGatewaySpec_ExternalTrafficPolicy) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_d0a1188b3d395975, []int{17, 1}
 }
 
 type InstallerStatus_Status int32
@@ -232,7 +178,7 @@ func (x InstallerStatus_Status) String() string {
 }
 
 func (InstallerStatus_Status) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{23, 0}
+	return fileDescriptor_d0a1188b3d395975, []int{24, 0}
 }
 
 type IstioInstaller struct {
@@ -292,36 +238,36 @@ func (m *IstioInstaller) GetStatus() *InstallerStatus {
 
 // InstallerSpec defines the desired state of IstioInstaller.
 type InstallerSpec struct {
+	// Prefix added to all namespaces for any installed component.
+	DefaultNamespacePrefix string `protobuf:"bytes,5,opt,name=default_namespace_prefix,json=defaultNamespacePrefix,proto3" json:"default_namespace_prefix,omitempty"`
+	// Selection and configuration of core Istio features.
+	TrafficManagement *TrafficManagementFeatureSpec `protobuf:"bytes,25,opt,name=traffic_management,json=trafficManagement,proto3" json:"traffic_management,omitempty"`
+	PolicyTelemetry   *PolicyTelemetryFeatureSpec   `protobuf:"bytes,26,opt,name=policy_telemetry,json=policyTelemetry,proto3" json:"policy_telemetry,omitempty"`
+	Security          *SecurityFeatureSpec          `protobuf:"bytes,28,opt,name=security,proto3" json:"security,omitempty"`
+	ConfigManagement  *ConfigManagementFeatureSpec  `protobuf:"bytes,29,opt,name=config_management,json=configManagement,proto3" json:"config_management,omitempty"`
+	// Ingress/egress gateway installation and configuration.
+	IngressGateway []*IngressGatewaySpec `protobuf:"bytes,30,rep,name=ingress_gateway,json=ingressGateway,proto3" json:"ingress_gateway,omitempty"`
+	EgressGateway  []*EgressGatewaySpec  `protobuf:"bytes,31,rep,name=egress_gateway,json=egressGateway,proto3" json:"egress_gateway,omitempty"`
+	// List of external operators that will be installed (but not managed)
+	// by the IstioInstaller e.g. prometheus, grafana, kiali.
+	ExternalOperators []*OperatorSpec `protobuf:"bytes,50,rep,name=external_operators,json=externalOperators,proto3" json:"external_operators,omitempty"`
+	// Global k8s defaults. Can be overridden per component.
+	K8SDefaults *KubernetesResourcesSpec `protobuf:"bytes,80,opt,name=k8s_defaults,json=k8sDefaults,proto3" json:"k8s_defaults,omitempty"`
 	// URL for the install package. e.g.
 	//   http://github.com/istio/istio/releases/install/1.1.2
 	//   http://github.com/istio/istio/releases/install/lts
 	//   file://tmp/istio-installer/nightly
 	// Uses compiled in install package by default.
-	InstallPackagePath string `protobuf:"bytes,1,opt,name=install_package_path,json=installPackagePath,proto3" json:"install_package_path,omitempty"`
+	CustomPackagePath string `protobuf:"bytes,100,opt,name=custom_package_path,json=customPackagePath,proto3" json:"custom_package_path,omitempty"`
 	// Root for docker image paths e.g. docker.io/istio-release.
 	// Releases are published to docker hub under 'istio' project.
-	//  Daily builds from prow are on gcr.io, and nightly builds from circle on docker.io/istionightly
-	Hub string `protobuf:"bytes,3,opt,name=hub,proto3" json:"hub,omitempty"`
+	// Daily builds from prow are on gcr.io, and nightly builds from circle on docker.io/istionightly
+	Hub string `protobuf:"bytes,101,opt,name=hub,proto3" json:"hub,omitempty"`
 	// Version tag for docker images e.g. 1.0.6
-	Tag string `protobuf:"bytes,4,opt,name=tag,proto3" json:"tag,omitempty"`
-	// Prefix added to all namespaces for any installed component.
-	DefaultNamespacePrefix string `protobuf:"bytes,5,opt,name=default_namespace_prefix,json=defaultNamespacePrefix,proto3" json:"default_namespace_prefix,omitempty"`
-	// Selection and configuration of core Istio features.
-	TrafficManagement *TrafficManagementConfig `protobuf:"bytes,25,opt,name=traffic_management,json=trafficManagement,proto3" json:"traffic_management,omitempty"`
-	PolicyTelemetry   *PolicyTelemetryConfig   `protobuf:"bytes,26,opt,name=policy_telemetry,json=policyTelemetry,proto3" json:"policy_telemetry,omitempty"`
-	Security          *SecurityConfig          `protobuf:"bytes,28,opt,name=security,proto3" json:"security,omitempty"`
-	ConfigManagement  *ConfigManagementConfig  `protobuf:"bytes,29,opt,name=config_management,json=configManagement,proto3" json:"config_management,omitempty"`
-	// Ingress/egress gateway installation and configuration.
-	IngressGateway []*IngressGatewayConfig `protobuf:"bytes,30,rep,name=ingress_gateway,json=ingressGateway,proto3" json:"ingress_gateway,omitempty"`
-	EgressGateway  []*EgressGatewayConfig  `protobuf:"bytes,31,rep,name=egress_gateway,json=egressGateway,proto3" json:"egress_gateway,omitempty"`
-	// List of external operators that will be installed (but not managed)
-	// by the IstioInstaller e.g. prometheus, grafana, kiali.
-	ExternalOperators []*OperatorConfig `protobuf:"bytes,50,rep,name=external_operators,json=externalOperators,proto3" json:"external_operators,omitempty"`
-	// Global k8s defaults. Can be overridden per component.
-	K8SDefaults          *KubernetesResourcesConfig `protobuf:"bytes,80,opt,name=k8s_defaults,json=k8sDefaults,proto3" json:"k8s_defaults,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}                   `json:"-"`
-	XXX_unrecognized     []byte                     `json:"-"`
-	XXX_sizecache        int32                      `json:"-"`
+	Tag                  string   `protobuf:"bytes,102,opt,name=tag,proto3" json:"tag,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
 func (m *InstallerSpec) Reset()         { *m = InstallerSpec{} }
@@ -357,9 +303,72 @@ func (m *InstallerSpec) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_InstallerSpec proto.InternalMessageInfo
 
-func (m *InstallerSpec) GetInstallPackagePath() string {
+func (m *InstallerSpec) GetDefaultNamespacePrefix() string {
 	if m != nil {
-		return m.InstallPackagePath
+		return m.DefaultNamespacePrefix
+	}
+	return ""
+}
+
+func (m *InstallerSpec) GetTrafficManagement() *TrafficManagementFeatureSpec {
+	if m != nil {
+		return m.TrafficManagement
+	}
+	return nil
+}
+
+func (m *InstallerSpec) GetPolicyTelemetry() *PolicyTelemetryFeatureSpec {
+	if m != nil {
+		return m.PolicyTelemetry
+	}
+	return nil
+}
+
+func (m *InstallerSpec) GetSecurity() *SecurityFeatureSpec {
+	if m != nil {
+		return m.Security
+	}
+	return nil
+}
+
+func (m *InstallerSpec) GetConfigManagement() *ConfigManagementFeatureSpec {
+	if m != nil {
+		return m.ConfigManagement
+	}
+	return nil
+}
+
+func (m *InstallerSpec) GetIngressGateway() []*IngressGatewaySpec {
+	if m != nil {
+		return m.IngressGateway
+	}
+	return nil
+}
+
+func (m *InstallerSpec) GetEgressGateway() []*EgressGatewaySpec {
+	if m != nil {
+		return m.EgressGateway
+	}
+	return nil
+}
+
+func (m *InstallerSpec) GetExternalOperators() []*OperatorSpec {
+	if m != nil {
+		return m.ExternalOperators
+	}
+	return nil
+}
+
+func (m *InstallerSpec) GetK8SDefaults() *KubernetesResourcesSpec {
+	if m != nil {
+		return m.K8SDefaults
+	}
+	return nil
+}
+
+func (m *InstallerSpec) GetCustomPackagePath() string {
+	if m != nil {
+		return m.CustomPackagePath
 	}
 	return ""
 }
@@ -378,71 +387,8 @@ func (m *InstallerSpec) GetTag() string {
 	return ""
 }
 
-func (m *InstallerSpec) GetDefaultNamespacePrefix() string {
-	if m != nil {
-		return m.DefaultNamespacePrefix
-	}
-	return ""
-}
-
-func (m *InstallerSpec) GetTrafficManagement() *TrafficManagementConfig {
-	if m != nil {
-		return m.TrafficManagement
-	}
-	return nil
-}
-
-func (m *InstallerSpec) GetPolicyTelemetry() *PolicyTelemetryConfig {
-	if m != nil {
-		return m.PolicyTelemetry
-	}
-	return nil
-}
-
-func (m *InstallerSpec) GetSecurity() *SecurityConfig {
-	if m != nil {
-		return m.Security
-	}
-	return nil
-}
-
-func (m *InstallerSpec) GetConfigManagement() *ConfigManagementConfig {
-	if m != nil {
-		return m.ConfigManagement
-	}
-	return nil
-}
-
-func (m *InstallerSpec) GetIngressGateway() []*IngressGatewayConfig {
-	if m != nil {
-		return m.IngressGateway
-	}
-	return nil
-}
-
-func (m *InstallerSpec) GetEgressGateway() []*EgressGatewayConfig {
-	if m != nil {
-		return m.EgressGateway
-	}
-	return nil
-}
-
-func (m *InstallerSpec) GetExternalOperators() []*OperatorConfig {
-	if m != nil {
-		return m.ExternalOperators
-	}
-	return nil
-}
-
-func (m *InstallerSpec) GetK8SDefaults() *KubernetesResourcesConfig {
-	if m != nil {
-		return m.K8SDefaults
-	}
-	return nil
-}
-
 // Configuration options for traffic management.
-type TrafficManagementConfig struct {
+type TrafficManagementFeatureSpec struct {
 	// Selects whether traffic management is installed.
 	// Must be enabled to enable any sub-component.
 	Enabled *protobuf.BoolValue `protobuf:"bytes,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
@@ -450,26 +396,26 @@ type TrafficManagementConfig struct {
 	Namespace     string `protobuf:"bytes,2,opt,name=namespace,proto3" json:"namespace,omitempty"`
 	ClusterDomain string `protobuf:"bytes,24,opt,name=cluster_domain,json=clusterDomain,proto3" json:"cluster_domain,omitempty"`
 	// Component specific config.
-	Pilot                *PilotComponentConfig           `protobuf:"bytes,30,opt,name=pilot,proto3" json:"pilot,omitempty"`
-	Proxy                *ProxyComponentConfig           `protobuf:"bytes,31,opt,name=proxy,proto3" json:"proxy,omitempty"`
-	SidecarInjector      *SidecarInjectorComponentConfig `protobuf:"bytes,32,opt,name=sidecar_injector,json=sidecarInjector,proto3" json:"sidecar_injector,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}                        `json:"-"`
-	XXX_unrecognized     []byte                          `json:"-"`
-	XXX_sizecache        int32                           `json:"-"`
+	Pilot                *PilotComponentSpec           `protobuf:"bytes,30,opt,name=pilot,proto3" json:"pilot,omitempty"`
+	Proxy                *ProxyComponentSpec           `protobuf:"bytes,31,opt,name=proxy,proto3" json:"proxy,omitempty"`
+	SidecarInjector      *SidecarInjectorComponentSpec `protobuf:"bytes,32,opt,name=sidecar_injector,json=sidecarInjector,proto3" json:"sidecar_injector,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}                      `json:"-"`
+	XXX_unrecognized     []byte                        `json:"-"`
+	XXX_sizecache        int32                         `json:"-"`
 }
 
-func (m *TrafficManagementConfig) Reset()         { *m = TrafficManagementConfig{} }
-func (m *TrafficManagementConfig) String() string { return proto.CompactTextString(m) }
-func (*TrafficManagementConfig) ProtoMessage()    {}
-func (*TrafficManagementConfig) Descriptor() ([]byte, []int) {
+func (m *TrafficManagementFeatureSpec) Reset()         { *m = TrafficManagementFeatureSpec{} }
+func (m *TrafficManagementFeatureSpec) String() string { return proto.CompactTextString(m) }
+func (*TrafficManagementFeatureSpec) ProtoMessage()    {}
+func (*TrafficManagementFeatureSpec) Descriptor() ([]byte, []int) {
 	return fileDescriptor_d0a1188b3d395975, []int{2}
 }
-func (m *TrafficManagementConfig) XXX_Unmarshal(b []byte) error {
+func (m *TrafficManagementFeatureSpec) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *TrafficManagementConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *TrafficManagementFeatureSpec) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_TrafficManagementConfig.Marshal(b, m, deterministic)
+		return xxx_messageInfo_TrafficManagementFeatureSpec.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalTo(b)
@@ -479,54 +425,54 @@ func (m *TrafficManagementConfig) XXX_Marshal(b []byte, deterministic bool) ([]b
 		return b[:n], nil
 	}
 }
-func (m *TrafficManagementConfig) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TrafficManagementConfig.Merge(m, src)
+func (m *TrafficManagementFeatureSpec) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TrafficManagementFeatureSpec.Merge(m, src)
 }
-func (m *TrafficManagementConfig) XXX_Size() int {
+func (m *TrafficManagementFeatureSpec) XXX_Size() int {
 	return m.Size()
 }
-func (m *TrafficManagementConfig) XXX_DiscardUnknown() {
-	xxx_messageInfo_TrafficManagementConfig.DiscardUnknown(m)
+func (m *TrafficManagementFeatureSpec) XXX_DiscardUnknown() {
+	xxx_messageInfo_TrafficManagementFeatureSpec.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_TrafficManagementConfig proto.InternalMessageInfo
+var xxx_messageInfo_TrafficManagementFeatureSpec proto.InternalMessageInfo
 
-func (m *TrafficManagementConfig) GetEnabled() *protobuf.BoolValue {
+func (m *TrafficManagementFeatureSpec) GetEnabled() *protobuf.BoolValue {
 	if m != nil {
 		return m.Enabled
 	}
 	return nil
 }
 
-func (m *TrafficManagementConfig) GetNamespace() string {
+func (m *TrafficManagementFeatureSpec) GetNamespace() string {
 	if m != nil {
 		return m.Namespace
 	}
 	return ""
 }
 
-func (m *TrafficManagementConfig) GetClusterDomain() string {
+func (m *TrafficManagementFeatureSpec) GetClusterDomain() string {
 	if m != nil {
 		return m.ClusterDomain
 	}
 	return ""
 }
 
-func (m *TrafficManagementConfig) GetPilot() *PilotComponentConfig {
+func (m *TrafficManagementFeatureSpec) GetPilot() *PilotComponentSpec {
 	if m != nil {
 		return m.Pilot
 	}
 	return nil
 }
 
-func (m *TrafficManagementConfig) GetProxy() *ProxyComponentConfig {
+func (m *TrafficManagementFeatureSpec) GetProxy() *ProxyComponentSpec {
 	if m != nil {
 		return m.Proxy
 	}
 	return nil
 }
 
-func (m *TrafficManagementConfig) GetSidecarInjector() *SidecarInjectorComponentConfig {
+func (m *TrafficManagementFeatureSpec) GetSidecarInjector() *SidecarInjectorComponentSpec {
 	if m != nil {
 		return m.SidecarInjector
 	}
@@ -534,30 +480,30 @@ func (m *TrafficManagementConfig) GetSidecarInjector() *SidecarInjectorComponent
 }
 
 // Configuration options for the policy and telemetry feature.
-type PolicyTelemetryConfig struct {
+type PolicyTelemetryFeatureSpec struct {
 	// If set, allows traffic in cases when the mixer policy service cannot be reached.
 	PolicyCheckFailOpen *protobuf.BoolValue `protobuf:"bytes,10,opt,name=policy_check_fail_open,json=policyCheckFailOpen,proto3" json:"policy_check_fail_open,omitempty"`
 	// Selects the outbound traffic policy mode.
-	OutboundTrafficPolicyMode PolicyTelemetryConfig_OutboundPolicy `protobuf:"varint,11,opt,name=outbound_traffic_policy_mode,json=outboundTrafficPolicyMode,proto3,enum=v1alpha1.PolicyTelemetryConfig_OutboundPolicy" json:"outbound_traffic_policy_mode,omitempty"`
-	Policy                    *PolicyComponentConfig               `protobuf:"bytes,50,opt,name=policy,proto3" json:"policy,omitempty"`
-	Telemetry                 *TelemetryComponentConfig            `protobuf:"bytes,51,opt,name=telemetry,proto3" json:"telemetry,omitempty"`
-	XXX_NoUnkeyedLiteral      struct{}                             `json:"-"`
-	XXX_unrecognized          []byte                               `json:"-"`
-	XXX_sizecache             int32                                `json:"-"`
+	OutboundTrafficPolicyMode PolicyTelemetryFeatureSpec_OutboundPolicy `protobuf:"varint,11,opt,name=outbound_traffic_policy_mode,json=outboundTrafficPolicyMode,proto3,enum=v1alpha1.PolicyTelemetryFeatureSpec_OutboundPolicy" json:"outbound_traffic_policy_mode,omitempty"`
+	Policy                    *PolicyComponentSpec                      `protobuf:"bytes,50,opt,name=policy,proto3" json:"policy,omitempty"`
+	Telemetry                 *TelemetryComponentSpec                   `protobuf:"bytes,51,opt,name=telemetry,proto3" json:"telemetry,omitempty"`
+	XXX_NoUnkeyedLiteral      struct{}                                  `json:"-"`
+	XXX_unrecognized          []byte                                    `json:"-"`
+	XXX_sizecache             int32                                     `json:"-"`
 }
 
-func (m *PolicyTelemetryConfig) Reset()         { *m = PolicyTelemetryConfig{} }
-func (m *PolicyTelemetryConfig) String() string { return proto.CompactTextString(m) }
-func (*PolicyTelemetryConfig) ProtoMessage()    {}
-func (*PolicyTelemetryConfig) Descriptor() ([]byte, []int) {
+func (m *PolicyTelemetryFeatureSpec) Reset()         { *m = PolicyTelemetryFeatureSpec{} }
+func (m *PolicyTelemetryFeatureSpec) String() string { return proto.CompactTextString(m) }
+func (*PolicyTelemetryFeatureSpec) ProtoMessage()    {}
+func (*PolicyTelemetryFeatureSpec) Descriptor() ([]byte, []int) {
 	return fileDescriptor_d0a1188b3d395975, []int{3}
 }
-func (m *PolicyTelemetryConfig) XXX_Unmarshal(b []byte) error {
+func (m *PolicyTelemetryFeatureSpec) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *PolicyTelemetryConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *PolicyTelemetryFeatureSpec) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_PolicyTelemetryConfig.Marshal(b, m, deterministic)
+		return xxx_messageInfo_PolicyTelemetryFeatureSpec.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalTo(b)
@@ -567,40 +513,40 @@ func (m *PolicyTelemetryConfig) XXX_Marshal(b []byte, deterministic bool) ([]byt
 		return b[:n], nil
 	}
 }
-func (m *PolicyTelemetryConfig) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PolicyTelemetryConfig.Merge(m, src)
+func (m *PolicyTelemetryFeatureSpec) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PolicyTelemetryFeatureSpec.Merge(m, src)
 }
-func (m *PolicyTelemetryConfig) XXX_Size() int {
+func (m *PolicyTelemetryFeatureSpec) XXX_Size() int {
 	return m.Size()
 }
-func (m *PolicyTelemetryConfig) XXX_DiscardUnknown() {
-	xxx_messageInfo_PolicyTelemetryConfig.DiscardUnknown(m)
+func (m *PolicyTelemetryFeatureSpec) XXX_DiscardUnknown() {
+	xxx_messageInfo_PolicyTelemetryFeatureSpec.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_PolicyTelemetryConfig proto.InternalMessageInfo
+var xxx_messageInfo_PolicyTelemetryFeatureSpec proto.InternalMessageInfo
 
-func (m *PolicyTelemetryConfig) GetPolicyCheckFailOpen() *protobuf.BoolValue {
+func (m *PolicyTelemetryFeatureSpec) GetPolicyCheckFailOpen() *protobuf.BoolValue {
 	if m != nil {
 		return m.PolicyCheckFailOpen
 	}
 	return nil
 }
 
-func (m *PolicyTelemetryConfig) GetOutboundTrafficPolicyMode() PolicyTelemetryConfig_OutboundPolicy {
+func (m *PolicyTelemetryFeatureSpec) GetOutboundTrafficPolicyMode() PolicyTelemetryFeatureSpec_OutboundPolicy {
 	if m != nil {
 		return m.OutboundTrafficPolicyMode
 	}
-	return PolicyTelemetryConfig_ALLOW_ANY
+	return PolicyTelemetryFeatureSpec_ALLOW_ANY
 }
 
-func (m *PolicyTelemetryConfig) GetPolicy() *PolicyComponentConfig {
+func (m *PolicyTelemetryFeatureSpec) GetPolicy() *PolicyComponentSpec {
 	if m != nil {
 		return m.Policy
 	}
 	return nil
 }
 
-func (m *PolicyTelemetryConfig) GetTelemetry() *TelemetryComponentConfig {
+func (m *PolicyTelemetryFeatureSpec) GetTelemetry() *TelemetryComponentSpec {
 	if m != nil {
 		return m.Telemetry
 	}
@@ -608,7 +554,7 @@ func (m *PolicyTelemetryConfig) GetTelemetry() *TelemetryComponentConfig {
 }
 
 // Configuration options for security feature.
-type SecurityConfig struct {
+type SecurityFeatureSpec struct {
 	// Selects whether security feature is installed. Must be set for any sub-component to be installed.
 	Enabled *protobuf.BoolValue `protobuf:"bytes,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
 	// Namespace that security components are installed into.
@@ -617,30 +563,28 @@ type SecurityConfig struct {
 	// Will result in delays starting the pods while secrets are propagated, not recommended for tests.
 	ControlPlaneMtls *protobuf.BoolValue `protobuf:"bytes,13,opt,name=control_plane_mtls,json=controlPlaneMtls,proto3" json:"control_plane_mtls,omitempty"`
 	// Enables MTLS for service to service traffic.
-	DataPlaneMtls        *protobuf.BoolValue         `protobuf:"bytes,14,opt,name=data_plane_mtls,json=dataPlaneMtls,proto3" json:"data_plane_mtls,omitempty"`
-	TrustDomain          string                      `protobuf:"bytes,15,opt,name=trust_domain,json=trustDomain,proto3" json:"trust_domain,omitempty"`
-	SelfSigned           *protobuf.BoolValue         `protobuf:"bytes,16,opt,name=self_signed,json=selfSigned,proto3" json:"self_signed,omitempty"`
-	CreateMeshPolicy     *protobuf.BoolValue         `protobuf:"bytes,17,opt,name=create_mesh_policy,json=createMeshPolicy,proto3" json:"create_mesh_policy,omitempty"`
-	Citadel              *CitadelComponentConfig     `protobuf:"bytes,20,opt,name=citadel,proto3" json:"citadel,omitempty"`
-	CertManager          *CertManagerComponentConfig `protobuf:"bytes,21,opt,name=cert_manager,json=certManager,proto3" json:"cert_manager,omitempty"`
-	NodeAgent            *NodeAgentComponentConfig   `protobuf:"bytes,22,opt,name=node_agent,json=nodeAgent,proto3" json:"node_agent,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}                    `json:"-"`
-	XXX_unrecognized     []byte                      `json:"-"`
-	XXX_sizecache        int32                       `json:"-"`
+	DataPlaneMtls        *protobuf.BoolValue       `protobuf:"bytes,14,opt,name=data_plane_mtls,json=dataPlaneMtls,proto3" json:"data_plane_mtls,omitempty"`
+	TrustDomain          string                    `protobuf:"bytes,15,opt,name=trust_domain,json=trustDomain,proto3" json:"trust_domain,omitempty"`
+	Citadel              *CitadelComponentSpec     `protobuf:"bytes,20,opt,name=citadel,proto3" json:"citadel,omitempty"`
+	CertManager          *CertManagerComponentSpec `protobuf:"bytes,21,opt,name=cert_manager,json=certManager,proto3" json:"cert_manager,omitempty"`
+	NodeAgent            *NodeAgentComponentSpec   `protobuf:"bytes,22,opt,name=node_agent,json=nodeAgent,proto3" json:"node_agent,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}                  `json:"-"`
+	XXX_unrecognized     []byte                    `json:"-"`
+	XXX_sizecache        int32                     `json:"-"`
 }
 
-func (m *SecurityConfig) Reset()         { *m = SecurityConfig{} }
-func (m *SecurityConfig) String() string { return proto.CompactTextString(m) }
-func (*SecurityConfig) ProtoMessage()    {}
-func (*SecurityConfig) Descriptor() ([]byte, []int) {
+func (m *SecurityFeatureSpec) Reset()         { *m = SecurityFeatureSpec{} }
+func (m *SecurityFeatureSpec) String() string { return proto.CompactTextString(m) }
+func (*SecurityFeatureSpec) ProtoMessage()    {}
+func (*SecurityFeatureSpec) Descriptor() ([]byte, []int) {
 	return fileDescriptor_d0a1188b3d395975, []int{4}
 }
-func (m *SecurityConfig) XXX_Unmarshal(b []byte) error {
+func (m *SecurityFeatureSpec) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *SecurityConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *SecurityFeatureSpec) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_SecurityConfig.Marshal(b, m, deterministic)
+		return xxx_messageInfo_SecurityFeatureSpec.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalTo(b)
@@ -650,91 +594,125 @@ func (m *SecurityConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, erro
 		return b[:n], nil
 	}
 }
-func (m *SecurityConfig) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_SecurityConfig.Merge(m, src)
+func (m *SecurityFeatureSpec) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SecurityFeatureSpec.Merge(m, src)
 }
-func (m *SecurityConfig) XXX_Size() int {
+func (m *SecurityFeatureSpec) XXX_Size() int {
 	return m.Size()
 }
-func (m *SecurityConfig) XXX_DiscardUnknown() {
-	xxx_messageInfo_SecurityConfig.DiscardUnknown(m)
+func (m *SecurityFeatureSpec) XXX_DiscardUnknown() {
+	xxx_messageInfo_SecurityFeatureSpec.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_SecurityConfig proto.InternalMessageInfo
+var xxx_messageInfo_SecurityFeatureSpec proto.InternalMessageInfo
 
-func (m *SecurityConfig) GetEnabled() *protobuf.BoolValue {
+func (m *SecurityFeatureSpec) GetEnabled() *protobuf.BoolValue {
 	if m != nil {
 		return m.Enabled
 	}
 	return nil
 }
 
-func (m *SecurityConfig) GetNamespace() string {
+func (m *SecurityFeatureSpec) GetNamespace() string {
 	if m != nil {
 		return m.Namespace
 	}
 	return ""
 }
 
-func (m *SecurityConfig) GetControlPlaneMtls() *protobuf.BoolValue {
+func (m *SecurityFeatureSpec) GetControlPlaneMtls() *protobuf.BoolValue {
 	if m != nil {
 		return m.ControlPlaneMtls
 	}
 	return nil
 }
 
-func (m *SecurityConfig) GetDataPlaneMtls() *protobuf.BoolValue {
+func (m *SecurityFeatureSpec) GetDataPlaneMtls() *protobuf.BoolValue {
 	if m != nil {
 		return m.DataPlaneMtls
 	}
 	return nil
 }
 
-func (m *SecurityConfig) GetTrustDomain() string {
+func (m *SecurityFeatureSpec) GetTrustDomain() string {
 	if m != nil {
 		return m.TrustDomain
 	}
 	return ""
 }
 
-func (m *SecurityConfig) GetSelfSigned() *protobuf.BoolValue {
-	if m != nil {
-		return m.SelfSigned
-	}
-	return nil
-}
-
-func (m *SecurityConfig) GetCreateMeshPolicy() *protobuf.BoolValue {
-	if m != nil {
-		return m.CreateMeshPolicy
-	}
-	return nil
-}
-
-func (m *SecurityConfig) GetCitadel() *CitadelComponentConfig {
+func (m *SecurityFeatureSpec) GetCitadel() *CitadelComponentSpec {
 	if m != nil {
 		return m.Citadel
 	}
 	return nil
 }
 
-func (m *SecurityConfig) GetCertManager() *CertManagerComponentConfig {
+func (m *SecurityFeatureSpec) GetCertManager() *CertManagerComponentSpec {
 	if m != nil {
 		return m.CertManager
 	}
 	return nil
 }
 
-func (m *SecurityConfig) GetNodeAgent() *NodeAgentComponentConfig {
+func (m *SecurityFeatureSpec) GetNodeAgent() *NodeAgentComponentSpec {
 	if m != nil {
 		return m.NodeAgent
 	}
 	return nil
 }
 
+// Configuration options for configuration management feature.
+type ConfigManagementFeatureSpec struct {
+	Galley               *GalleyComponentSpec `protobuf:"bytes,1,opt,name=galley,proto3" json:"galley,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
+	XXX_unrecognized     []byte               `json:"-"`
+	XXX_sizecache        int32                `json:"-"`
+}
+
+func (m *ConfigManagementFeatureSpec) Reset()         { *m = ConfigManagementFeatureSpec{} }
+func (m *ConfigManagementFeatureSpec) String() string { return proto.CompactTextString(m) }
+func (*ConfigManagementFeatureSpec) ProtoMessage()    {}
+func (*ConfigManagementFeatureSpec) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d0a1188b3d395975, []int{5}
+}
+func (m *ConfigManagementFeatureSpec) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *ConfigManagementFeatureSpec) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_ConfigManagementFeatureSpec.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *ConfigManagementFeatureSpec) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ConfigManagementFeatureSpec.Merge(m, src)
+}
+func (m *ConfigManagementFeatureSpec) XXX_Size() int {
+	return m.Size()
+}
+func (m *ConfigManagementFeatureSpec) XXX_DiscardUnknown() {
+	xxx_messageInfo_ConfigManagementFeatureSpec.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ConfigManagementFeatureSpec proto.InternalMessageInfo
+
+func (m *ConfigManagementFeatureSpec) GetGalley() *GalleyComponentSpec {
+	if m != nil {
+		return m.Galley
+	}
+	return nil
+}
+
 // Configuration options for the pilot component.
-type PilotComponentConfig struct {
-	Common *CommonComponentConfig `protobuf:"bytes,1,opt,name=common,proto3" json:"common,omitempty"`
+type PilotComponentSpec struct {
+	Common *CommonComponentSpec `protobuf:"bytes,1,opt,name=common,proto3" json:"common,omitempty"`
 	// Enables sidecar in the pilot pod.
 	Sidecar              *protobuf.BoolValue `protobuf:"bytes,10,opt,name=sidecar,proto3" json:"sidecar,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}            `json:"-"`
@@ -742,18 +720,18 @@ type PilotComponentConfig struct {
 	XXX_sizecache        int32               `json:"-"`
 }
 
-func (m *PilotComponentConfig) Reset()         { *m = PilotComponentConfig{} }
-func (m *PilotComponentConfig) String() string { return proto.CompactTextString(m) }
-func (*PilotComponentConfig) ProtoMessage()    {}
-func (*PilotComponentConfig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{5}
+func (m *PilotComponentSpec) Reset()         { *m = PilotComponentSpec{} }
+func (m *PilotComponentSpec) String() string { return proto.CompactTextString(m) }
+func (*PilotComponentSpec) ProtoMessage()    {}
+func (*PilotComponentSpec) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d0a1188b3d395975, []int{6}
 }
-func (m *PilotComponentConfig) XXX_Unmarshal(b []byte) error {
+func (m *PilotComponentSpec) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *PilotComponentConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *PilotComponentSpec) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_PilotComponentConfig.Marshal(b, m, deterministic)
+		return xxx_messageInfo_PilotComponentSpec.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalTo(b)
@@ -763,26 +741,26 @@ func (m *PilotComponentConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte
 		return b[:n], nil
 	}
 }
-func (m *PilotComponentConfig) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PilotComponentConfig.Merge(m, src)
+func (m *PilotComponentSpec) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PilotComponentSpec.Merge(m, src)
 }
-func (m *PilotComponentConfig) XXX_Size() int {
+func (m *PilotComponentSpec) XXX_Size() int {
 	return m.Size()
 }
-func (m *PilotComponentConfig) XXX_DiscardUnknown() {
-	xxx_messageInfo_PilotComponentConfig.DiscardUnknown(m)
+func (m *PilotComponentSpec) XXX_DiscardUnknown() {
+	xxx_messageInfo_PilotComponentSpec.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_PilotComponentConfig proto.InternalMessageInfo
+var xxx_messageInfo_PilotComponentSpec proto.InternalMessageInfo
 
-func (m *PilotComponentConfig) GetCommon() *CommonComponentConfig {
+func (m *PilotComponentSpec) GetCommon() *CommonComponentSpec {
 	if m != nil {
 		return m.Common
 	}
 	return nil
 }
 
-func (m *PilotComponentConfig) GetSidecar() *protobuf.BoolValue {
+func (m *PilotComponentSpec) GetSidecar() *protobuf.BoolValue {
 	if m != nil {
 		return m.Sidecar
 	}
@@ -790,25 +768,25 @@ func (m *PilotComponentConfig) GetSidecar() *protobuf.BoolValue {
 }
 
 // Configuration options for the proxy.
-type ProxyComponentConfig struct {
-	Common               *CommonComponentConfig `protobuf:"bytes,1,opt,name=common,proto3" json:"common,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}               `json:"-"`
-	XXX_unrecognized     []byte                 `json:"-"`
-	XXX_sizecache        int32                  `json:"-"`
+type ProxyComponentSpec struct {
+	Common               *CommonComponentSpec `protobuf:"bytes,1,opt,name=common,proto3" json:"common,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
+	XXX_unrecognized     []byte               `json:"-"`
+	XXX_sizecache        int32                `json:"-"`
 }
 
-func (m *ProxyComponentConfig) Reset()         { *m = ProxyComponentConfig{} }
-func (m *ProxyComponentConfig) String() string { return proto.CompactTextString(m) }
-func (*ProxyComponentConfig) ProtoMessage()    {}
-func (*ProxyComponentConfig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{6}
+func (m *ProxyComponentSpec) Reset()         { *m = ProxyComponentSpec{} }
+func (m *ProxyComponentSpec) String() string { return proto.CompactTextString(m) }
+func (*ProxyComponentSpec) ProtoMessage()    {}
+func (*ProxyComponentSpec) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d0a1188b3d395975, []int{7}
 }
-func (m *ProxyComponentConfig) XXX_Unmarshal(b []byte) error {
+func (m *ProxyComponentSpec) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *ProxyComponentConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *ProxyComponentSpec) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_ProxyComponentConfig.Marshal(b, m, deterministic)
+		return xxx_messageInfo_ProxyComponentSpec.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalTo(b)
@@ -818,19 +796,19 @@ func (m *ProxyComponentConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte
 		return b[:n], nil
 	}
 }
-func (m *ProxyComponentConfig) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ProxyComponentConfig.Merge(m, src)
+func (m *ProxyComponentSpec) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ProxyComponentSpec.Merge(m, src)
 }
-func (m *ProxyComponentConfig) XXX_Size() int {
+func (m *ProxyComponentSpec) XXX_Size() int {
 	return m.Size()
 }
-func (m *ProxyComponentConfig) XXX_DiscardUnknown() {
-	xxx_messageInfo_ProxyComponentConfig.DiscardUnknown(m)
+func (m *ProxyComponentSpec) XXX_DiscardUnknown() {
+	xxx_messageInfo_ProxyComponentSpec.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_ProxyComponentConfig proto.InternalMessageInfo
+var xxx_messageInfo_ProxyComponentSpec proto.InternalMessageInfo
 
-func (m *ProxyComponentConfig) GetCommon() *CommonComponentConfig {
+func (m *ProxyComponentSpec) GetCommon() *CommonComponentSpec {
 	if m != nil {
 		return m.Common
 	}
@@ -838,8 +816,8 @@ func (m *ProxyComponentConfig) GetCommon() *CommonComponentConfig {
 }
 
 // Configuration options for the sidecar injector component.
-type SidecarInjectorComponentConfig struct {
-	Common *CommonComponentConfig `protobuf:"bytes,1,opt,name=common,proto3" json:"common,omitempty"`
+type SidecarInjectorComponentSpec struct {
+	Common *CommonComponentSpec `protobuf:"bytes,1,opt,name=common,proto3" json:"common,omitempty"`
 	// Selects whether auto-injection is enabled in namespaces by default.
 	EnableNamespacesByDefault *protobuf.BoolValue `protobuf:"bytes,10,opt,name=enable_namespaces_by_default,json=enableNamespacesByDefault,proto3" json:"enable_namespaces_by_default,omitempty"`
 	XXX_NoUnkeyedLiteral      struct{}            `json:"-"`
@@ -847,18 +825,18 @@ type SidecarInjectorComponentConfig struct {
 	XXX_sizecache             int32               `json:"-"`
 }
 
-func (m *SidecarInjectorComponentConfig) Reset()         { *m = SidecarInjectorComponentConfig{} }
-func (m *SidecarInjectorComponentConfig) String() string { return proto.CompactTextString(m) }
-func (*SidecarInjectorComponentConfig) ProtoMessage()    {}
-func (*SidecarInjectorComponentConfig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{7}
+func (m *SidecarInjectorComponentSpec) Reset()         { *m = SidecarInjectorComponentSpec{} }
+func (m *SidecarInjectorComponentSpec) String() string { return proto.CompactTextString(m) }
+func (*SidecarInjectorComponentSpec) ProtoMessage()    {}
+func (*SidecarInjectorComponentSpec) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d0a1188b3d395975, []int{8}
 }
-func (m *SidecarInjectorComponentConfig) XXX_Unmarshal(b []byte) error {
+func (m *SidecarInjectorComponentSpec) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *SidecarInjectorComponentConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *SidecarInjectorComponentSpec) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_SidecarInjectorComponentConfig.Marshal(b, m, deterministic)
+		return xxx_messageInfo_SidecarInjectorComponentSpec.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalTo(b)
@@ -868,26 +846,26 @@ func (m *SidecarInjectorComponentConfig) XXX_Marshal(b []byte, deterministic boo
 		return b[:n], nil
 	}
 }
-func (m *SidecarInjectorComponentConfig) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_SidecarInjectorComponentConfig.Merge(m, src)
+func (m *SidecarInjectorComponentSpec) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SidecarInjectorComponentSpec.Merge(m, src)
 }
-func (m *SidecarInjectorComponentConfig) XXX_Size() int {
+func (m *SidecarInjectorComponentSpec) XXX_Size() int {
 	return m.Size()
 }
-func (m *SidecarInjectorComponentConfig) XXX_DiscardUnknown() {
-	xxx_messageInfo_SidecarInjectorComponentConfig.DiscardUnknown(m)
+func (m *SidecarInjectorComponentSpec) XXX_DiscardUnknown() {
+	xxx_messageInfo_SidecarInjectorComponentSpec.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_SidecarInjectorComponentConfig proto.InternalMessageInfo
+var xxx_messageInfo_SidecarInjectorComponentSpec proto.InternalMessageInfo
 
-func (m *SidecarInjectorComponentConfig) GetCommon() *CommonComponentConfig {
+func (m *SidecarInjectorComponentSpec) GetCommon() *CommonComponentSpec {
 	if m != nil {
 		return m.Common
 	}
 	return nil
 }
 
-func (m *SidecarInjectorComponentConfig) GetEnableNamespacesByDefault() *protobuf.BoolValue {
+func (m *SidecarInjectorComponentSpec) GetEnableNamespacesByDefault() *protobuf.BoolValue {
 	if m != nil {
 		return m.EnableNamespacesByDefault
 	}
@@ -895,25 +873,25 @@ func (m *SidecarInjectorComponentConfig) GetEnableNamespacesByDefault() *protobu
 }
 
 // Configuration options for the policy enforcement component.
-type PolicyComponentConfig struct {
-	Common               *CommonComponentConfig `protobuf:"bytes,1,opt,name=common,proto3" json:"common,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}               `json:"-"`
-	XXX_unrecognized     []byte                 `json:"-"`
-	XXX_sizecache        int32                  `json:"-"`
+type PolicyComponentSpec struct {
+	Common               *CommonComponentSpec `protobuf:"bytes,1,opt,name=common,proto3" json:"common,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
+	XXX_unrecognized     []byte               `json:"-"`
+	XXX_sizecache        int32                `json:"-"`
 }
 
-func (m *PolicyComponentConfig) Reset()         { *m = PolicyComponentConfig{} }
-func (m *PolicyComponentConfig) String() string { return proto.CompactTextString(m) }
-func (*PolicyComponentConfig) ProtoMessage()    {}
-func (*PolicyComponentConfig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{8}
+func (m *PolicyComponentSpec) Reset()         { *m = PolicyComponentSpec{} }
+func (m *PolicyComponentSpec) String() string { return proto.CompactTextString(m) }
+func (*PolicyComponentSpec) ProtoMessage()    {}
+func (*PolicyComponentSpec) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d0a1188b3d395975, []int{9}
 }
-func (m *PolicyComponentConfig) XXX_Unmarshal(b []byte) error {
+func (m *PolicyComponentSpec) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *PolicyComponentConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *PolicyComponentSpec) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_PolicyComponentConfig.Marshal(b, m, deterministic)
+		return xxx_messageInfo_PolicyComponentSpec.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalTo(b)
@@ -923,19 +901,19 @@ func (m *PolicyComponentConfig) XXX_Marshal(b []byte, deterministic bool) ([]byt
 		return b[:n], nil
 	}
 }
-func (m *PolicyComponentConfig) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PolicyComponentConfig.Merge(m, src)
+func (m *PolicyComponentSpec) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PolicyComponentSpec.Merge(m, src)
 }
-func (m *PolicyComponentConfig) XXX_Size() int {
+func (m *PolicyComponentSpec) XXX_Size() int {
 	return m.Size()
 }
-func (m *PolicyComponentConfig) XXX_DiscardUnknown() {
-	xxx_messageInfo_PolicyComponentConfig.DiscardUnknown(m)
+func (m *PolicyComponentSpec) XXX_DiscardUnknown() {
+	xxx_messageInfo_PolicyComponentSpec.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_PolicyComponentConfig proto.InternalMessageInfo
+var xxx_messageInfo_PolicyComponentSpec proto.InternalMessageInfo
 
-func (m *PolicyComponentConfig) GetCommon() *CommonComponentConfig {
+func (m *PolicyComponentSpec) GetCommon() *CommonComponentSpec {
 	if m != nil {
 		return m.Common
 	}
@@ -943,25 +921,25 @@ func (m *PolicyComponentConfig) GetCommon() *CommonComponentConfig {
 }
 
 // Configuration options for the telemetry component.
-type TelemetryComponentConfig struct {
-	Common               *CommonComponentConfig `protobuf:"bytes,1,opt,name=common,proto3" json:"common,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}               `json:"-"`
-	XXX_unrecognized     []byte                 `json:"-"`
-	XXX_sizecache        int32                  `json:"-"`
+type TelemetryComponentSpec struct {
+	Common               *CommonComponentSpec `protobuf:"bytes,1,opt,name=common,proto3" json:"common,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
+	XXX_unrecognized     []byte               `json:"-"`
+	XXX_sizecache        int32                `json:"-"`
 }
 
-func (m *TelemetryComponentConfig) Reset()         { *m = TelemetryComponentConfig{} }
-func (m *TelemetryComponentConfig) String() string { return proto.CompactTextString(m) }
-func (*TelemetryComponentConfig) ProtoMessage()    {}
-func (*TelemetryComponentConfig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{9}
+func (m *TelemetryComponentSpec) Reset()         { *m = TelemetryComponentSpec{} }
+func (m *TelemetryComponentSpec) String() string { return proto.CompactTextString(m) }
+func (*TelemetryComponentSpec) ProtoMessage()    {}
+func (*TelemetryComponentSpec) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d0a1188b3d395975, []int{10}
 }
-func (m *TelemetryComponentConfig) XXX_Unmarshal(b []byte) error {
+func (m *TelemetryComponentSpec) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *TelemetryComponentConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *TelemetryComponentSpec) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_TelemetryComponentConfig.Marshal(b, m, deterministic)
+		return xxx_messageInfo_TelemetryComponentSpec.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalTo(b)
@@ -971,19 +949,19 @@ func (m *TelemetryComponentConfig) XXX_Marshal(b []byte, deterministic bool) ([]
 		return b[:n], nil
 	}
 }
-func (m *TelemetryComponentConfig) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TelemetryComponentConfig.Merge(m, src)
+func (m *TelemetryComponentSpec) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TelemetryComponentSpec.Merge(m, src)
 }
-func (m *TelemetryComponentConfig) XXX_Size() int {
+func (m *TelemetryComponentSpec) XXX_Size() int {
 	return m.Size()
 }
-func (m *TelemetryComponentConfig) XXX_DiscardUnknown() {
-	xxx_messageInfo_TelemetryComponentConfig.DiscardUnknown(m)
+func (m *TelemetryComponentSpec) XXX_DiscardUnknown() {
+	xxx_messageInfo_TelemetryComponentSpec.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_TelemetryComponentConfig proto.InternalMessageInfo
+var xxx_messageInfo_TelemetryComponentSpec proto.InternalMessageInfo
 
-func (m *TelemetryComponentConfig) GetCommon() *CommonComponentConfig {
+func (m *TelemetryComponentSpec) GetCommon() *CommonComponentSpec {
 	if m != nil {
 		return m.Common
 	}
@@ -991,25 +969,27 @@ func (m *TelemetryComponentConfig) GetCommon() *CommonComponentConfig {
 }
 
 // Configuration options for Citadel component.
-type CitadelComponentConfig struct {
-	Common               *CommonComponentConfig `protobuf:"bytes,1,opt,name=common,proto3" json:"common,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}               `json:"-"`
-	XXX_unrecognized     []byte                 `json:"-"`
-	XXX_sizecache        int32                  `json:"-"`
+type CitadelComponentSpec struct {
+	Common               *CommonComponentSpec `protobuf:"bytes,1,opt,name=common,proto3" json:"common,omitempty"`
+	SelfSigned           bool                 `protobuf:"varint,11,opt,name=self_signed,json=selfSigned,proto3" json:"self_signed,omitempty"`
+	CreateMeshPolicy     bool                 `protobuf:"varint,12,opt,name=create_mesh_policy,json=createMeshPolicy,proto3" json:"create_mesh_policy,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
+	XXX_unrecognized     []byte               `json:"-"`
+	XXX_sizecache        int32                `json:"-"`
 }
 
-func (m *CitadelComponentConfig) Reset()         { *m = CitadelComponentConfig{} }
-func (m *CitadelComponentConfig) String() string { return proto.CompactTextString(m) }
-func (*CitadelComponentConfig) ProtoMessage()    {}
-func (*CitadelComponentConfig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{10}
+func (m *CitadelComponentSpec) Reset()         { *m = CitadelComponentSpec{} }
+func (m *CitadelComponentSpec) String() string { return proto.CompactTextString(m) }
+func (*CitadelComponentSpec) ProtoMessage()    {}
+func (*CitadelComponentSpec) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d0a1188b3d395975, []int{11}
 }
-func (m *CitadelComponentConfig) XXX_Unmarshal(b []byte) error {
+func (m *CitadelComponentSpec) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *CitadelComponentConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *CitadelComponentSpec) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_CitadelComponentConfig.Marshal(b, m, deterministic)
+		return xxx_messageInfo_CitadelComponentSpec.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalTo(b)
@@ -1019,45 +999,59 @@ func (m *CitadelComponentConfig) XXX_Marshal(b []byte, deterministic bool) ([]by
 		return b[:n], nil
 	}
 }
-func (m *CitadelComponentConfig) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CitadelComponentConfig.Merge(m, src)
+func (m *CitadelComponentSpec) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CitadelComponentSpec.Merge(m, src)
 }
-func (m *CitadelComponentConfig) XXX_Size() int {
+func (m *CitadelComponentSpec) XXX_Size() int {
 	return m.Size()
 }
-func (m *CitadelComponentConfig) XXX_DiscardUnknown() {
-	xxx_messageInfo_CitadelComponentConfig.DiscardUnknown(m)
+func (m *CitadelComponentSpec) XXX_DiscardUnknown() {
+	xxx_messageInfo_CitadelComponentSpec.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_CitadelComponentConfig proto.InternalMessageInfo
+var xxx_messageInfo_CitadelComponentSpec proto.InternalMessageInfo
 
-func (m *CitadelComponentConfig) GetCommon() *CommonComponentConfig {
+func (m *CitadelComponentSpec) GetCommon() *CommonComponentSpec {
 	if m != nil {
 		return m.Common
 	}
 	return nil
 }
 
-// Configuration options for certificate manager component.
-type CertManagerComponentConfig struct {
-	Common               *CommonComponentConfig `protobuf:"bytes,1,opt,name=common,proto3" json:"common,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}               `json:"-"`
-	XXX_unrecognized     []byte                 `json:"-"`
-	XXX_sizecache        int32                  `json:"-"`
+func (m *CitadelComponentSpec) GetSelfSigned() bool {
+	if m != nil {
+		return m.SelfSigned
+	}
+	return false
 }
 
-func (m *CertManagerComponentConfig) Reset()         { *m = CertManagerComponentConfig{} }
-func (m *CertManagerComponentConfig) String() string { return proto.CompactTextString(m) }
-func (*CertManagerComponentConfig) ProtoMessage()    {}
-func (*CertManagerComponentConfig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{11}
+func (m *CitadelComponentSpec) GetCreateMeshPolicy() bool {
+	if m != nil {
+		return m.CreateMeshPolicy
+	}
+	return false
 }
-func (m *CertManagerComponentConfig) XXX_Unmarshal(b []byte) error {
+
+// Configuration options for certificate manager component.
+type CertManagerComponentSpec struct {
+	Common               *CommonComponentSpec `protobuf:"bytes,1,opt,name=common,proto3" json:"common,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
+	XXX_unrecognized     []byte               `json:"-"`
+	XXX_sizecache        int32                `json:"-"`
+}
+
+func (m *CertManagerComponentSpec) Reset()         { *m = CertManagerComponentSpec{} }
+func (m *CertManagerComponentSpec) String() string { return proto.CompactTextString(m) }
+func (*CertManagerComponentSpec) ProtoMessage()    {}
+func (*CertManagerComponentSpec) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d0a1188b3d395975, []int{12}
+}
+func (m *CertManagerComponentSpec) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *CertManagerComponentConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *CertManagerComponentSpec) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_CertManagerComponentConfig.Marshal(b, m, deterministic)
+		return xxx_messageInfo_CertManagerComponentSpec.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalTo(b)
@@ -1067,19 +1061,19 @@ func (m *CertManagerComponentConfig) XXX_Marshal(b []byte, deterministic bool) (
 		return b[:n], nil
 	}
 }
-func (m *CertManagerComponentConfig) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CertManagerComponentConfig.Merge(m, src)
+func (m *CertManagerComponentSpec) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CertManagerComponentSpec.Merge(m, src)
 }
-func (m *CertManagerComponentConfig) XXX_Size() int {
+func (m *CertManagerComponentSpec) XXX_Size() int {
 	return m.Size()
 }
-func (m *CertManagerComponentConfig) XXX_DiscardUnknown() {
-	xxx_messageInfo_CertManagerComponentConfig.DiscardUnknown(m)
+func (m *CertManagerComponentSpec) XXX_DiscardUnknown() {
+	xxx_messageInfo_CertManagerComponentSpec.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_CertManagerComponentConfig proto.InternalMessageInfo
+var xxx_messageInfo_CertManagerComponentSpec proto.InternalMessageInfo
 
-func (m *CertManagerComponentConfig) GetCommon() *CommonComponentConfig {
+func (m *CertManagerComponentSpec) GetCommon() *CommonComponentSpec {
 	if m != nil {
 		return m.Common
 	}
@@ -1087,25 +1081,25 @@ func (m *CertManagerComponentConfig) GetCommon() *CommonComponentConfig {
 }
 
 // Configuration options for node agent component.
-type NodeAgentComponentConfig struct {
-	Common               *CommonComponentConfig `protobuf:"bytes,1,opt,name=common,proto3" json:"common,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}               `json:"-"`
-	XXX_unrecognized     []byte                 `json:"-"`
-	XXX_sizecache        int32                  `json:"-"`
+type NodeAgentComponentSpec struct {
+	Common               *CommonComponentSpec `protobuf:"bytes,1,opt,name=common,proto3" json:"common,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
+	XXX_unrecognized     []byte               `json:"-"`
+	XXX_sizecache        int32                `json:"-"`
 }
 
-func (m *NodeAgentComponentConfig) Reset()         { *m = NodeAgentComponentConfig{} }
-func (m *NodeAgentComponentConfig) String() string { return proto.CompactTextString(m) }
-func (*NodeAgentComponentConfig) ProtoMessage()    {}
-func (*NodeAgentComponentConfig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{12}
+func (m *NodeAgentComponentSpec) Reset()         { *m = NodeAgentComponentSpec{} }
+func (m *NodeAgentComponentSpec) String() string { return proto.CompactTextString(m) }
+func (*NodeAgentComponentSpec) ProtoMessage()    {}
+func (*NodeAgentComponentSpec) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d0a1188b3d395975, []int{13}
 }
-func (m *NodeAgentComponentConfig) XXX_Unmarshal(b []byte) error {
+func (m *NodeAgentComponentSpec) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *NodeAgentComponentConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *NodeAgentComponentSpec) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_NodeAgentComponentConfig.Marshal(b, m, deterministic)
+		return xxx_messageInfo_NodeAgentComponentSpec.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalTo(b)
@@ -1115,45 +1109,45 @@ func (m *NodeAgentComponentConfig) XXX_Marshal(b []byte, deterministic bool) ([]
 		return b[:n], nil
 	}
 }
-func (m *NodeAgentComponentConfig) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_NodeAgentComponentConfig.Merge(m, src)
+func (m *NodeAgentComponentSpec) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_NodeAgentComponentSpec.Merge(m, src)
 }
-func (m *NodeAgentComponentConfig) XXX_Size() int {
+func (m *NodeAgentComponentSpec) XXX_Size() int {
 	return m.Size()
 }
-func (m *NodeAgentComponentConfig) XXX_DiscardUnknown() {
-	xxx_messageInfo_NodeAgentComponentConfig.DiscardUnknown(m)
+func (m *NodeAgentComponentSpec) XXX_DiscardUnknown() {
+	xxx_messageInfo_NodeAgentComponentSpec.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_NodeAgentComponentConfig proto.InternalMessageInfo
+var xxx_messageInfo_NodeAgentComponentSpec proto.InternalMessageInfo
 
-func (m *NodeAgentComponentConfig) GetCommon() *CommonComponentConfig {
+func (m *NodeAgentComponentSpec) GetCommon() *CommonComponentSpec {
 	if m != nil {
 		return m.Common
 	}
 	return nil
 }
 
-// Configuration options for configuration management feature.
-type ConfigManagementConfig struct {
-	Common               *CommonComponentConfig `protobuf:"bytes,1,opt,name=common,proto3" json:"common,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}               `json:"-"`
-	XXX_unrecognized     []byte                 `json:"-"`
-	XXX_sizecache        int32                  `json:"-"`
+// Configuration options for node agent component.
+type GalleyComponentSpec struct {
+	Common               *CommonComponentSpec `protobuf:"bytes,1,opt,name=common,proto3" json:"common,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
+	XXX_unrecognized     []byte               `json:"-"`
+	XXX_sizecache        int32                `json:"-"`
 }
 
-func (m *ConfigManagementConfig) Reset()         { *m = ConfigManagementConfig{} }
-func (m *ConfigManagementConfig) String() string { return proto.CompactTextString(m) }
-func (*ConfigManagementConfig) ProtoMessage()    {}
-func (*ConfigManagementConfig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{13}
+func (m *GalleyComponentSpec) Reset()         { *m = GalleyComponentSpec{} }
+func (m *GalleyComponentSpec) String() string { return proto.CompactTextString(m) }
+func (*GalleyComponentSpec) ProtoMessage()    {}
+func (*GalleyComponentSpec) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d0a1188b3d395975, []int{14}
 }
-func (m *ConfigManagementConfig) XXX_Unmarshal(b []byte) error {
+func (m *GalleyComponentSpec) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *ConfigManagementConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *GalleyComponentSpec) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_ConfigManagementConfig.Marshal(b, m, deterministic)
+		return xxx_messageInfo_GalleyComponentSpec.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalTo(b)
@@ -1163,19 +1157,19 @@ func (m *ConfigManagementConfig) XXX_Marshal(b []byte, deterministic bool) ([]by
 		return b[:n], nil
 	}
 }
-func (m *ConfigManagementConfig) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ConfigManagementConfig.Merge(m, src)
+func (m *GalleyComponentSpec) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GalleyComponentSpec.Merge(m, src)
 }
-func (m *ConfigManagementConfig) XXX_Size() int {
+func (m *GalleyComponentSpec) XXX_Size() int {
 	return m.Size()
 }
-func (m *ConfigManagementConfig) XXX_DiscardUnknown() {
-	xxx_messageInfo_ConfigManagementConfig.DiscardUnknown(m)
+func (m *GalleyComponentSpec) XXX_DiscardUnknown() {
+	xxx_messageInfo_GalleyComponentSpec.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_ConfigManagementConfig proto.InternalMessageInfo
+var xxx_messageInfo_GalleyComponentSpec proto.InternalMessageInfo
 
-func (m *ConfigManagementConfig) GetCommon() *CommonComponentConfig {
+func (m *GalleyComponentSpec) GetCommon() *CommonComponentSpec {
 	if m != nil {
 		return m.Common
 	}
@@ -1183,37 +1177,33 @@ func (m *ConfigManagementConfig) GetCommon() *CommonComponentConfig {
 }
 
 // Configuration common to all components.
-type CommonComponentConfig struct {
+type CommonComponentSpec struct {
 	// Selects whether policy enforcement is installed.
 	// Q. is this enough to cover both mixer.policy.enabled and disablePolicyChecks?
 	Enabled *protobuf.BoolValue `protobuf:"bytes,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
 	// Namespace that all resources for this feature are installed into.
-	Namespace string                         `protobuf:"bytes,2,opt,name=namespace,proto3" json:"namespace,omitempty"`
-	Debug     CommonComponentConfig_LogLevel `protobuf:"varint,3,opt,name=debug,proto3,enum=v1alpha1.CommonComponentConfig_LogLevel" json:"debug,omitempty"`
-	// Additional environment variables for the container.
-	Env map[string]*CommonComponentConfig_UpdateSpec `protobuf:"bytes,60,rep,name=env,proto3" json:"env,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-	// Additional command line arguments for the container.
-	Args map[string]*CommonComponentConfig_UpdateSpec `protobuf:"bytes,61,rep,name=args,proto3" json:"args,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	Namespace string                       `protobuf:"bytes,2,opt,name=namespace,proto3" json:"namespace,omitempty"`
+	Debug     CommonComponentSpec_LogLevel `protobuf:"varint,3,opt,name=debug,proto3,enum=v1alpha1.CommonComponentSpec_LogLevel" json:"debug,omitempty"`
 	// Kubernetes resource spec.
-	K8S                  *KubernetesResourcesConfig `protobuf:"bytes,80,opt,name=k8s,proto3" json:"k8s,omitempty"`
-    ValuesOverrides      map[string]interface{}     `protobuf:"bytes,6,opt,name=data" json:"valuesOverrides,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}                   `json:"-"`
-	XXX_unrecognized     []byte                     `json:"-"`
-	XXX_sizecache        int32                      `json:"-"`
+	K8S                  *KubernetesResourcesSpec `protobuf:"bytes,80,opt,name=k8s,proto3" json:"k8s,omitempty"`
+	ValuesOverrides      map[string]interface{}   `protobuf:"bytes,6,opt,name=data" json:"valuesOverrides,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}                 `json:"-"`
+	XXX_unrecognized     []byte                   `json:"-"`
+	XXX_sizecache        int32                    `json:"-"`
 }
 
-func (m *CommonComponentConfig) Reset()         { *m = CommonComponentConfig{} }
-func (m *CommonComponentConfig) String() string { return proto.CompactTextString(m) }
-func (*CommonComponentConfig) ProtoMessage()    {}
-func (*CommonComponentConfig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{14}
+func (m *CommonComponentSpec) Reset()         { *m = CommonComponentSpec{} }
+func (m *CommonComponentSpec) String() string { return proto.CompactTextString(m) }
+func (*CommonComponentSpec) ProtoMessage()    {}
+func (*CommonComponentSpec) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d0a1188b3d395975, []int{15}
 }
-func (m *CommonComponentConfig) XXX_Unmarshal(b []byte) error {
+func (m *CommonComponentSpec) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *CommonComponentConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *CommonComponentSpec) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_CommonComponentConfig.Marshal(b, m, deterministic)
+		return xxx_messageInfo_CommonComponentSpec.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalTo(b)
@@ -1223,61 +1213,47 @@ func (m *CommonComponentConfig) XXX_Marshal(b []byte, deterministic bool) ([]byt
 		return b[:n], nil
 	}
 }
-func (m *CommonComponentConfig) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CommonComponentConfig.Merge(m, src)
+func (m *CommonComponentSpec) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CommonComponentSpec.Merge(m, src)
 }
-func (m *CommonComponentConfig) XXX_Size() int {
+func (m *CommonComponentSpec) XXX_Size() int {
 	return m.Size()
 }
-func (m *CommonComponentConfig) XXX_DiscardUnknown() {
-	xxx_messageInfo_CommonComponentConfig.DiscardUnknown(m)
+func (m *CommonComponentSpec) XXX_DiscardUnknown() {
+	xxx_messageInfo_CommonComponentSpec.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_CommonComponentConfig proto.InternalMessageInfo
+var xxx_messageInfo_CommonComponentSpec proto.InternalMessageInfo
 
-func (m *CommonComponentConfig) GetEnabled() *protobuf.BoolValue {
+func (m *CommonComponentSpec) GetEnabled() *protobuf.BoolValue {
 	if m != nil {
 		return m.Enabled
 	}
 	return nil
 }
 
-func (m *CommonComponentConfig) GetNamespace() string {
+func (m *CommonComponentSpec) GetNamespace() string {
 	if m != nil {
 		return m.Namespace
 	}
 	return ""
 }
 
-func (m *CommonComponentConfig) GetDebug() CommonComponentConfig_LogLevel {
+func (m *CommonComponentSpec) GetDebug() CommonComponentSpec_LogLevel {
 	if m != nil {
 		return m.Debug
 	}
-	return CommonComponentConfig_NONE
+	return CommonComponentSpec_NONE
 }
 
-func (m *CommonComponentConfig) GetEnv() map[string]*CommonComponentConfig_UpdateSpec {
-	if m != nil {
-		return m.Env
-	}
-	return nil
-}
-
-func (m *CommonComponentConfig) GetArgs() map[string]*CommonComponentConfig_UpdateSpec {
-	if m != nil {
-		return m.Args
-	}
-	return nil
-}
-
-func (m *CommonComponentConfig) GetK8S() *KubernetesResourcesConfig {
+func (m *CommonComponentSpec) GetK8S() *KubernetesResourcesSpec {
 	if m != nil {
 		return m.K8S
 	}
 	return nil
 }
 
-type CommonComponentConfig_UpdateSpec struct {
+type CommonComponentSpec_UpdateSpec struct {
 	Old                  string   `protobuf:"bytes,1,opt,name=old,proto3" json:"old,omitempty"`
 	New                  string   `protobuf:"bytes,2,opt,name=new,proto3" json:"new,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -1285,18 +1261,18 @@ type CommonComponentConfig_UpdateSpec struct {
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *CommonComponentConfig_UpdateSpec) Reset()         { *m = CommonComponentConfig_UpdateSpec{} }
-func (m *CommonComponentConfig_UpdateSpec) String() string { return proto.CompactTextString(m) }
-func (*CommonComponentConfig_UpdateSpec) ProtoMessage()    {}
-func (*CommonComponentConfig_UpdateSpec) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{14, 0}
+func (m *CommonComponentSpec_UpdateSpec) Reset()         { *m = CommonComponentSpec_UpdateSpec{} }
+func (m *CommonComponentSpec_UpdateSpec) String() string { return proto.CompactTextString(m) }
+func (*CommonComponentSpec_UpdateSpec) ProtoMessage()    {}
+func (*CommonComponentSpec_UpdateSpec) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d0a1188b3d395975, []int{15, 0}
 }
-func (m *CommonComponentConfig_UpdateSpec) XXX_Unmarshal(b []byte) error {
+func (m *CommonComponentSpec_UpdateSpec) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *CommonComponentConfig_UpdateSpec) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *CommonComponentSpec_UpdateSpec) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_CommonComponentConfig_UpdateSpec.Marshal(b, m, deterministic)
+		return xxx_messageInfo_CommonComponentSpec_UpdateSpec.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalTo(b)
@@ -1306,26 +1282,26 @@ func (m *CommonComponentConfig_UpdateSpec) XXX_Marshal(b []byte, deterministic b
 		return b[:n], nil
 	}
 }
-func (m *CommonComponentConfig_UpdateSpec) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CommonComponentConfig_UpdateSpec.Merge(m, src)
+func (m *CommonComponentSpec_UpdateSpec) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CommonComponentSpec_UpdateSpec.Merge(m, src)
 }
-func (m *CommonComponentConfig_UpdateSpec) XXX_Size() int {
+func (m *CommonComponentSpec_UpdateSpec) XXX_Size() int {
 	return m.Size()
 }
-func (m *CommonComponentConfig_UpdateSpec) XXX_DiscardUnknown() {
-	xxx_messageInfo_CommonComponentConfig_UpdateSpec.DiscardUnknown(m)
+func (m *CommonComponentSpec_UpdateSpec) XXX_DiscardUnknown() {
+	xxx_messageInfo_CommonComponentSpec_UpdateSpec.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_CommonComponentConfig_UpdateSpec proto.InternalMessageInfo
+var xxx_messageInfo_CommonComponentSpec_UpdateSpec proto.InternalMessageInfo
 
-func (m *CommonComponentConfig_UpdateSpec) GetOld() string {
+func (m *CommonComponentSpec_UpdateSpec) GetOld() string {
 	if m != nil {
 		return m.Old
 	}
 	return ""
 }
 
-func (m *CommonComponentConfig_UpdateSpec) GetNew() string {
+func (m *CommonComponentSpec_UpdateSpec) GetNew() string {
 	if m != nil {
 		return m.New
 	}
@@ -1333,7 +1309,7 @@ func (m *CommonComponentConfig_UpdateSpec) GetNew() string {
 }
 
 // KubernetesResourcesConfig is a common set of k8s resource configs for components.
-type KubernetesResourcesConfig struct {
+type KubernetesResourcesSpec struct {
 	// k8s resources settings.
 	// https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/#resource-requests-and-limits-of-pod-and-container
 	Resources *Resources `protobuf:"bytes,1,opt,name=resources,proto3" json:"resources,omitempty"`
@@ -1354,8 +1330,8 @@ type KubernetesResourcesConfig struct {
 	PodAnnotations map[string]string `protobuf:"bytes,6,rep,name=pod_annotations,json=podAnnotations,proto3" json:"pod_annotations,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 	// k8s nodeSelector.
 	// https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#nodeselector
-	NodeSelector map[string]string                       `protobuf:"bytes,7,rep,name=node_selector,json=nodeSelector,proto3" json:"node_selector,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-	NodeAffinity *KubernetesResourcesConfig_NodeAffinity `protobuf:"bytes,8,opt,name=node_affinity,json=nodeAffinity,proto3" json:"node_affinity,omitempty"`
+	NodeSelector map[string]string                     `protobuf:"bytes,7,rep,name=node_selector,json=nodeSelector,proto3" json:"node_selector,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	NodeAffinity *KubernetesResourcesSpec_NodeAffinity `protobuf:"bytes,8,opt,name=node_affinity,json=nodeAffinity,proto3" json:"node_affinity,omitempty"`
 	// k8s imagePullPolicy.
 	// https://kubernetes.io/docs/concepts/containers/images/
 	ImagePullPolicy string `protobuf:"bytes,9,opt,name=image_pull_policy,json=imagePullPolicy,proto3" json:"image_pull_policy,omitempty"`
@@ -1369,18 +1345,18 @@ type KubernetesResourcesConfig struct {
 	XXX_sizecache        int32               `json:"-"`
 }
 
-func (m *KubernetesResourcesConfig) Reset()         { *m = KubernetesResourcesConfig{} }
-func (m *KubernetesResourcesConfig) String() string { return proto.CompactTextString(m) }
-func (*KubernetesResourcesConfig) ProtoMessage()    {}
-func (*KubernetesResourcesConfig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{15}
+func (m *KubernetesResourcesSpec) Reset()         { *m = KubernetesResourcesSpec{} }
+func (m *KubernetesResourcesSpec) String() string { return proto.CompactTextString(m) }
+func (*KubernetesResourcesSpec) ProtoMessage()    {}
+func (*KubernetesResourcesSpec) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d0a1188b3d395975, []int{16}
 }
-func (m *KubernetesResourcesConfig) XXX_Unmarshal(b []byte) error {
+func (m *KubernetesResourcesSpec) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *KubernetesResourcesConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *KubernetesResourcesSpec) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_KubernetesResourcesConfig.Marshal(b, m, deterministic)
+		return xxx_messageInfo_KubernetesResourcesSpec.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalTo(b)
@@ -1390,89 +1366,89 @@ func (m *KubernetesResourcesConfig) XXX_Marshal(b []byte, deterministic bool) ([
 		return b[:n], nil
 	}
 }
-func (m *KubernetesResourcesConfig) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_KubernetesResourcesConfig.Merge(m, src)
+func (m *KubernetesResourcesSpec) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_KubernetesResourcesSpec.Merge(m, src)
 }
-func (m *KubernetesResourcesConfig) XXX_Size() int {
+func (m *KubernetesResourcesSpec) XXX_Size() int {
 	return m.Size()
 }
-func (m *KubernetesResourcesConfig) XXX_DiscardUnknown() {
-	xxx_messageInfo_KubernetesResourcesConfig.DiscardUnknown(m)
+func (m *KubernetesResourcesSpec) XXX_DiscardUnknown() {
+	xxx_messageInfo_KubernetesResourcesSpec.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_KubernetesResourcesConfig proto.InternalMessageInfo
+var xxx_messageInfo_KubernetesResourcesSpec proto.InternalMessageInfo
 
-func (m *KubernetesResourcesConfig) GetResources() *Resources {
+func (m *KubernetesResourcesSpec) GetResources() *Resources {
 	if m != nil {
 		return m.Resources
 	}
 	return nil
 }
 
-func (m *KubernetesResourcesConfig) GetReadinessProbe() *v1.Probe {
+func (m *KubernetesResourcesSpec) GetReadinessProbe() *v1.Probe {
 	if m != nil {
 		return m.ReadinessProbe
 	}
 	return nil
 }
 
-func (m *KubernetesResourcesConfig) GetReplicaCount() uint32 {
+func (m *KubernetesResourcesSpec) GetReplicaCount() uint32 {
 	if m != nil {
 		return m.ReplicaCount
 	}
 	return 0
 }
 
-func (m *KubernetesResourcesConfig) GetHpaSpec() *v11.HorizontalPodAutoscalerSpec {
+func (m *KubernetesResourcesSpec) GetHpaSpec() *v11.HorizontalPodAutoscalerSpec {
 	if m != nil {
 		return m.HpaSpec
 	}
 	return nil
 }
 
-func (m *KubernetesResourcesConfig) GetPodDisruptionBudget() *PodDisruptionBudgetSpec {
+func (m *KubernetesResourcesSpec) GetPodDisruptionBudget() *PodDisruptionBudgetSpec {
 	if m != nil {
 		return m.PodDisruptionBudget
 	}
 	return nil
 }
 
-func (m *KubernetesResourcesConfig) GetPodAnnotations() map[string]string {
+func (m *KubernetesResourcesSpec) GetPodAnnotations() map[string]string {
 	if m != nil {
 		return m.PodAnnotations
 	}
 	return nil
 }
 
-func (m *KubernetesResourcesConfig) GetNodeSelector() map[string]string {
+func (m *KubernetesResourcesSpec) GetNodeSelector() map[string]string {
 	if m != nil {
 		return m.NodeSelector
 	}
 	return nil
 }
 
-func (m *KubernetesResourcesConfig) GetNodeAffinity() *KubernetesResourcesConfig_NodeAffinity {
+func (m *KubernetesResourcesSpec) GetNodeAffinity() *KubernetesResourcesSpec_NodeAffinity {
 	if m != nil {
 		return m.NodeAffinity
 	}
 	return nil
 }
 
-func (m *KubernetesResourcesConfig) GetImagePullPolicy() string {
+func (m *KubernetesResourcesSpec) GetImagePullPolicy() string {
 	if m != nil {
 		return m.ImagePullPolicy
 	}
 	return ""
 }
 
-func (m *KubernetesResourcesConfig) GetPriorityClassName() string {
+func (m *KubernetesResourcesSpec) GetPriorityClassName() string {
 	if m != nil {
 		return m.PriorityClassName
 	}
 	return ""
 }
 
-func (m *KubernetesResourcesConfig) GetOverlays() []*K8SObjectOverlay {
+func (m *KubernetesResourcesSpec) GetOverlays() []*K8SObjectOverlay {
 	if m != nil {
 		return m.Overlays
 	}
@@ -1481,7 +1457,7 @@ func (m *KubernetesResourcesConfig) GetOverlays() []*K8SObjectOverlay {
 
 // k8s node affinity.
 // https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
-type KubernetesResourcesConfig_NodeAffinity struct {
+type KubernetesResourcesSpec_NodeAffinity struct {
 	ArchAmd64            uint32   `protobuf:"varint,1,opt,name=arch_amd64,json=archAmd64,proto3" json:"arch_amd64,omitempty"`
 	ArchS390X            uint32   `protobuf:"varint,2,opt,name=arch_s390x,json=archS390x,proto3" json:"arch_s390x,omitempty"`
 	ArchPpc64Le          uint32   `protobuf:"varint,3,opt,name=arch_ppc64le,json=archPpc64le,proto3" json:"arch_ppc64le,omitempty"`
@@ -1490,20 +1466,18 @@ type KubernetesResourcesConfig_NodeAffinity struct {
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *KubernetesResourcesConfig_NodeAffinity) Reset() {
-	*m = KubernetesResourcesConfig_NodeAffinity{}
+func (m *KubernetesResourcesSpec_NodeAffinity) Reset()         { *m = KubernetesResourcesSpec_NodeAffinity{} }
+func (m *KubernetesResourcesSpec_NodeAffinity) String() string { return proto.CompactTextString(m) }
+func (*KubernetesResourcesSpec_NodeAffinity) ProtoMessage()    {}
+func (*KubernetesResourcesSpec_NodeAffinity) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d0a1188b3d395975, []int{16, 2}
 }
-func (m *KubernetesResourcesConfig_NodeAffinity) String() string { return proto.CompactTextString(m) }
-func (*KubernetesResourcesConfig_NodeAffinity) ProtoMessage()    {}
-func (*KubernetesResourcesConfig_NodeAffinity) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{15, 2}
-}
-func (m *KubernetesResourcesConfig_NodeAffinity) XXX_Unmarshal(b []byte) error {
+func (m *KubernetesResourcesSpec_NodeAffinity) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *KubernetesResourcesConfig_NodeAffinity) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *KubernetesResourcesSpec_NodeAffinity) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_KubernetesResourcesConfig_NodeAffinity.Marshal(b, m, deterministic)
+		return xxx_messageInfo_KubernetesResourcesSpec_NodeAffinity.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalTo(b)
@@ -1513,33 +1487,33 @@ func (m *KubernetesResourcesConfig_NodeAffinity) XXX_Marshal(b []byte, determini
 		return b[:n], nil
 	}
 }
-func (m *KubernetesResourcesConfig_NodeAffinity) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_KubernetesResourcesConfig_NodeAffinity.Merge(m, src)
+func (m *KubernetesResourcesSpec_NodeAffinity) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_KubernetesResourcesSpec_NodeAffinity.Merge(m, src)
 }
-func (m *KubernetesResourcesConfig_NodeAffinity) XXX_Size() int {
+func (m *KubernetesResourcesSpec_NodeAffinity) XXX_Size() int {
 	return m.Size()
 }
-func (m *KubernetesResourcesConfig_NodeAffinity) XXX_DiscardUnknown() {
-	xxx_messageInfo_KubernetesResourcesConfig_NodeAffinity.DiscardUnknown(m)
+func (m *KubernetesResourcesSpec_NodeAffinity) XXX_DiscardUnknown() {
+	xxx_messageInfo_KubernetesResourcesSpec_NodeAffinity.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_KubernetesResourcesConfig_NodeAffinity proto.InternalMessageInfo
+var xxx_messageInfo_KubernetesResourcesSpec_NodeAffinity proto.InternalMessageInfo
 
-func (m *KubernetesResourcesConfig_NodeAffinity) GetArchAmd64() uint32 {
+func (m *KubernetesResourcesSpec_NodeAffinity) GetArchAmd64() uint32 {
 	if m != nil {
 		return m.ArchAmd64
 	}
 	return 0
 }
 
-func (m *KubernetesResourcesConfig_NodeAffinity) GetArchS390X() uint32 {
+func (m *KubernetesResourcesSpec_NodeAffinity) GetArchS390X() uint32 {
 	if m != nil {
 		return m.ArchS390X
 	}
 	return 0
 }
 
-func (m *KubernetesResourcesConfig_NodeAffinity) GetArchPpc64Le() uint32 {
+func (m *KubernetesResourcesSpec_NodeAffinity) GetArchPpc64Le() uint32 {
 	if m != nil {
 		return m.ArchPpc64Le
 	}
@@ -1547,36 +1521,31 @@ func (m *KubernetesResourcesConfig_NodeAffinity) GetArchPpc64Le() uint32 {
 }
 
 // Configuration options for ingress gateways.
-type IngressGatewayConfig struct {
+type IngressGatewaySpec struct {
 	// Common gateway configuration.
-	Gateway     *GatewayConfig                   `protobuf:"bytes,10,opt,name=gateway,proto3" json:"gateway,omitempty"`
-	IngressType IngressGatewayConfig_IngressType `protobuf:"varint,11,opt,name=ingress_type,json=ingressType,proto3,enum=v1alpha1.IngressGatewayConfig_IngressType" json:"ingress_type,omitempty"`
-	// enableHttps will add port 443 on the ingress.
-	// It REQUIRES that the certificates are installed  in the
-	// expected secrets - enabling this option without certificates
-	// will result in LDS rejection and the ingress will not work.
-	HttpsEnabled *protobuf.BoolValue `protobuf:"bytes,12,opt,name=https_enabled,json=httpsEnabled,proto3" json:"https_enabled,omitempty"`
-	LoadBalancer *LoadBalancerConfig `protobuf:"bytes,13,opt,name=load_balancer,json=loadBalancer,proto3" json:"load_balancer,omitempty"`
+	Gateway      *GatewayConfig                 `protobuf:"bytes,10,opt,name=gateway,proto3" json:"gateway,omitempty"`
+	IngressType  IngressGatewaySpec_IngressType `protobuf:"varint,11,opt,name=ingress_type,json=ingressType,proto3,enum=v1alpha1.IngressGatewaySpec_IngressType" json:"ingress_type,omitempty"`
+	LoadBalancer *LoadBalancerConfig            `protobuf:"bytes,13,opt,name=load_balancer,json=loadBalancer,proto3" json:"load_balancer,omitempty"`
 	// If true, ingress gateway fetches credentials from SDS server to handle TLS connections.
-	SdsEnabled            *protobuf.BoolValue                        `protobuf:"bytes,16,opt,name=sds_enabled,json=sdsEnabled,proto3" json:"sds_enabled,omitempty"`
-	ExternalTrafficPolicy IngressGatewayConfig_ExternalTrafficPolicy `protobuf:"varint,17,opt,name=externalTrafficPolicy,proto3,enum=v1alpha1.IngressGatewayConfig_ExternalTrafficPolicy" json:"externalTrafficPolicy,omitempty"`
-	XXX_NoUnkeyedLiteral  struct{}                                   `json:"-"`
-	XXX_unrecognized      []byte                                     `json:"-"`
-	XXX_sizecache         int32                                      `json:"-"`
+	SdsEnabled            *protobuf.BoolValue                      `protobuf:"bytes,16,opt,name=sds_enabled,json=sdsEnabled,proto3" json:"sds_enabled,omitempty"`
+	ExternalTrafficPolicy IngressGatewaySpec_ExternalTrafficPolicy `protobuf:"varint,17,opt,name=externalTrafficPolicy,proto3,enum=v1alpha1.IngressGatewaySpec_ExternalTrafficPolicy" json:"externalTrafficPolicy,omitempty"`
+	XXX_NoUnkeyedLiteral  struct{}                                 `json:"-"`
+	XXX_unrecognized      []byte                                   `json:"-"`
+	XXX_sizecache         int32                                    `json:"-"`
 }
 
-func (m *IngressGatewayConfig) Reset()         { *m = IngressGatewayConfig{} }
-func (m *IngressGatewayConfig) String() string { return proto.CompactTextString(m) }
-func (*IngressGatewayConfig) ProtoMessage()    {}
-func (*IngressGatewayConfig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{16}
+func (m *IngressGatewaySpec) Reset()         { *m = IngressGatewaySpec{} }
+func (m *IngressGatewaySpec) String() string { return proto.CompactTextString(m) }
+func (*IngressGatewaySpec) ProtoMessage()    {}
+func (*IngressGatewaySpec) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d0a1188b3d395975, []int{17}
 }
-func (m *IngressGatewayConfig) XXX_Unmarshal(b []byte) error {
+func (m *IngressGatewaySpec) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *IngressGatewayConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *IngressGatewaySpec) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_IngressGatewayConfig.Marshal(b, m, deterministic)
+		return xxx_messageInfo_IngressGatewaySpec.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalTo(b)
@@ -1586,62 +1555,55 @@ func (m *IngressGatewayConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte
 		return b[:n], nil
 	}
 }
-func (m *IngressGatewayConfig) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_IngressGatewayConfig.Merge(m, src)
+func (m *IngressGatewaySpec) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_IngressGatewaySpec.Merge(m, src)
 }
-func (m *IngressGatewayConfig) XXX_Size() int {
+func (m *IngressGatewaySpec) XXX_Size() int {
 	return m.Size()
 }
-func (m *IngressGatewayConfig) XXX_DiscardUnknown() {
-	xxx_messageInfo_IngressGatewayConfig.DiscardUnknown(m)
+func (m *IngressGatewaySpec) XXX_DiscardUnknown() {
+	xxx_messageInfo_IngressGatewaySpec.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_IngressGatewayConfig proto.InternalMessageInfo
+var xxx_messageInfo_IngressGatewaySpec proto.InternalMessageInfo
 
-func (m *IngressGatewayConfig) GetGateway() *GatewayConfig {
+func (m *IngressGatewaySpec) GetGateway() *GatewayConfig {
 	if m != nil {
 		return m.Gateway
 	}
 	return nil
 }
 
-func (m *IngressGatewayConfig) GetIngressType() IngressGatewayConfig_IngressType {
+func (m *IngressGatewaySpec) GetIngressType() IngressGatewaySpec_IngressType {
 	if m != nil {
 		return m.IngressType
 	}
-	return IngressGatewayConfig_ISTIO
+	return IngressGatewaySpec_ISTIO
 }
 
-func (m *IngressGatewayConfig) GetHttpsEnabled() *protobuf.BoolValue {
-	if m != nil {
-		return m.HttpsEnabled
-	}
-	return nil
-}
-
-func (m *IngressGatewayConfig) GetLoadBalancer() *LoadBalancerConfig {
+func (m *IngressGatewaySpec) GetLoadBalancer() *LoadBalancerConfig {
 	if m != nil {
 		return m.LoadBalancer
 	}
 	return nil
 }
 
-func (m *IngressGatewayConfig) GetSdsEnabled() *protobuf.BoolValue {
+func (m *IngressGatewaySpec) GetSdsEnabled() *protobuf.BoolValue {
 	if m != nil {
 		return m.SdsEnabled
 	}
 	return nil
 }
 
-func (m *IngressGatewayConfig) GetExternalTrafficPolicy() IngressGatewayConfig_ExternalTrafficPolicy {
+func (m *IngressGatewaySpec) GetExternalTrafficPolicy() IngressGatewaySpec_ExternalTrafficPolicy {
 	if m != nil {
 		return m.ExternalTrafficPolicy
 	}
-	return IngressGatewayConfig_NONE
+	return IngressGatewaySpec_NONE
 }
 
 // Configuration options for egress gateways.
-type EgressGatewayConfig struct {
+type EgressGatewaySpec struct {
 	// Common gateway configuration.
 	Gateway              *GatewayConfig `protobuf:"bytes,10,opt,name=gateway,proto3" json:"gateway,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}       `json:"-"`
@@ -1649,18 +1611,18 @@ type EgressGatewayConfig struct {
 	XXX_sizecache        int32          `json:"-"`
 }
 
-func (m *EgressGatewayConfig) Reset()         { *m = EgressGatewayConfig{} }
-func (m *EgressGatewayConfig) String() string { return proto.CompactTextString(m) }
-func (*EgressGatewayConfig) ProtoMessage()    {}
-func (*EgressGatewayConfig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{17}
+func (m *EgressGatewaySpec) Reset()         { *m = EgressGatewaySpec{} }
+func (m *EgressGatewaySpec) String() string { return proto.CompactTextString(m) }
+func (*EgressGatewaySpec) ProtoMessage()    {}
+func (*EgressGatewaySpec) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d0a1188b3d395975, []int{18}
 }
-func (m *EgressGatewayConfig) XXX_Unmarshal(b []byte) error {
+func (m *EgressGatewaySpec) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *EgressGatewayConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *EgressGatewaySpec) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_EgressGatewayConfig.Marshal(b, m, deterministic)
+		return xxx_messageInfo_EgressGatewaySpec.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalTo(b)
@@ -1670,19 +1632,19 @@ func (m *EgressGatewayConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte,
 		return b[:n], nil
 	}
 }
-func (m *EgressGatewayConfig) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_EgressGatewayConfig.Merge(m, src)
+func (m *EgressGatewaySpec) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EgressGatewaySpec.Merge(m, src)
 }
-func (m *EgressGatewayConfig) XXX_Size() int {
+func (m *EgressGatewaySpec) XXX_Size() int {
 	return m.Size()
 }
-func (m *EgressGatewayConfig) XXX_DiscardUnknown() {
-	xxx_messageInfo_EgressGatewayConfig.DiscardUnknown(m)
+func (m *EgressGatewaySpec) XXX_DiscardUnknown() {
+	xxx_messageInfo_EgressGatewaySpec.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_EgressGatewayConfig proto.InternalMessageInfo
+var xxx_messageInfo_EgressGatewaySpec proto.InternalMessageInfo
 
-func (m *EgressGatewayConfig) GetGateway() *GatewayConfig {
+func (m *EgressGatewaySpec) GetGateway() *GatewayConfig {
 	if m != nil {
 		return m.Gateway
 	}
@@ -1704,7 +1666,7 @@ func (m *LoadBalancingGatewayConfig) Reset()         { *m = LoadBalancingGateway
 func (m *LoadBalancingGatewayConfig) String() string { return proto.CompactTextString(m) }
 func (*LoadBalancingGatewayConfig) ProtoMessage()    {}
 func (*LoadBalancingGatewayConfig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{18}
+	return fileDescriptor_d0a1188b3d395975, []int{19}
 }
 func (m *LoadBalancingGatewayConfig) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1749,7 +1711,7 @@ func (m *LoadBalancingGatewayConfig) GetLoadBalancer() *LoadBalancerConfig {
 
 // Common config for all gateway types.
 type GatewayConfig struct {
-	Common *CommonComponentConfig `protobuf:"bytes,1,opt,name=common,proto3" json:"common,omitempty"`
+	Common *CommonComponentSpec `protobuf:"bytes,1,opt,name=common,proto3" json:"common,omitempty"`
 	// NodePort, ClusterIP or LoadBalancer.
 	Type                 string   `protobuf:"bytes,10,opt,name=type,proto3" json:"type,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -1761,7 +1723,7 @@ func (m *GatewayConfig) Reset()         { *m = GatewayConfig{} }
 func (m *GatewayConfig) String() string { return proto.CompactTextString(m) }
 func (*GatewayConfig) ProtoMessage()    {}
 func (*GatewayConfig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{19}
+	return fileDescriptor_d0a1188b3d395975, []int{20}
 }
 func (m *GatewayConfig) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1790,7 +1752,7 @@ func (m *GatewayConfig) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_GatewayConfig proto.InternalMessageInfo
 
-func (m *GatewayConfig) GetCommon() *CommonComponentConfig {
+func (m *GatewayConfig) GetCommon() *CommonComponentSpec {
 	if m != nil {
 		return m.Common
 	}
@@ -1870,7 +1832,7 @@ func (m *LoadBalancerConfig) Reset()         { *m = LoadBalancerConfig{} }
 func (m *LoadBalancerConfig) String() string { return proto.CompactTextString(m) }
 func (*LoadBalancerConfig) ProtoMessage()    {}
 func (*LoadBalancerConfig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{20}
+	return fileDescriptor_d0a1188b3d395975, []int{21}
 }
 func (m *LoadBalancerConfig) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1956,7 +1918,7 @@ func (m *LoadBalancerConfig) GetExternalTrafficPolicy() string {
 }
 
 // OperatorConfig defines a config used to install an external operator.
-type OperatorConfig struct {
+type OperatorSpec struct {
 	// manifest_path is the URL for the operator install manifest.
 	ManifestPath string `protobuf:"bytes,1,opt,name=manifest_path,json=manifestPath,proto3" json:"manifest_path,omitempty"`
 	// namespace is the namespace the operator manifest and CR are installed into.
@@ -1968,18 +1930,18 @@ type OperatorConfig struct {
 	XXX_sizecache        int32             `json:"-"`
 }
 
-func (m *OperatorConfig) Reset()         { *m = OperatorConfig{} }
-func (m *OperatorConfig) String() string { return proto.CompactTextString(m) }
-func (*OperatorConfig) ProtoMessage()    {}
-func (*OperatorConfig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{21}
+func (m *OperatorSpec) Reset()         { *m = OperatorSpec{} }
+func (m *OperatorSpec) String() string { return proto.CompactTextString(m) }
+func (*OperatorSpec) ProtoMessage()    {}
+func (*OperatorSpec) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d0a1188b3d395975, []int{22}
 }
-func (m *OperatorConfig) XXX_Unmarshal(b []byte) error {
+func (m *OperatorSpec) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *OperatorConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *OperatorSpec) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_OperatorConfig.Marshal(b, m, deterministic)
+		return xxx_messageInfo_OperatorSpec.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalTo(b)
@@ -1989,33 +1951,33 @@ func (m *OperatorConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, erro
 		return b[:n], nil
 	}
 }
-func (m *OperatorConfig) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_OperatorConfig.Merge(m, src)
+func (m *OperatorSpec) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_OperatorSpec.Merge(m, src)
 }
-func (m *OperatorConfig) XXX_Size() int {
+func (m *OperatorSpec) XXX_Size() int {
 	return m.Size()
 }
-func (m *OperatorConfig) XXX_DiscardUnknown() {
-	xxx_messageInfo_OperatorConfig.DiscardUnknown(m)
+func (m *OperatorSpec) XXX_DiscardUnknown() {
+	xxx_messageInfo_OperatorSpec.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_OperatorConfig proto.InternalMessageInfo
+var xxx_messageInfo_OperatorSpec proto.InternalMessageInfo
 
-func (m *OperatorConfig) GetManifestPath() string {
+func (m *OperatorSpec) GetManifestPath() string {
 	if m != nil {
 		return m.ManifestPath
 	}
 	return ""
 }
 
-func (m *OperatorConfig) GetNamespace() string {
+func (m *OperatorSpec) GetNamespace() string {
 	if m != nil {
 		return m.Namespace
 	}
 	return ""
 }
 
-func (m *OperatorConfig) GetSpec() *K8SObjectOverlay {
+func (m *OperatorSpec) GetSpec() *K8SObjectOverlay {
 	if m != nil {
 		return m.Spec
 	}
@@ -2024,19 +1986,25 @@ func (m *OperatorConfig) GetSpec() *K8SObjectOverlay {
 
 // Patch for an existing k8s resource.
 type K8SObjectOverlay struct {
-	PatchType            K8SObjectOverlay_PatchType `protobuf:"varint,1,opt,name=patch_type,json=patchType,proto3,enum=v1alpha1.K8SObjectOverlay_PatchType" json:"patch_type,omitempty"`
-	Op                   K8SObjectOverlay_Op        `protobuf:"varint,2,opt,name=op,proto3,enum=v1alpha1.K8SObjectOverlay_Op" json:"op,omitempty"`
-	Data                 *unstructured.Unstructured `protobuf:"bytes,6,opt,name=data" json:"data,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}                   `json:"-"`
-	XXX_unrecognized     []byte                     `json:"-"`
-	XXX_sizecache        int32                      `json:"-"`
+	// Resource API version.
+	ApiVersion string `protobuf:"bytes,1,opt,name=api_version,json=apiVersion,proto3" json:"api_version,omitempty"`
+	// Resource kind.
+	Kind string `protobuf:"bytes,2,opt,name=kind,proto3" json:"kind,omitempty"`
+	// Name of resource.
+	// Namespace is always the component namespace.
+	Name string `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	// List of patches to apply to resource.
+	Patches              []*K8SObjectOverlay_PathValue `protobuf:"bytes,4,rep,name=patches,proto3" json:"patches,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}                      `json:"-"`
+	XXX_unrecognized     []byte                        `json:"-"`
+	XXX_sizecache        int32                         `json:"-"`
 }
 
 func (m *K8SObjectOverlay) Reset()         { *m = K8SObjectOverlay{} }
 func (m *K8SObjectOverlay) String() string { return proto.CompactTextString(m) }
 func (*K8SObjectOverlay) ProtoMessage()    {}
 func (*K8SObjectOverlay) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{22}
+	return fileDescriptor_d0a1188b3d395975, []int{23}
 }
 func (m *K8SObjectOverlay) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -2065,18 +2033,83 @@ func (m *K8SObjectOverlay) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_K8SObjectOverlay proto.InternalMessageInfo
 
-func (m *K8SObjectOverlay) GetPatchType() K8SObjectOverlay_PatchType {
+func (m *K8SObjectOverlay) GetApiVersion() string {
 	if m != nil {
-		return m.PatchType
+		return m.ApiVersion
 	}
-	return K8SObjectOverlay_STRATEGIC
+	return ""
 }
 
-func (m *K8SObjectOverlay) GetOp() K8SObjectOverlay_Op {
+func (m *K8SObjectOverlay) GetKind() string {
 	if m != nil {
-		return m.Op
+		return m.Kind
 	}
-	return K8SObjectOverlay_ADD
+	return ""
+}
+
+func (m *K8SObjectOverlay) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+func (m *K8SObjectOverlay) GetPatches() []*K8SObjectOverlay_PathValue {
+	if m != nil {
+		return m.Patches
+	}
+	return nil
+}
+
+type K8SObjectOverlay_PathValue struct {
+	// Path of the form a.b:c.e.:f
+	// Where b:c is a list element selector of the form key:value and :f is a list selector of the form :value.
+	// All path intermediate nodes must exist.
+	Path                 string   `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
+	Value                interface{} `protobuf:"bytes,4,opt,name=value,proto3" json:"value,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *K8SObjectOverlay_PathValue) Reset()         { *m = K8SObjectOverlay_PathValue{} }
+func (m *K8SObjectOverlay_PathValue) String() string { return proto.CompactTextString(m) }
+func (*K8SObjectOverlay_PathValue) ProtoMessage()    {}
+func (*K8SObjectOverlay_PathValue) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d0a1188b3d395975, []int{23, 0}
+}
+func (m *K8SObjectOverlay_PathValue) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *K8SObjectOverlay_PathValue) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_K8SObjectOverlay_PathValue.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *K8SObjectOverlay_PathValue) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_K8SObjectOverlay_PathValue.Merge(m, src)
+}
+func (m *K8SObjectOverlay_PathValue) XXX_Size() int {
+	return m.Size()
+}
+func (m *K8SObjectOverlay_PathValue) XXX_DiscardUnknown() {
+	xxx_messageInfo_K8SObjectOverlay_PathValue.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_K8SObjectOverlay_PathValue proto.InternalMessageInfo
+
+func (m *K8SObjectOverlay_PathValue) GetPath() string {
+	if m != nil {
+		return m.Path
+	}
+	return ""
 }
 
 // Observed state of IstioInstaller.
@@ -2096,7 +2129,7 @@ func (m *InstallerStatus) Reset()         { *m = InstallerStatus{} }
 func (m *InstallerStatus) String() string { return proto.CompactTextString(m) }
 func (*InstallerStatus) ProtoMessage()    {}
 func (*InstallerStatus) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{23}
+	return fileDescriptor_d0a1188b3d395975, []int{24}
 }
 func (m *InstallerStatus) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -2179,7 +2212,7 @@ func (m *InstallerStatus_VersionStatus) Reset()         { *m = InstallerStatus_V
 func (m *InstallerStatus_VersionStatus) String() string { return proto.CompactTextString(m) }
 func (*InstallerStatus_VersionStatus) ProtoMessage()    {}
 func (*InstallerStatus_VersionStatus) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{23, 0}
+	return fileDescriptor_d0a1188b3d395975, []int{24, 0}
 }
 func (m *InstallerStatus_VersionStatus) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -2235,7 +2268,7 @@ func (m *Resources) Reset()         { *m = Resources{} }
 func (m *Resources) String() string { return proto.CompactTextString(m) }
 func (*Resources) ProtoMessage()    {}
 func (*Resources) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{24}
+	return fileDescriptor_d0a1188b3d395975, []int{25}
 }
 func (m *Resources) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -2292,7 +2325,7 @@ func (m *PodDisruptionBudgetSpec) Reset()         { *m = PodDisruptionBudgetSpec
 func (m *PodDisruptionBudgetSpec) String() string { return proto.CompactTextString(m) }
 func (*PodDisruptionBudgetSpec) ProtoMessage()    {}
 func (*PodDisruptionBudgetSpec) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{25}
+	return fileDescriptor_d0a1188b3d395975, []int{26}
 }
 func (m *PodDisruptionBudgetSpec) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -2355,7 +2388,7 @@ func (m *ObjectMeta) Reset()         { *m = ObjectMeta{} }
 func (m *ObjectMeta) String() string { return proto.CompactTextString(m) }
 func (*ObjectMeta) ProtoMessage()    {}
 func (*ObjectMeta) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{26}
+	return fileDescriptor_d0a1188b3d395975, []int{27}
 }
 func (m *ObjectMeta) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -2418,7 +2451,7 @@ func (m *TestKube) Reset()         { *m = TestKube{} }
 func (m *TestKube) String() string { return proto.CompactTextString(m) }
 func (*TestKube) ProtoMessage()    {}
 func (*TestKube) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{27}
+	return fileDescriptor_d0a1188b3d395975, []int{28}
 }
 func (m *TestKube) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -2504,42 +2537,40 @@ func (m *TestKube) GetK8SObjectOverride() []*K8SObjectOverlay {
 }
 
 func init() {
-	proto.RegisterEnum("v1alpha1.PolicyTelemetryConfig_OutboundPolicy", PolicyTelemetryConfig_OutboundPolicy_name, PolicyTelemetryConfig_OutboundPolicy_value)
-	proto.RegisterEnum("v1alpha1.CommonComponentConfig_LogLevel", CommonComponentConfig_LogLevel_name, CommonComponentConfig_LogLevel_value)
-	proto.RegisterEnum("v1alpha1.IngressGatewayConfig_IngressType", IngressGatewayConfig_IngressType_name, IngressGatewayConfig_IngressType_value)
-	proto.RegisterEnum("v1alpha1.IngressGatewayConfig_ExternalTrafficPolicy", IngressGatewayConfig_ExternalTrafficPolicy_name, IngressGatewayConfig_ExternalTrafficPolicy_value)
-	proto.RegisterEnum("v1alpha1.K8SObjectOverlay_PatchType", K8SObjectOverlay_PatchType_name, K8SObjectOverlay_PatchType_value)
-	proto.RegisterEnum("v1alpha1.K8SObjectOverlay_Op", K8SObjectOverlay_Op_name, K8SObjectOverlay_Op_value)
+	proto.RegisterEnum("v1alpha1.PolicyTelemetryFeatureSpec_OutboundPolicy", PolicyTelemetryFeatureSpec_OutboundPolicy_name, PolicyTelemetryFeatureSpec_OutboundPolicy_value)
+	proto.RegisterEnum("v1alpha1.CommonComponentSpec_LogLevel", CommonComponentSpec_LogLevel_name, CommonComponentSpec_LogLevel_value)
+	proto.RegisterEnum("v1alpha1.IngressGatewaySpec_IngressType", IngressGatewaySpec_IngressType_name, IngressGatewaySpec_IngressType_value)
+	proto.RegisterEnum("v1alpha1.IngressGatewaySpec_ExternalTrafficPolicy", IngressGatewaySpec_ExternalTrafficPolicy_name, IngressGatewaySpec_ExternalTrafficPolicy_value)
 	proto.RegisterEnum("v1alpha1.InstallerStatus_Status", InstallerStatus_Status_name, InstallerStatus_Status_value)
 	proto.RegisterType((*IstioInstaller)(nil), "v1alpha1.IstioInstaller")
 	proto.RegisterType((*InstallerSpec)(nil), "v1alpha1.InstallerSpec")
-	proto.RegisterType((*TrafficManagementConfig)(nil), "v1alpha1.TrafficManagementConfig")
-	proto.RegisterType((*PolicyTelemetryConfig)(nil), "v1alpha1.PolicyTelemetryConfig")
-	proto.RegisterType((*SecurityConfig)(nil), "v1alpha1.SecurityConfig")
-	proto.RegisterType((*PilotComponentConfig)(nil), "v1alpha1.PilotComponentConfig")
-	proto.RegisterType((*ProxyComponentConfig)(nil), "v1alpha1.ProxyComponentConfig")
-	proto.RegisterType((*SidecarInjectorComponentConfig)(nil), "v1alpha1.SidecarInjectorComponentConfig")
-	proto.RegisterType((*PolicyComponentConfig)(nil), "v1alpha1.PolicyComponentConfig")
-	proto.RegisterType((*TelemetryComponentConfig)(nil), "v1alpha1.TelemetryComponentConfig")
-	proto.RegisterType((*CitadelComponentConfig)(nil), "v1alpha1.CitadelComponentConfig")
-	proto.RegisterType((*CertManagerComponentConfig)(nil), "v1alpha1.CertManagerComponentConfig")
-	proto.RegisterType((*NodeAgentComponentConfig)(nil), "v1alpha1.NodeAgentComponentConfig")
-	proto.RegisterType((*ConfigManagementConfig)(nil), "v1alpha1.ConfigManagementConfig")
-	proto.RegisterType((*CommonComponentConfig)(nil), "v1alpha1.CommonComponentConfig")
-	proto.RegisterMapType((map[string]*CommonComponentConfig_UpdateSpec)(nil), "v1alpha1.CommonComponentConfig.ArgsEntry")
-	proto.RegisterMapType((map[string]*CommonComponentConfig_UpdateSpec)(nil), "v1alpha1.CommonComponentConfig.EnvEntry")
-	proto.RegisterType((*CommonComponentConfig_UpdateSpec)(nil), "v1alpha1.CommonComponentConfig.UpdateSpec")
-	proto.RegisterType((*KubernetesResourcesConfig)(nil), "v1alpha1.KubernetesResourcesConfig")
-	proto.RegisterMapType((map[string]string)(nil), "v1alpha1.KubernetesResourcesConfig.NodeSelectorEntry")
-	proto.RegisterMapType((map[string]string)(nil), "v1alpha1.KubernetesResourcesConfig.PodAnnotationsEntry")
-	proto.RegisterType((*KubernetesResourcesConfig_NodeAffinity)(nil), "v1alpha1.KubernetesResourcesConfig.NodeAffinity")
-	proto.RegisterType((*IngressGatewayConfig)(nil), "v1alpha1.IngressGatewayConfig")
-	proto.RegisterType((*EgressGatewayConfig)(nil), "v1alpha1.EgressGatewayConfig")
+	proto.RegisterType((*TrafficManagementFeatureSpec)(nil), "v1alpha1.TrafficManagementFeatureSpec")
+	proto.RegisterType((*PolicyTelemetryFeatureSpec)(nil), "v1alpha1.PolicyTelemetryFeatureSpec")
+	proto.RegisterType((*SecurityFeatureSpec)(nil), "v1alpha1.SecurityFeatureSpec")
+	proto.RegisterType((*ConfigManagementFeatureSpec)(nil), "v1alpha1.ConfigManagementFeatureSpec")
+	proto.RegisterType((*PilotComponentSpec)(nil), "v1alpha1.PilotComponentSpec")
+	proto.RegisterType((*ProxyComponentSpec)(nil), "v1alpha1.ProxyComponentSpec")
+	proto.RegisterType((*SidecarInjectorComponentSpec)(nil), "v1alpha1.SidecarInjectorComponentSpec")
+	proto.RegisterType((*PolicyComponentSpec)(nil), "v1alpha1.PolicyComponentSpec")
+	proto.RegisterType((*TelemetryComponentSpec)(nil), "v1alpha1.TelemetryComponentSpec")
+	proto.RegisterType((*CitadelComponentSpec)(nil), "v1alpha1.CitadelComponentSpec")
+	proto.RegisterType((*CertManagerComponentSpec)(nil), "v1alpha1.CertManagerComponentSpec")
+	proto.RegisterType((*NodeAgentComponentSpec)(nil), "v1alpha1.NodeAgentComponentSpec")
+	proto.RegisterType((*GalleyComponentSpec)(nil), "v1alpha1.GalleyComponentSpec")
+	proto.RegisterType((*CommonComponentSpec)(nil), "v1alpha1.CommonComponentSpec")
+	proto.RegisterType((*CommonComponentSpec_UpdateSpec)(nil), "v1alpha1.CommonComponentSpec.UpdateSpec")
+	proto.RegisterType((*KubernetesResourcesSpec)(nil), "v1alpha1.KubernetesResourcesSpec")
+	proto.RegisterMapType((map[string]string)(nil), "v1alpha1.KubernetesResourcesSpec.NodeSelectorEntry")
+	proto.RegisterMapType((map[string]string)(nil), "v1alpha1.KubernetesResourcesSpec.PodAnnotationsEntry")
+	proto.RegisterType((*KubernetesResourcesSpec_NodeAffinity)(nil), "v1alpha1.KubernetesResourcesSpec.NodeAffinity")
+	proto.RegisterType((*IngressGatewaySpec)(nil), "v1alpha1.IngressGatewaySpec")
+	proto.RegisterType((*EgressGatewaySpec)(nil), "v1alpha1.EgressGatewaySpec")
 	proto.RegisterType((*LoadBalancingGatewayConfig)(nil), "v1alpha1.LoadBalancingGatewayConfig")
 	proto.RegisterType((*GatewayConfig)(nil), "v1alpha1.GatewayConfig")
 	proto.RegisterType((*LoadBalancerConfig)(nil), "v1alpha1.LoadBalancerConfig")
-	proto.RegisterType((*OperatorConfig)(nil), "v1alpha1.OperatorConfig")
+	proto.RegisterType((*OperatorSpec)(nil), "v1alpha1.OperatorSpec")
 	proto.RegisterType((*K8SObjectOverlay)(nil), "v1alpha1.k8sObjectOverlay")
+	proto.RegisterType((*K8SObjectOverlay_PathValue)(nil), "v1alpha1.k8sObjectOverlay.PathValue")
 	proto.RegisterType((*InstallerStatus)(nil), "v1alpha1.InstallerStatus")
 	proto.RegisterType((*InstallerStatus_VersionStatus)(nil), "v1alpha1.InstallerStatus.VersionStatus")
 	proto.RegisterType((*Resources)(nil), "v1alpha1.Resources")
@@ -2556,177 +2587,173 @@ func init() {
 func init() { proto.RegisterFile("istioinstaller_types.proto", fileDescriptor_d0a1188b3d395975) }
 
 var fileDescriptor_d0a1188b3d395975 = []byte{
-	// 2718 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xcc, 0x59, 0x5b, 0x73, 0xdb, 0xc6,
-	0xf5, 0x37, 0x45, 0xdd, 0x78, 0x78, 0x11, 0xb5, 0xb2, 0x1d, 0x98, 0x7f, 0x47, 0x51, 0x10, 0xff,
-	0x13, 0x25, 0x9d, 0x50, 0xb6, 0xac, 0x38, 0x8a, 0xd3, 0x5c, 0x28, 0x89, 0x91, 0x95, 0x48, 0x22,
-	0x03, 0x4a, 0xce, 0x38, 0xcd, 0x0c, 0xba, 0x04, 0x56, 0x24, 0x22, 0x10, 0x8b, 0x62, 0x97, 0xb2,
-	0xd9, 0xd7, 0x4e, 0x67, 0xfa, 0xdc, 0xa7, 0xf4, 0x2b, 0xf4, 0x03, 0x74, 0xfa, 0x11, 0xfa, 0xd8,
-	0x87, 0xf6, 0xbd, 0xe3, 0xf6, 0x1b, 0xf4, 0xb1, 0x33, 0x6d, 0x67, 0x17, 0x0b, 0x02, 0xbc, 0x59,
-	0x17, 0xc7, 0x33, 0x7d, 0x03, 0x7e, 0xe7, 0x9c, 0x1f, 0x76, 0x17, 0xe7, 0x9c, 0x3d, 0x67, 0x17,
-	0x4a, 0x0e, 0xe3, 0x0e, 0x75, 0x3c, 0xc6, 0xb1, 0xeb, 0x92, 0xc0, 0xe4, 0x3d, 0x9f, 0xb0, 0xb2,
-	0x1f, 0x50, 0x4e, 0xd1, 0xfc, 0xd9, 0x3d, 0xec, 0xfa, 0x6d, 0x7c, 0xaf, 0xa4, 0x9f, 0x6e, 0xb2,
-	0xb2, 0x43, 0xd7, 0xb0, 0xef, 0xac, 0x59, 0x34, 0x20, 0x6b, 0x67, 0xf7, 0xd6, 0x5a, 0xc4, 0x23,
-	0x01, 0xe6, 0xc4, 0x0e, 0xb5, 0x4b, 0xef, 0x26, 0x74, 0x70, 0x97, 0x53, 0x66, 0x61, 0xd7, 0xf1,
-	0x5a, 0xe3, 0x54, 0x37, 0x62, 0xd5, 0x0e, 0xb6, 0xda, 0x8e, 0x47, 0x82, 0xde, 0x9a, 0x7f, 0xda,
-	0x12, 0x00, 0x5b, 0xeb, 0x10, 0x8e, 0xc7, 0x59, 0x7d, 0xde, 0x72, 0x78, 0xbb, 0xdb, 0x2c, 0x5b,
-	0xb4, 0xb3, 0xd6, 0xa2, 0x2d, 0xba, 0x26, 0xe1, 0x66, 0xf7, 0x24, 0x7e, 0x68, 0x51, 0xda, 0x72,
-	0x49, 0xfc, 0xfe, 0x34, 0xc0, 0xbe, 0x4f, 0x02, 0x35, 0x21, 0xdd, 0x87, 0xc2, 0x9e, 0x98, 0xee,
-	0x5e, 0x34, 0x5d, 0xf4, 0x13, 0x98, 0x66, 0x3e, 0xb1, 0xb4, 0xf4, 0x4a, 0x6a, 0x35, 0xbb, 0xfe,
-	0x5a, 0x39, 0x9a, 0x71, 0xb9, 0xaf, 0xd2, 0xf0, 0x89, 0x65, 0x48, 0x25, 0x74, 0x0f, 0x66, 0x19,
-	0xc7, 0xbc, 0xcb, 0xb4, 0x69, 0xa9, 0x7e, 0x6b, 0x9c, 0xba, 0x54, 0x30, 0x94, 0xa2, 0xfe, 0x7c,
-	0x06, 0xf2, 0x03, 0x54, 0xe8, 0x2e, 0x5c, 0x57, 0xab, 0x6d, 0xfa, 0xd8, 0x3a, 0xc5, 0x2d, 0x62,
-	0xfa, 0x98, 0xb7, 0xb5, 0xd4, 0x4a, 0x6a, 0x35, 0x63, 0x20, 0x25, 0xab, 0x87, 0xa2, 0x3a, 0xe6,
-	0x6d, 0x54, 0x84, 0x74, 0xbb, 0xdb, 0x94, 0x43, 0xcc, 0x18, 0xe2, 0x51, 0x20, 0x1c, 0xb7, 0xe4,
-	0x28, 0x32, 0x86, 0x78, 0x44, 0x9b, 0xa0, 0xd9, 0xe4, 0x04, 0x77, 0x5d, 0x6e, 0x7a, 0xb8, 0x43,
-	0x98, 0x8f, 0x2d, 0x62, 0xfa, 0x01, 0x39, 0x71, 0x9e, 0x69, 0x33, 0x52, 0xed, 0xa6, 0x92, 0x1f,
-	0x46, 0xe2, 0xba, 0x94, 0xa2, 0x3a, 0x20, 0x1e, 0xe0, 0x93, 0x13, 0xc7, 0x32, 0x3b, 0xd8, 0xc3,
-	0x2d, 0xd2, 0x21, 0x1e, 0xd7, 0x6e, 0xc9, 0x09, 0xbe, 0x19, 0x4f, 0xf0, 0x28, 0xd4, 0x39, 0xe8,
-	0xab, 0x6c, 0x53, 0xef, 0xc4, 0x69, 0x19, 0x8b, 0x7c, 0x58, 0x80, 0xbe, 0x84, 0xa2, 0x4f, 0x5d,
-	0xc7, 0xea, 0x99, 0x9c, 0xb8, 0xa4, 0x43, 0x78, 0xd0, 0xd3, 0x4a, 0x92, 0xef, 0x8d, 0x98, 0xaf,
-	0x2e, 0x35, 0x8e, 0x22, 0x05, 0xc5, 0xb6, 0xe0, 0x0f, 0xc2, 0x68, 0x03, 0xe6, 0x19, 0xb1, 0xba,
-	0x81, 0xc3, 0x7b, 0xda, 0x6d, 0xc9, 0xa1, 0xc5, 0x1c, 0x0d, 0x25, 0x51, 0xc6, 0x7d, 0x4d, 0x74,
-	0x00, 0x8b, 0x96, 0xc4, 0x92, 0x53, 0x7a, 0x5d, 0x9a, 0xaf, 0xc4, 0xe6, 0xa1, 0xd9, 0xc8, 0x8c,
-	0x8a, 0xd6, 0x10, 0x8e, 0x76, 0x61, 0xc1, 0xf1, 0x5a, 0x01, 0x61, 0xcc, 0x6c, 0x61, 0x4e, 0x9e,
-	0xe2, 0x9e, 0xb6, 0xbc, 0x92, 0x5e, 0xcd, 0xae, 0x2f, 0x27, 0x1d, 0x40, 0x2a, 0xec, 0x86, 0x72,
-	0x45, 0x55, 0x70, 0x06, 0x50, 0xb4, 0x03, 0x05, 0x32, 0xc8, 0xf3, 0x86, 0xe4, 0x79, 0x3d, 0xe6,
-	0xa9, 0x8e, 0xa1, 0xc9, 0x93, 0x01, 0x96, 0x5d, 0x40, 0xe4, 0x19, 0x27, 0x81, 0x87, 0x5d, 0x93,
-	0xfa, 0x22, 0x44, 0x68, 0xc0, 0xb4, 0x75, 0xc9, 0x94, 0x58, 0x9d, 0x9a, 0x12, 0x45, 0x3f, 0x2a,
-	0xb2, 0x89, 0x70, 0x86, 0xbe, 0x80, 0xdc, 0xe9, 0x26, 0x33, 0x95, 0x63, 0x30, 0xad, 0x2e, 0x57,
-	0xe8, 0xad, 0x98, 0xe2, 0xab, 0x6e, 0x93, 0x04, 0x1e, 0xe1, 0x84, 0x19, 0x84, 0xd1, 0x6e, 0x60,
-	0x11, 0xa6, 0xd8, 0xb2, 0xa7, 0x9b, 0x6c, 0x47, 0xd9, 0xe9, 0x7f, 0x9d, 0x82, 0xd7, 0x26, 0xf8,
-	0x07, 0xda, 0x80, 0x39, 0xe2, 0xe1, 0xa6, 0x4b, 0x6c, 0xe9, 0xe1, 0xd9, 0xf5, 0x52, 0x39, 0x0c,
-	0xd2, 0x72, 0x14, 0xa4, 0xe5, 0x2d, 0x4a, 0xdd, 0xc7, 0xd8, 0xed, 0x12, 0x23, 0x52, 0x45, 0xb7,
-	0x21, 0xd3, 0x77, 0x63, 0x6d, 0x4a, 0xfa, 0x6f, 0x0c, 0xa0, 0xff, 0x87, 0x82, 0xe5, 0x76, 0x19,
-	0x27, 0x81, 0x69, 0xd3, 0x0e, 0x76, 0x3c, 0x4d, 0x93, 0x2a, 0x79, 0x85, 0xee, 0x48, 0x10, 0x6d,
-	0xc0, 0x8c, 0xef, 0xb8, 0x94, 0x6b, 0xcb, 0xf2, 0xc3, 0x89, 0x9f, 0x55, 0x17, 0xf0, 0x36, 0xed,
-	0xf8, 0xd4, 0x8b, 0xff, 0x7b, 0xa8, 0x2c, 0xad, 0x02, 0xfa, 0x4c, 0xfc, 0x9a, 0x61, 0x2b, 0x01,
-	0x8f, 0x5a, 0x09, 0x14, 0x35, 0xa0, 0xc8, 0x1c, 0x9b, 0x58, 0x38, 0x30, 0x1d, 0xef, 0x7b, 0x62,
-	0x71, 0x1a, 0x68, 0x2b, 0x92, 0x60, 0x35, 0xe1, 0xaf, 0xa1, 0xc6, 0x9e, 0x52, 0x18, 0xa6, 0x5a,
-	0x60, 0x83, 0x72, 0xfd, 0x37, 0x69, 0xb8, 0x31, 0x36, 0x4e, 0x50, 0x0d, 0x6e, 0xaa, 0x10, 0xb3,
-	0xda, 0xc4, 0x3a, 0x35, 0x4f, 0xb0, 0x23, 0x7d, 0xc1, 0xd3, 0xe0, 0xdc, 0x45, 0x5e, 0x0a, 0x2d,
-	0xb7, 0x85, 0xe1, 0x17, 0xd8, 0x11, 0xfe, 0xe0, 0x21, 0x0a, 0xb7, 0x69, 0x97, 0x37, 0x69, 0xd7,
-	0xb3, 0xcd, 0x28, 0x1d, 0xa8, 0x2f, 0x74, 0xa8, 0x4d, 0xb4, 0xec, 0x4a, 0x6a, 0xb5, 0xb0, 0x5e,
-	0x3e, 0x27, 0x7e, 0xcb, 0x35, 0xc5, 0x11, 0x4a, 0x8d, 0x5b, 0x11, 0xa7, 0xf2, 0x8e, 0x10, 0x3e,
-	0xa0, 0x36, 0x41, 0x1f, 0xc2, 0x6c, 0xc8, 0xaf, 0xad, 0x8f, 0x4f, 0x0d, 0xc3, 0xab, 0xa3, 0xd4,
-	0xd1, 0xe7, 0x90, 0x89, 0xd3, 0xca, 0x7d, 0x69, 0xab, 0x27, 0xd2, 0x54, 0x3c, 0xa0, 0x41, 0xf3,
-	0xd8, 0x48, 0x5f, 0x87, 0xc2, 0xe0, 0x38, 0x51, 0x1e, 0x32, 0x95, 0xfd, 0xfd, 0xda, 0x37, 0x66,
-	0xe5, 0xf0, 0x49, 0xf1, 0x1a, 0x5a, 0x84, 0xbc, 0x51, 0xdd, 0xdd, 0x6b, 0x1c, 0x19, 0x4f, 0xcc,
-	0xda, 0xe1, 0xfe, 0x93, 0x62, 0x4a, 0xff, 0xc7, 0x34, 0x14, 0x06, 0xd3, 0xcd, 0x2b, 0xf1, 0xec,
-	0x47, 0x80, 0x2c, 0xea, 0xf1, 0x80, 0xba, 0xa6, 0xef, 0x62, 0x8f, 0x98, 0x1d, 0xee, 0x32, 0x2d,
-	0x7f, 0x2e, 0x7d, 0x51, 0x59, 0xd5, 0x85, 0xd1, 0x01, 0x77, 0x19, 0xda, 0x82, 0x05, 0x1b, 0x73,
-	0x9c, 0xa4, 0x29, 0x9c, 0x4b, 0x93, 0x17, 0x26, 0x31, 0xc7, 0x9b, 0x90, 0xe3, 0x41, 0x97, 0xf1,
-	0x28, 0xca, 0x16, 0xe4, 0x70, 0xb3, 0x12, 0x53, 0x31, 0xf6, 0x31, 0x64, 0x19, 0x71, 0x4f, 0x4c,
-	0xe6, 0xb4, 0x3c, 0x62, 0x6b, 0xc5, 0x73, 0x3f, 0x01, 0x42, 0xbd, 0x21, 0xb5, 0xe5, 0x6c, 0x03,
-	0x82, 0x39, 0x31, 0x3b, 0x84, 0xb5, 0x95, 0xbf, 0x69, 0x8b, 0x17, 0x98, 0xad, 0xb4, 0x3a, 0x20,
-	0xac, 0xad, 0x7e, 0xe0, 0x43, 0x98, 0xb3, 0x1c, 0x8e, 0x6d, 0xe2, 0x6a, 0xd7, 0x47, 0xd2, 0x7c,
-	0x28, 0x18, 0x76, 0x88, 0xc8, 0x00, 0xed, 0x42, 0xce, 0x22, 0x01, 0x57, 0x5b, 0x45, 0xa0, 0xdd,
-	0x90, 0x04, 0x77, 0x12, 0x04, 0x24, 0xe0, 0x61, 0x5e, 0x1b, 0x09, 0xd9, 0xac, 0x15, 0xcb, 0x50,
-	0x05, 0xc0, 0xa3, 0x36, 0x31, 0x71, 0x4b, 0x6c, 0x37, 0x37, 0x87, 0x5d, 0xf3, 0x90, 0xda, 0xa4,
-	0xd2, 0x92, 0xb6, 0x43, 0xae, 0xe9, 0x45, 0x12, 0xfd, 0xd7, 0x29, 0xb8, 0x3e, 0x2e, 0x39, 0x89,
-	0x70, 0xb1, 0x68, 0xa7, 0x43, 0x3d, 0xe5, 0x6b, 0x6f, 0x24, 0xb7, 0x31, 0x81, 0x8f, 0x84, 0x4b,
-	0xa8, 0x2e, 0xbc, 0x54, 0xa5, 0x95, 0x0b, 0xa4, 0x86, 0x48, 0x55, 0xaf, 0xc1, 0xf5, 0x71, 0xd9,
-	0xee, 0xca, 0xc3, 0xd0, 0xff, 0x90, 0x82, 0xe5, 0x17, 0xa7, 0xbf, 0xab, 0x4f, 0xf1, 0x67, 0x70,
-	0x3b, 0x8c, 0xae, 0xb8, 0xf4, 0x61, 0x66, 0xb3, 0x17, 0xed, 0x6b, 0x17, 0x98, 0xf7, 0xad, 0xd0,
-	0xbe, 0x5f, 0x1a, 0xb1, 0xad, 0x9e, 0xda, 0xdc, 0xf4, 0x7a, 0x94, 0x82, 0x7f, 0xb4, 0xa5, 0x68,
-	0x80, 0x36, 0x29, 0x4b, 0x5d, 0x9d, 0xf4, 0x6b, 0xb8, 0x39, 0xde, 0xcf, 0xaf, 0x4e, 0x79, 0x0c,
-	0xa5, 0xc9, 0x9e, 0xff, 0x52, 0xd3, 0x9f, 0x14, 0x09, 0x2f, 0x37, 0xfd, 0xb1, 0xd5, 0xdc, 0xd5,
-	0x29, 0x7f, 0x98, 0x81, 0x1b, 0x63, 0x35, 0x5e, 0x49, 0xe2, 0xff, 0x14, 0x66, 0x6c, 0xd2, 0xec,
-	0xb6, 0x64, 0x95, 0x5f, 0x48, 0x16, 0x0d, 0x63, 0xc7, 0x50, 0xde, 0xa7, 0xad, 0x7d, 0x72, 0x46,
-	0x5c, 0x23, 0x34, 0x43, 0x0f, 0x21, 0x4d, 0xbc, 0x33, 0xed, 0xa7, 0xb2, 0x08, 0x3c, 0xd7, 0xba,
-	0xea, 0x9d, 0x55, 0x3d, 0x1e, 0xf4, 0x0c, 0x61, 0x84, 0x3e, 0x81, 0x69, 0x1c, 0xb4, 0x98, 0xf6,
-	0x89, 0x34, 0x7e, 0xf7, 0x3c, 0xe3, 0x4a, 0xd0, 0x62, 0xa1, 0xb5, 0x34, 0x43, 0x1f, 0x40, 0xfa,
-	0x74, 0xf3, 0x52, 0xc5, 0xa3, 0xd0, 0x2f, 0xdd, 0x05, 0x38, 0xf6, 0x6d, 0xcc, 0x89, 0xec, 0x8a,
-	0x8a, 0x90, 0xa6, 0xae, 0xad, 0x9a, 0x20, 0xf1, 0x28, 0x10, 0x8f, 0x3c, 0x55, 0x2b, 0x25, 0x1e,
-	0x4b, 0x4d, 0x98, 0x8f, 0x06, 0x2e, 0xa4, 0xa7, 0xa4, 0x17, 0xe9, 0x9f, 0x12, 0x51, 0x17, 0xcc,
-	0x9c, 0x89, 0x15, 0x97, 0x16, 0xd9, 0xf5, 0xf7, 0xce, 0x9b, 0x46, 0xfc, 0x71, 0x23, 0x34, 0x7c,
-	0x38, 0xb5, 0x99, 0x2a, 0x59, 0x90, 0xe9, 0xcf, 0xef, 0x55, 0x7d, 0x44, 0xff, 0x14, 0xe6, 0xa3,
-	0xff, 0x87, 0xe6, 0x61, 0xfa, 0xb0, 0x76, 0x58, 0x2d, 0x5e, 0x43, 0x19, 0x98, 0xa9, 0x1a, 0x46,
-	0xcd, 0x28, 0xa6, 0x04, 0xf8, 0x4d, 0xc5, 0x38, 0x2c, 0x4e, 0x09, 0x70, 0xa7, 0xba, 0x75, 0xbc,
-	0x5b, 0x4c, 0x0b, 0x70, 0xef, 0xf0, 0x8b, 0x5a, 0x71, 0x5a, 0xff, 0xcf, 0x1c, 0xdc, 0x9a, 0xb8,
-	0xba, 0xe8, 0x1e, 0x64, 0x82, 0x08, 0x52, 0x0e, 0xba, 0x14, 0x8f, 0xb3, 0xaf, 0x6d, 0xc4, 0x5a,
-	0xa2, 0x58, 0x08, 0x08, 0xb6, 0x1d, 0x4f, 0xb4, 0x26, 0x7e, 0x40, 0x9b, 0xd1, 0x04, 0x6f, 0x95,
-	0xc3, 0x4e, 0xbd, 0x8c, 0x7d, 0xa7, 0x2c, 0x1a, 0xff, 0xf2, 0x99, 0xac, 0x83, 0x9b, 0xc4, 0x28,
-	0xf4, 0x2d, 0xe4, 0x3b, 0x7a, 0x0b, 0xf2, 0x01, 0xf1, 0x5d, 0xc7, 0xc2, 0xa6, 0x45, 0xbb, 0x1e,
-	0x97, 0x9e, 0x9c, 0x37, 0x72, 0x0a, 0xdc, 0x16, 0x18, 0xfa, 0x1a, 0xe6, 0xdb, 0x3e, 0x36, 0x65,
-	0xcb, 0x1d, 0xf6, 0xd0, 0x0f, 0x92, 0x5f, 0x48, 0x1c, 0x1b, 0x88, 0x0f, 0x3d, 0xa2, 0x81, 0xf3,
-	0x4b, 0xea, 0x71, 0xec, 0xd6, 0xa9, 0x5d, 0x51, 0x32, 0xd5, 0x91, 0xcf, 0xb5, 0x7d, 0x2c, 0x3d,
-	0xe7, 0x18, 0x6e, 0xf8, 0xd4, 0x36, 0x6d, 0x87, 0x05, 0x5d, 0x9f, 0x3b, 0xd4, 0x33, 0x9b, 0x5d,
-	0xbb, 0x45, 0xb8, 0x6c, 0x7b, 0x07, 0x5a, 0xd8, 0x3a, 0xb5, 0x77, 0xfa, 0x5a, 0x5b, 0x52, 0x49,
-	0x52, 0x2d, 0xf9, 0xa3, 0x02, 0xf4, 0x73, 0x58, 0x10, 0xb4, 0xd8, 0xf3, 0x28, 0xc7, 0x02, 0x67,
-	0xda, 0xac, 0x8c, 0x8f, 0x0f, 0x2f, 0xe0, 0xe1, 0xe2, 0x53, 0x95, 0xd8, 0x32, 0x8c, 0x96, 0x82,
-	0x3f, 0x00, 0xa2, 0x6f, 0x21, 0x2f, 0xcb, 0x05, 0x46, 0xdc, 0xb0, 0x5f, 0x98, 0x93, 0xfc, 0x1f,
-	0x5c, 0x84, 0x5f, 0x64, 0xd0, 0x86, 0xb2, 0x0b, 0xd9, 0x73, 0x5e, 0x02, 0x42, 0xc7, 0x8a, 0x5b,
-	0x54, 0xdd, 0x9e, 0xe8, 0x9d, 0xe7, 0xe5, 0x62, 0xdc, 0xbd, 0x28, 0x77, 0x45, 0xd9, 0x85, 0xb4,
-	0xd1, 0x1b, 0x7a, 0x0f, 0x16, 0x9d, 0x8e, 0x3c, 0xb1, 0xe8, 0xba, 0x6e, 0x54, 0xaf, 0x65, 0x64,
-	0x78, 0x2c, 0x48, 0x41, 0xbd, 0xeb, 0xba, 0xaa, 0x24, 0x2b, 0xc3, 0x92, 0x1f, 0x38, 0x54, 0x14,
-	0xcc, 0xa6, 0xe5, 0x62, 0xc6, 0xe4, 0xee, 0x2c, 0x37, 0xe3, 0x8c, 0xb1, 0x18, 0x89, 0xb6, 0x85,
-	0x44, 0xec, 0xbb, 0xe8, 0x01, 0xcc, 0xd3, 0x33, 0x12, 0xb8, 0xb8, 0xc7, 0x34, 0x5b, 0xae, 0x44,
-	0x29, 0x1e, 0xed, 0xe9, 0x26, 0xab, 0x35, 0x45, 0xd9, 0x50, 0x0b, 0x55, 0x8c, 0xbe, 0x6e, 0xa9,
-	0x02, 0x4b, 0x63, 0x56, 0x7b, 0x4c, 0xec, 0x5e, 0x4f, 0xc6, 0x6e, 0x26, 0x19, 0xf4, 0x9f, 0xc1,
-	0xe2, 0xc8, 0x82, 0x5e, 0x8a, 0x80, 0x42, 0x2e, 0xb9, 0x6a, 0xe8, 0x75, 0x00, 0x1c, 0x58, 0x6d,
-	0x13, 0x77, 0xec, 0x07, 0x1b, 0x92, 0x22, 0x6f, 0x64, 0x04, 0x52, 0x11, 0x40, 0x5f, 0xcc, 0xee,
-	0x7f, 0x74, 0xf7, 0x99, 0x64, 0x53, 0xe2, 0x86, 0x00, 0x44, 0xd9, 0x2d, 0xc5, 0xbe, 0x6f, 0x3d,
-	0xd8, 0x70, 0x89, 0x0a, 0xa4, 0xac, 0xc0, 0xea, 0x21, 0xa4, 0xff, 0x7e, 0x1a, 0xae, 0x8f, 0x3b,
-	0x71, 0x40, 0xf7, 0x60, 0x2e, 0x3a, 0x5a, 0x80, 0xe1, 0x23, 0xad, 0xc1, 0x43, 0x85, 0x48, 0x0f,
-	0x1d, 0x40, 0x2e, 0x3a, 0xdd, 0xe0, 0x3d, 0x3f, 0x6a, 0xf5, 0xde, 0x7b, 0xf1, 0xd1, 0x46, 0x04,
-	0x1e, 0xf5, 0x7c, 0x62, 0x64, 0x9d, 0xf8, 0x05, 0x7d, 0x06, 0xf9, 0x36, 0xe7, 0x3e, 0x33, 0xa3,
-	0x3d, 0x32, 0x77, 0xee, 0x1e, 0x99, 0x93, 0x06, 0x55, 0xb5, 0x51, 0x56, 0x20, 0xef, 0x52, 0x6c,
-	0x9b, 0x4d, 0xec, 0x62, 0xcf, 0x22, 0x81, 0x6a, 0x7f, 0x6e, 0xc7, 0x03, 0xda, 0xa7, 0xd8, 0xde,
-	0x52, 0x52, 0x35, 0x9b, 0x9c, 0x9b, 0xc0, 0x64, 0x57, 0x62, 0xc7, 0x23, 0xb8, 0x48, 0x57, 0x62,
-	0xf7, 0xbf, 0xff, 0x3d, 0xdc, 0x88, 0x8e, 0x4a, 0x06, 0xda, 0x56, 0xd9, 0x98, 0x14, 0xd6, 0x37,
-	0xce, 0x59, 0x98, 0xea, 0x38, 0x5b, 0x63, 0x3c, 0xa5, 0xbe, 0x0a, 0xd9, 0xc4, 0x42, 0x8a, 0x6c,
-	0xbf, 0xd7, 0x38, 0xda, 0xab, 0x15, 0xaf, 0xa1, 0x02, 0xc0, 0x57, 0xc7, 0x5b, 0x55, 0xe3, 0xb0,
-	0x7a, 0x54, 0x6d, 0x14, 0x53, 0xfa, 0x47, 0x70, 0x63, 0x2c, 0xf3, 0xe0, 0x06, 0xb2, 0x5f, 0xdb,
-	0xae, 0xec, 0x17, 0x53, 0x28, 0x0b, 0x73, 0xdb, 0xfb, 0xc7, 0x8d, 0xa3, 0xaa, 0x51, 0x9c, 0xd2,
-	0x1f, 0xc1, 0x52, 0xf5, 0x47, 0x71, 0x15, 0xfd, 0xb7, 0x29, 0x28, 0xc5, 0x8b, 0xef, 0x78, 0xad,
-	0x97, 0x76, 0xbe, 0x91, 0x9f, 0x9d, 0xbd, 0xec, 0xcf, 0xd6, 0xbf, 0x83, 0xfc, 0xe0, 0x30, 0xae,
-	0xdc, 0x48, 0x20, 0x98, 0x96, 0x11, 0x10, 0xe6, 0x28, 0xf9, 0xac, 0xff, 0x73, 0x0a, 0xd0, 0xe8,
-	0x10, 0xd0, 0x07, 0x30, 0xe3, 0xd3, 0x80, 0x8b, 0x0d, 0x36, 0x2d, 0x3f, 0x31, 0x66, 0x9f, 0x6c,
-	0x90, 0xe0, 0xcc, 0xb1, 0x48, 0x9d, 0x06, 0xdc, 0x08, 0xb5, 0x45, 0x11, 0xa8, 0xce, 0xa8, 0xf6,
-	0xea, 0xea, 0x40, 0x37, 0x06, 0xd0, 0x0a, 0x64, 0x23, 0x37, 0xd9, 0xab, 0x33, 0x6d, 0x66, 0x25,
-	0x2d, 0xda, 0xed, 0x04, 0x84, 0x56, 0x61, 0x81, 0x11, 0xc6, 0x1c, 0xea, 0x45, 0xb9, 0x46, 0x9b,
-	0x0b, 0xd3, 0xef, 0x10, 0x8c, 0xde, 0x86, 0x42, 0x72, 0x95, 0xf6, 0xea, 0x72, 0x0b, 0xc8, 0x18,
-	0x43, 0x28, 0x7a, 0x08, 0x5a, 0x12, 0x69, 0xc8, 0xad, 0xc0, 0xc0, 0x5e, 0x8b, 0x30, 0x2d, 0x23,
-	0x07, 0x30, 0x51, 0x8e, 0x74, 0xc8, 0x45, 0x83, 0x3b, 0x8c, 0x73, 0xfb, 0x00, 0x86, 0x36, 0x26,
-	0x45, 0x53, 0x56, 0x2a, 0x4f, 0x88, 0x8b, 0x5f, 0xa5, 0xa0, 0x30, 0x78, 0x7e, 0x29, 0xea, 0x8b,
-	0x0e, 0xf6, 0x9c, 0x13, 0xc2, 0x78, 0xf2, 0xc0, 0x3c, 0x17, 0x81, 0xf2, 0xa8, 0xfc, 0xc5, 0x45,
-	0x76, 0x59, 0x1d, 0xf6, 0xdb, 0x2a, 0x1f, 0x4c, 0xde, 0x5e, 0xa4, 0x9e, 0xfe, 0x97, 0x14, 0x14,
-	0x87, 0x45, 0x68, 0x1b, 0xc0, 0xc7, 0xdc, 0x6a, 0x87, 0xc9, 0x32, 0x25, 0x73, 0xc2, 0x9d, 0xc9,
-	0x54, 0xe5, 0xba, 0x50, 0x96, 0x69, 0x32, 0xe3, 0x47, 0x8f, 0xe8, 0x7d, 0x98, 0xa2, 0xbe, 0x1c,
-	0x60, 0x21, 0x79, 0xf8, 0x3b, 0x62, 0x5c, 0xf3, 0x8d, 0x29, 0xea, 0xeb, 0x77, 0x20, 0xd3, 0xa7,
-	0x41, 0x79, 0xc8, 0x34, 0x8e, 0x8c, 0xca, 0x51, 0x75, 0x77, 0x6f, 0xbb, 0x78, 0x4d, 0xc4, 0xff,
-	0x97, 0x8d, 0xda, 0x61, 0x31, 0xa5, 0xbf, 0x0d, 0x53, 0x35, 0x1f, 0xcd, 0x41, 0xba, 0xb2, 0xb3,
-	0x53, 0xbc, 0x86, 0x00, 0x66, 0x8d, 0xea, 0x41, 0xed, 0x71, 0x35, 0xcc, 0x07, 0x46, 0xb5, 0xbe,
-	0x5f, 0xd9, 0xae, 0x16, 0xa7, 0xf4, 0xdf, 0xcd, 0xc0, 0xc2, 0xd0, 0x7d, 0x05, 0x7a, 0x3c, 0xf6,
-	0x16, 0x20, 0x8c, 0x9f, 0x77, 0x26, 0x5e, 0x73, 0x94, 0x1f, 0x93, 0x40, 0x78, 0x9d, 0xba, 0xf4,
-	0x18, 0x73, 0x17, 0x60, 0x8c, 0xb9, 0x0b, 0x98, 0xba, 0x1c, 0xeb, 0xc8, 0x9d, 0xc0, 0x76, 0xe2,
-	0x4e, 0x20, 0x7d, 0x39, 0xae, 0xf8, 0x8a, 0xe0, 0x68, 0xdc, 0x15, 0xc1, 0xf4, 0xe5, 0xd8, 0x46,
-	0x6f, 0x0a, 0xea, 0xa3, 0x37, 0x05, 0x33, 0x32, 0x41, 0x5c, 0x98, 0x73, 0xf8, 0xca, 0xe0, 0x70,
-	0xe4, 0xca, 0x60, 0xf6, 0x72, 0x84, 0x83, 0x97, 0x07, 0x25, 0x0b, 0xf2, 0x03, 0x72, 0xa4, 0xc1,
-	0xdc, 0x59, 0x08, 0xa8, 0x88, 0x8a, 0x5e, 0xd1, 0x66, 0xff, 0xba, 0x2b, 0x74, 0xd4, 0x95, 0xc9,
-	0x9f, 0x1c, 0xba, 0xf5, 0xda, 0x84, 0x59, 0xc5, 0x1e, 0xef, 0x4e, 0x39, 0x98, 0x3f, 0xae, 0xef,
-	0x54, 0x8e, 0xf6, 0x0e, 0x77, 0x43, 0x87, 0x7c, 0x54, 0xad, 0xec, 0x1f, 0x3d, 0x7a, 0x12, 0x36,
-	0x39, 0x61, 0xe7, 0x93, 0xd6, 0xff, 0x95, 0x82, 0x4c, 0xbf, 0x20, 0x15, 0x99, 0xdc, 0x75, 0x3a,
-	0x4e, 0x22, 0xcd, 0x8e, 0xf6, 0x31, 0xe5, 0x7d, 0xa9, 0x11, 0x56, 0xc1, 0x4a, 0x1d, 0x7d, 0x02,
-	0xf3, 0x01, 0xf9, 0x45, 0x97, 0x30, 0x2e, 0x06, 0x9f, 0x1e, 0xec, 0x03, 0x62, 0x53, 0x43, 0xe9,
-	0x84, 0xc6, 0x7d, 0x93, 0xd2, 0x47, 0x90, 0x4d, 0xb0, 0x5e, 0xaa, 0x14, 0xfc, 0x18, 0xf2, 0x03,
-	0xac, 0x97, 0x31, 0xd6, 0xff, 0x98, 0x82, 0xd7, 0x26, 0x74, 0x29, 0x32, 0xff, 0x39, 0x9e, 0x89,
-	0xcf, 0xb0, 0xe3, 0x8a, 0x42, 0x45, 0x95, 0x95, 0xb9, 0x8e, 0xe3, 0x55, 0x22, 0x0c, 0xd5, 0x44,
-	0x68, 0xa8, 0x76, 0x22, 0x0c, 0xb3, 0xfb, 0x89, 0x9d, 0xa9, 0x7f, 0xd7, 0x5a, 0xf6, 0x4f, 0x5b,
-	0x02, 0x60, 0xe5, 0x0e, 0xe1, 0x58, 0xec, 0x55, 0xfb, 0xb8, 0x49, 0xdc, 0xa8, 0x00, 0x36, 0xfa,
-	0x24, 0xe8, 0x1d, 0x58, 0xe8, 0xe0, 0x67, 0x66, 0xd7, 0x8b, 0xbf, 0x1b, 0x96, 0xa3, 0x85, 0x0e,
-	0x7e, 0x76, 0x1c, 0xa3, 0xfa, 0xa7, 0x00, 0x61, 0xea, 0x3a, 0x20, 0x1c, 0x8b, 0x9d, 0x54, 0x56,
-	0xfb, 0xe1, 0xd5, 0xa3, 0x7c, 0x1e, 0xcc, 0xcd, 0xb3, 0x43, 0xb9, 0x59, 0xff, 0xf7, 0x0c, 0xcc,
-	0x1f, 0x11, 0xc6, 0x45, 0x5f, 0x82, 0xde, 0x4f, 0x9e, 0x66, 0xfc, 0x5f, 0xf2, 0x74, 0x3f, 0x54,
-	0x18, 0x3a, 0xc0, 0x18, 0xe8, 0x78, 0xeb, 0x57, 0xed, 0x78, 0xbf, 0xbe, 0x6c, 0xc7, 0x9b, 0x6c,
-	0x66, 0x1f, 0xbf, 0xe2, 0x66, 0xf6, 0x9b, 0x97, 0x6a, 0x66, 0x6b, 0xa3, 0xcd, 0xec, 0xb7, 0x72,
-	0x6d, 0xdf, 0x1e, 0xb3, 0xb6, 0x17, 0xe9, 0x5d, 0xf7, 0x86, 0x7b, 0xd7, 0xef, 0x24, 0xdd, 0x9d,
-	0x31, 0x74, 0xe7, 0xb5, 0xaa, 0x5f, 0xc2, 0xd2, 0xe9, 0x26, 0x33, 0xa9, 0x74, 0x1e, 0x53, 0xb4,
-	0x75, 0x81, 0x63, 0x93, 0x0b, 0xb4, 0x80, 0x8b, 0x03, 0x88, 0x30, 0x2a, 0x3d, 0x78, 0xe1, 0x09,
-	0xd1, 0xe4, 0xa0, 0xfd, 0x1f, 0xe8, 0x21, 0xb7, 0x8a, 0x7f, 0x7a, 0xbe, 0x9c, 0xfa, 0xf3, 0xf3,
-	0xe5, 0xd4, 0xdf, 0x9e, 0x2f, 0xa7, 0x7e, 0xf8, 0xfb, 0xf2, 0xb5, 0xe6, 0xac, 0x6c, 0x54, 0xee,
-	0xff, 0x37, 0x00, 0x00, 0xff, 0xff, 0x1d, 0xda, 0x9c, 0x6c, 0xa3, 0x21, 0x00, 0x00,
+	// 2647 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xcc, 0x59, 0x49, 0x73, 0x1b, 0xc7,
+	0xf5, 0x17, 0x08, 0x6e, 0x78, 0x00, 0x48, 0xb0, 0x69, 0xc9, 0x23, 0x98, 0xa6, 0xe8, 0xf9, 0x7b,
+	0xe1, 0x3f, 0x0b, 0x68, 0x91, 0xb2, 0x42, 0xd9, 0x8e, 0x1c, 0x90, 0x82, 0x24, 0x46, 0x10, 0x01,
+	0x0d, 0x49, 0x39, 0x72, 0x52, 0x99, 0x6a, 0xcc, 0x34, 0x81, 0x09, 0x07, 0xd3, 0x93, 0xe9, 0x06,
+	0x2d, 0xe4, 0xe6, 0x2f, 0x90, 0x43, 0x4e, 0x49, 0x55, 0x3e, 0x45, 0x4e, 0x39, 0xe4, 0x03, 0xe4,
+	0x94, 0xca, 0x21, 0xc7, 0x1c, 0x52, 0xf6, 0x35, 0xb7, 0x1c, 0x72, 0x48, 0x55, 0x2a, 0xd5, 0xcb,
+	0x60, 0x06, 0x0b, 0xc5, 0xc5, 0x71, 0x55, 0x6e, 0x83, 0xdf, 0x7b, 0xef, 0xd7, 0xeb, 0xdb, 0x1a,
+	0x50, 0xf6, 0x18, 0xf7, 0xa8, 0x17, 0x30, 0x8e, 0x7d, 0x9f, 0x44, 0x36, 0xef, 0x87, 0x84, 0x55,
+	0xc2, 0x88, 0x72, 0x8a, 0xe6, 0x4f, 0x6f, 0x63, 0x3f, 0xec, 0xe0, 0xdb, 0x65, 0xf3, 0x64, 0x9b,
+	0x55, 0x3c, 0xba, 0x81, 0x43, 0x6f, 0xc3, 0xa1, 0x11, 0xd9, 0x38, 0xbd, 0xbd, 0xd1, 0x26, 0x01,
+	0x89, 0x30, 0x27, 0xae, 0xd2, 0x2e, 0xff, 0x7f, 0x4a, 0x07, 0xf7, 0x38, 0x65, 0x0e, 0xf6, 0xbd,
+	0xa0, 0x3d, 0x49, 0xf5, 0x4e, 0xa2, 0xda, 0xc5, 0x4e, 0xc7, 0x0b, 0x48, 0xd4, 0xdf, 0x08, 0x4f,
+	0xda, 0x02, 0x60, 0x1b, 0x5d, 0xc2, 0xf1, 0x24, 0xab, 0x1f, 0xb4, 0x3d, 0xde, 0xe9, 0xb5, 0x2a,
+	0x0e, 0xed, 0x6e, 0xb4, 0x69, 0x9b, 0x6e, 0x48, 0xb8, 0xd5, 0x3b, 0x4e, 0x3e, 0xda, 0x94, 0xb6,
+	0x7d, 0x92, 0xfc, 0xfe, 0x3c, 0xc2, 0x61, 0x48, 0x22, 0xbd, 0x20, 0x33, 0x84, 0x85, 0x3d, 0xb1,
+	0xdc, 0xbd, 0x78, 0xb9, 0xe8, 0xdb, 0x30, 0xcd, 0x42, 0xe2, 0x18, 0xd9, 0xb5, 0xcc, 0x7a, 0x7e,
+	0xf3, 0xf5, 0x4a, 0xbc, 0xe2, 0xca, 0x40, 0xe5, 0x20, 0x24, 0x8e, 0x25, 0x95, 0xd0, 0x6d, 0x98,
+	0x65, 0x1c, 0xf3, 0x1e, 0x33, 0xa6, 0xa5, 0xfa, 0xcd, 0x49, 0xea, 0x52, 0xc1, 0xd2, 0x8a, 0xe6,
+	0xdf, 0x67, 0xa0, 0x38, 0x44, 0x85, 0xb6, 0xc1, 0x70, 0xc9, 0x31, 0xee, 0xf9, 0xdc, 0x0e, 0x70,
+	0x97, 0xb0, 0x10, 0x3b, 0xc4, 0x0e, 0x23, 0x72, 0xec, 0xbd, 0x34, 0x66, 0xd6, 0x32, 0xeb, 0x39,
+	0xeb, 0x86, 0x96, 0xef, 0xc7, 0xe2, 0xa6, 0x94, 0xa2, 0x23, 0x40, 0x3c, 0xc2, 0xc7, 0xc7, 0x9e,
+	0x63, 0x77, 0x71, 0x80, 0xdb, 0xa4, 0x4b, 0x02, 0x6e, 0xdc, 0x94, 0x53, 0x79, 0x37, 0x99, 0xca,
+	0xa1, 0xd2, 0x79, 0x3a, 0x50, 0x79, 0x48, 0x30, 0xef, 0x45, 0x44, 0x2e, 0x64, 0x89, 0x8f, 0x4a,
+	0x51, 0x03, 0x4a, 0x21, 0xf5, 0x3d, 0xa7, 0x6f, 0x73, 0xe2, 0x93, 0x2e, 0xe1, 0x51, 0xdf, 0x28,
+	0x4b, 0xd2, 0xb7, 0x13, 0xd2, 0xa6, 0xd4, 0x38, 0x8c, 0x15, 0xd2, 0x94, 0x8b, 0xe1, 0xb0, 0x0c,
+	0xdd, 0x83, 0x79, 0x46, 0x9c, 0x5e, 0xe4, 0xf1, 0xbe, 0xb1, 0x22, 0x89, 0xde, 0x4c, 0x88, 0x0e,
+	0xb4, 0x24, 0xcd, 0x30, 0x50, 0x47, 0x16, 0x2c, 0x39, 0x34, 0x38, 0xf6, 0xda, 0xe9, 0x15, 0xbe,
+	0x29, 0x39, 0xde, 0x49, 0x38, 0x76, 0xa5, 0xca, 0xe4, 0x05, 0x96, 0x9c, 0x11, 0x21, 0xaa, 0xc1,
+	0xa2, 0x17, 0xb4, 0x23, 0xc2, 0x98, 0xdd, 0xc6, 0x9c, 0x7c, 0x8e, 0xfb, 0xc6, 0xea, 0x5a, 0x76,
+	0x3d, 0xbf, 0xb9, 0x92, 0x3e, 0x3e, 0xa9, 0xf0, 0x48, 0xc9, 0x25, 0xd1, 0x82, 0x37, 0x84, 0xa1,
+	0x1d, 0x58, 0x20, 0xc3, 0x2c, 0xb7, 0x24, 0xcb, 0x1b, 0x09, 0x4b, 0x6d, 0x8c, 0xa4, 0x48, 0x86,
+	0x38, 0x6a, 0x80, 0xc8, 0x4b, 0x4e, 0xa2, 0x00, 0xfb, 0x36, 0x0d, 0xc5, 0xe5, 0xa6, 0x11, 0x33,
+	0x36, 0x25, 0xcf, 0x8d, 0x84, 0xa7, 0xa1, 0x45, 0xea, 0xc4, 0x62, 0x8b, 0x18, 0x65, 0xe8, 0x01,
+	0x14, 0x4e, 0xb6, 0x99, 0xad, 0xaf, 0x09, 0x33, 0x9a, 0x72, 0x83, 0xde, 0x4a, 0x08, 0x9e, 0xf4,
+	0x5a, 0x24, 0x0a, 0x08, 0x27, 0xcc, 0x22, 0x8c, 0xf6, 0x22, 0x87, 0x30, 0xc9, 0x95, 0x3f, 0xd9,
+	0x66, 0x0f, 0xb4, 0x15, 0xaa, 0xc0, 0xb2, 0xd3, 0x63, 0x9c, 0x76, 0xed, 0x10, 0x3b, 0x27, 0xb8,
+	0x4d, 0xec, 0x10, 0xf3, 0x8e, 0xe1, 0xca, 0x3b, 0xb8, 0xa4, 0x44, 0x4d, 0x25, 0x69, 0x62, 0xde,
+	0x41, 0x25, 0xc8, 0x76, 0x7a, 0x2d, 0x83, 0x48, 0xb9, 0xf8, 0x14, 0x08, 0xc7, 0x6d, 0xe3, 0x58,
+	0x21, 0x1c, 0xb7, 0xcd, 0xbf, 0x4c, 0xc1, 0xca, 0xab, 0xee, 0x1f, 0xba, 0x03, 0x73, 0x24, 0xc0,
+	0x2d, 0x9f, 0xb8, 0x46, 0x46, 0xce, 0xba, 0x5c, 0x51, 0x3e, 0x5b, 0x89, 0x7d, 0xb6, 0xb2, 0x43,
+	0xa9, 0xff, 0x1c, 0xfb, 0x3d, 0x62, 0xc5, 0xaa, 0x68, 0x05, 0x72, 0x03, 0x5f, 0x31, 0xa6, 0xe4,
+	0x70, 0x09, 0x80, 0xde, 0x81, 0x05, 0xc7, 0xef, 0x31, 0x4e, 0x22, 0xdb, 0xa5, 0x5d, 0xec, 0x05,
+	0x86, 0x21, 0x55, 0x8a, 0x1a, 0x7d, 0x20, 0x41, 0xb4, 0x09, 0x33, 0xa1, 0xe7, 0x53, 0x6e, 0xac,
+	0xca, 0x81, 0x53, 0xa7, 0xdf, 0x14, 0xf0, 0x2e, 0xed, 0x86, 0x34, 0x20, 0x01, 0x97, 0x3b, 0xa5,
+	0x54, 0xa5, 0x4d, 0x44, 0x5f, 0x8a, 0xb3, 0x1e, 0xb5, 0x11, 0xf0, 0xa8, 0x8d, 0xc0, 0xd0, 0x33,
+	0x28, 0x31, 0xcf, 0x25, 0x0e, 0x8e, 0x6c, 0x2f, 0xf8, 0x19, 0x71, 0x38, 0x8d, 0x8c, 0xb5, 0x51,
+	0x27, 0x3d, 0x50, 0x1a, 0x7b, 0x5a, 0x61, 0x98, 0x68, 0x91, 0x0d, 0x4b, 0xcd, 0x5f, 0x66, 0xa1,
+	0x7c, 0xb6, 0x07, 0xa2, 0x06, 0xdc, 0xd0, 0x1e, 0xec, 0x74, 0x88, 0x73, 0x62, 0x1f, 0x63, 0x4f,
+	0xde, 0xaf, 0xc0, 0x80, 0x73, 0xf7, 0x78, 0x59, 0x59, 0xee, 0x0a, 0xc3, 0x87, 0xd8, 0x13, 0xb7,
+	0x2c, 0x40, 0x1c, 0x56, 0x68, 0x8f, 0xb7, 0x68, 0x2f, 0x70, 0xed, 0x38, 0xe4, 0xe8, 0x11, 0xba,
+	0xd4, 0x25, 0x46, 0x7e, 0x2d, 0xb3, 0xbe, 0xb0, 0xb9, 0x75, 0x91, 0xf0, 0x50, 0x69, 0x68, 0x22,
+	0xa5, 0x62, 0xdd, 0x8c, 0x89, 0xf5, 0x35, 0x51, 0xf0, 0x53, 0xea, 0x12, 0xf4, 0x01, 0xcc, 0xaa,
+	0x41, 0x8c, 0xcd, 0xd1, 0xa8, 0xa1, 0xb4, 0x86, 0x77, 0x49, 0x2b, 0xa3, 0xfb, 0x90, 0x4b, 0x02,
+	0xd7, 0x96, 0xb4, 0x5c, 0x4b, 0x45, 0xc3, 0x58, 0x34, 0x6c, 0x9c, 0x98, 0x98, 0x9b, 0xb0, 0x30,
+	0x3c, 0x47, 0x54, 0x84, 0x5c, 0xb5, 0x5e, 0x6f, 0x7c, 0x6a, 0x57, 0xf7, 0x5f, 0x94, 0xae, 0xa1,
+	0x25, 0x28, 0x5a, 0xb5, 0x47, 0x7b, 0x07, 0x87, 0xd6, 0x0b, 0xbb, 0xb1, 0x5f, 0x7f, 0x51, 0xca,
+	0x98, 0x7f, 0xcd, 0xc2, 0xf2, 0x84, 0x48, 0xf6, 0x8d, 0x5c, 0xef, 0xc7, 0x80, 0x1c, 0x1a, 0xf0,
+	0x88, 0xfa, 0x76, 0xe8, 0xe3, 0x80, 0xd8, 0x5d, 0xee, 0x33, 0xa3, 0x78, 0x2e, 0x7d, 0x49, 0x5b,
+	0x35, 0x85, 0xd1, 0x53, 0xee, 0x33, 0xb4, 0x03, 0x8b, 0x2e, 0xe6, 0x38, 0x4d, 0xb3, 0x70, 0x2e,
+	0x4d, 0x51, 0x98, 0x24, 0x1c, 0x6f, 0x41, 0x81, 0x47, 0x3d, 0xc6, 0x63, 0x57, 0x5b, 0x94, 0xd3,
+	0xcd, 0x4b, 0x4c, 0x3b, 0xda, 0x36, 0xcc, 0x39, 0x1e, 0xc7, 0x2e, 0xf1, 0x8d, 0xd7, 0x24, 0xfd,
+	0x6a, 0x2a, 0x74, 0x2b, 0xc1, 0xf0, 0x61, 0xc4, 0xea, 0xa8, 0x06, 0x05, 0x87, 0x44, 0x5c, 0x07,
+	0xff, 0xc8, 0xb8, 0x2e, 0xcd, 0xcd, 0x94, 0x39, 0x89, 0xb8, 0x0a, 0x2c, 0x23, 0x2e, 0x93, 0x77,
+	0x12, 0x09, 0xfa, 0x04, 0x20, 0xa0, 0x2e, 0xb1, 0x71, 0x5b, 0xa4, 0x8f, 0x1b, 0xa3, 0x57, 0x62,
+	0x9f, 0xba, 0xa4, 0x2a, 0x44, 0x23, 0x57, 0x22, 0x88, 0x71, 0xf3, 0x10, 0xde, 0x78, 0x45, 0x8e,
+	0x11, 0x17, 0xb5, 0x2d, 0x12, 0x7a, 0x5f, 0x1f, 0x72, 0xea, 0xa2, 0x3e, 0x92, 0xf8, 0xc8, 0x45,
+	0x55, 0xca, 0xe6, 0x17, 0x19, 0x40, 0xe3, 0xa1, 0x46, 0xb0, 0x39, 0xb4, 0xdb, 0xa5, 0xc1, 0x38,
+	0xdb, 0xae, 0xc4, 0x47, 0xd8, 0x94, 0xb2, 0xb8, 0x6a, 0x3a, 0x4c, 0x5c, 0xc0, 0xcb, 0x63, 0x55,
+	0xf3, 0x09, 0xa0, 0xf1, 0xc8, 0x75, 0xc5, 0x29, 0x98, 0xbf, 0xcb, 0xc0, 0xca, 0xab, 0x02, 0xd9,
+	0x55, 0x97, 0xf6, 0x63, 0x58, 0x51, 0xae, 0x91, 0x54, 0x48, 0xcc, 0x6e, 0xf5, 0xe3, 0x84, 0x77,
+	0x81, 0xf5, 0xde, 0x54, 0xf6, 0x83, 0x0a, 0x8a, 0xed, 0xf4, 0x75, 0xde, 0x33, 0xeb, 0xb0, 0x3c,
+	0x21, 0x9a, 0x5c, 0x75, 0x0b, 0x1a, 0x70, 0x63, 0x72, 0x84, 0xb9, 0x2a, 0xe1, 0x6f, 0x33, 0xf0,
+	0xda, 0x24, 0x27, 0xb9, 0xea, 0x5e, 0xde, 0x82, 0x3c, 0x23, 0xfe, 0xb1, 0xcd, 0xbc, 0x76, 0x40,
+	0x5c, 0x19, 0xb9, 0xe7, 0x2d, 0x10, 0xd0, 0x81, 0x44, 0xd0, 0x77, 0x00, 0x39, 0x11, 0xc1, 0x9c,
+	0xd8, 0x5d, 0xc2, 0x3a, 0x3a, 0xcc, 0x1b, 0x05, 0xa9, 0x57, 0x52, 0x92, 0xa7, 0x84, 0x75, 0xd4,
+	0x9e, 0x99, 0xcf, 0xc0, 0x38, 0xcb, 0x07, 0xbf, 0xc6, 0x16, 0x4e, 0xf6, 0xc8, 0xab, 0x12, 0xd6,
+	0x61, 0x79, 0x82, 0x1b, 0x5e, 0x95, 0xed, 0x4f, 0x53, 0xb0, 0x3c, 0x41, 0xfe, 0x8d, 0x84, 0xfa,
+	0x8f, 0x61, 0xc6, 0x25, 0xad, 0x5e, 0x5b, 0xb6, 0x23, 0x0b, 0xe9, 0x7a, 0x61, 0xc2, 0x0c, 0x2a,
+	0x75, 0xda, 0xae, 0x93, 0x53, 0xe2, 0x5b, 0xca, 0x08, 0x6d, 0x41, 0xf6, 0x64, 0xfb, 0x12, 0xd5,
+	0xa0, 0xd0, 0x2e, 0xbf, 0x0f, 0x70, 0x14, 0xba, 0x98, 0xab, 0xc8, 0x56, 0x82, 0x2c, 0xf5, 0xd5,
+	0x82, 0x72, 0x96, 0xf8, 0x14, 0x48, 0x40, 0x3e, 0xd7, 0x53, 0x15, 0x9f, 0xe6, 0x7d, 0x98, 0x8f,
+	0x47, 0x46, 0xf3, 0x30, 0xbd, 0xdf, 0xd8, 0xaf, 0x95, 0xae, 0xa1, 0x1c, 0xcc, 0xd4, 0x2c, 0xab,
+	0x61, 0x95, 0x32, 0x02, 0xfc, 0xb4, 0x6a, 0xed, 0x97, 0xa6, 0x04, 0xf8, 0xa0, 0xb6, 0x73, 0xf4,
+	0xa8, 0x94, 0x15, 0xe0, 0xde, 0xfe, 0xc3, 0x46, 0x69, 0xda, 0xfc, 0xe7, 0x1c, 0xbc, 0x7e, 0xc6,
+	0x94, 0xd0, 0x6d, 0xc8, 0x45, 0x31, 0xa0, 0xb7, 0x75, 0x39, 0x59, 0xc8, 0x40, 0xd7, 0x4a, 0xb4,
+	0x44, 0x52, 0x8b, 0x08, 0x76, 0xbd, 0x40, 0x94, 0xe6, 0x61, 0x44, 0x5b, 0x6a, 0x5f, 0x45, 0x77,
+	0xa6, 0xba, 0xcc, 0x0a, 0x0e, 0xbd, 0x8a, 0x68, 0x5a, 0x2b, 0xa7, 0xb2, 0x6c, 0x6b, 0x11, 0x6b,
+	0x61, 0x60, 0x21, 0x7f, 0xa3, 0xff, 0x83, 0x62, 0x44, 0x42, 0xdf, 0x73, 0xb0, 0xed, 0xd0, 0x5e,
+	0xc0, 0xe5, 0xfe, 0x17, 0xad, 0x82, 0x06, 0x77, 0x05, 0x86, 0x9e, 0xc1, 0x7c, 0x27, 0xc4, 0xb6,
+	0x6c, 0x17, 0x55, 0xff, 0x77, 0x37, 0x3d, 0x42, 0xaa, 0xe5, 0x15, 0x03, 0x3d, 0xa6, 0x91, 0xf7,
+	0x0b, 0x1a, 0x70, 0xec, 0x37, 0xa9, 0x5b, 0xd5, 0x32, 0xdd, 0x4d, 0xce, 0x75, 0x42, 0x2c, 0x97,
+	0x7b, 0x04, 0xd7, 0x43, 0xea, 0xda, 0xae, 0xc7, 0xa2, 0x5e, 0xc8, 0x3d, 0x1a, 0xd8, 0xad, 0x9e,
+	0xdb, 0x26, 0x5c, 0x36, 0x82, 0x43, 0x67, 0xd8, 0xa4, 0xee, 0x83, 0x81, 0xd6, 0x8e, 0x54, 0x92,
+	0x54, 0xcb, 0xe1, 0xb8, 0x00, 0xfd, 0x14, 0x16, 0x05, 0x2d, 0x0e, 0x02, 0xca, 0xb1, 0xc0, 0x99,
+	0x31, 0x2b, 0x7b, 0x8c, 0x0f, 0xce, 0xbd, 0x14, 0x62, 0xa0, 0x6a, 0x62, 0x57, 0x0b, 0x78, 0xd4,
+	0xb7, 0x16, 0xc2, 0x21, 0x10, 0xfd, 0x08, 0x8a, 0x32, 0xbf, 0x32, 0xe2, 0xab, 0xf2, 0x76, 0x4e,
+	0xb2, 0x6f, 0x9d, 0xcf, 0x2e, 0x1c, 0xfd, 0x40, 0x5b, 0x29, 0xee, 0x42, 0x90, 0x82, 0xd0, 0x81,
+	0x66, 0x16, 0xa5, 0x61, 0x20, 0xfa, 0xc7, 0x79, 0xb9, 0x11, 0x95, 0x8b, 0x31, 0x57, 0xb5, 0x95,
+	0x22, 0x8d, 0x7f, 0xa1, 0x6f, 0xc1, 0x92, 0xd7, 0x95, 0xfd, 0x4d, 0xcf, 0xf7, 0xe3, 0x00, 0x97,
+	0x93, 0x17, 0x7a, 0x51, 0x0a, 0x9a, 0x3d, 0xdf, 0xd7, 0xa5, 0x5f, 0x05, 0x96, 0xc3, 0xc8, 0xa3,
+	0xa2, 0xae, 0xb3, 0x1d, 0x1f, 0x33, 0x26, 0x53, 0x90, 0xcc, 0x38, 0x39, 0x6b, 0x29, 0x16, 0xed,
+	0x0a, 0x89, 0x48, 0x2e, 0xe8, 0x2e, 0xcc, 0xd3, 0x53, 0x12, 0xf9, 0xb8, 0xcf, 0x0c, 0x57, 0xee,
+	0x42, 0x39, 0x99, 0xeb, 0xc9, 0x36, 0x6b, 0xb4, 0x44, 0x5e, 0x6c, 0x28, 0x15, 0x6b, 0xa0, 0x5b,
+	0xae, 0x8a, 0x2c, 0x34, 0xb6, 0xd3, 0xc2, 0xdb, 0x4e, 0x74, 0x59, 0x91, 0xb3, 0xc4, 0x27, 0x7a,
+	0x0d, 0x66, 0x4e, 0x45, 0x08, 0xd1, 0x1e, 0xa8, 0x7e, 0x7c, 0x38, 0xb5, 0x9d, 0x29, 0x7f, 0x02,
+	0x4b, 0x63, 0xdb, 0x79, 0x29, 0x02, 0x0a, 0x85, 0xf4, 0xae, 0xa1, 0x37, 0x01, 0x70, 0xe4, 0x74,
+	0x6c, 0xdc, 0x75, 0xef, 0xde, 0x91, 0x14, 0x45, 0x2b, 0x27, 0x90, 0xaa, 0x00, 0x06, 0x62, 0xb6,
+	0x75, 0xef, 0xfd, 0x97, 0x92, 0x4d, 0x8b, 0x0f, 0x04, 0x20, 0x0a, 0x43, 0x29, 0x0e, 0x43, 0xe7,
+	0xee, 0x1d, 0x9f, 0x68, 0x17, 0xca, 0x0b, 0xac, 0xa9, 0x20, 0xf3, 0xab, 0x2c, 0xa0, 0xf1, 0x4e,
+	0x1b, 0xdd, 0x86, 0xb9, 0xb8, 0xa5, 0x86, 0xd1, 0x67, 0x18, 0xad, 0xa7, 0xaa, 0x31, 0x2b, 0xd6,
+	0x43, 0x4f, 0xa0, 0x10, 0xf7, 0xf4, 0xbc, 0x1f, 0xc6, 0x0d, 0xc9, 0xfa, 0xab, 0x1a, 0xfa, 0x18,
+	0x3a, 0xec, 0x87, 0xc4, 0xca, 0x7b, 0xc9, 0x0f, 0x54, 0x85, 0xa2, 0x4f, 0xb1, 0x6b, 0xb7, 0xb0,
+	0x8f, 0x03, 0x87, 0x44, 0xba, 0xb6, 0x4e, 0x35, 0x7b, 0x75, 0x8a, 0xdd, 0x1d, 0x2d, 0xd5, 0x53,
+	0x29, 0xf8, 0x29, 0x0c, 0x7d, 0x04, 0x79, 0xe6, 0x32, 0x3b, 0x4e, 0x08, 0xa5, 0x73, 0x13, 0x02,
+	0x30, 0x97, 0xd5, 0x74, 0x4e, 0xe8, 0xc0, 0xf5, 0xb8, 0xc7, 0x1f, 0x6a, 0x8a, 0x8c, 0x25, 0xb9,
+	0xaa, 0xcd, 0x57, 0xae, 0xaa, 0x36, 0xc9, 0xd2, 0x9a, 0x4c, 0x68, 0xae, 0x43, 0x3e, 0xb5, 0x0b,
+	0x22, 0x3c, 0xef, 0x1d, 0x1c, 0xee, 0x35, 0x4a, 0xd7, 0xd0, 0x02, 0xc0, 0x93, 0xa3, 0x9d, 0x9a,
+	0xb5, 0x5f, 0x3b, 0xac, 0x1d, 0x94, 0x32, 0xe6, 0x3d, 0xb8, 0x3e, 0x91, 0x79, 0x38, 0xe2, 0xd7,
+	0x1b, 0xbb, 0xd5, 0x7a, 0x29, 0x83, 0xf2, 0x30, 0xb7, 0x5b, 0x3f, 0x3a, 0x38, 0xac, 0x59, 0xa5,
+	0x29, 0xf3, 0x21, 0x2c, 0xd5, 0xfe, 0x0b, 0x67, 0x6c, 0xfe, 0x2a, 0x03, 0xe5, 0x64, 0xe3, 0xbd,
+	0xa0, 0x3d, 0xa4, 0x77, 0x95, 0x5b, 0x33, 0x76, 0xd0, 0xf9, 0xcb, 0x1e, 0xb4, 0xf9, 0x19, 0x14,
+	0x87, 0xa7, 0x71, 0xc5, 0xb2, 0x0c, 0xc1, 0xb4, 0xbc, 0xb8, 0x2a, 0xb0, 0xc8, 0x6f, 0xf3, 0x1f,
+	0x53, 0x80, 0xc6, 0x27, 0x80, 0x3e, 0x80, 0x99, 0x90, 0x46, 0x5c, 0xe4, 0x43, 0x11, 0x5f, 0x6e,
+	0x4d, 0x4a, 0x6b, 0x07, 0x24, 0x3a, 0xf5, 0x1c, 0xd2, 0xa4, 0x11, 0xb7, 0x94, 0xb6, 0xa8, 0x34,
+	0xf4, 0xfb, 0xc7, 0x5e, 0x53, 0x3a, 0x63, 0xce, 0x4a, 0x00, 0xb4, 0x06, 0xf9, 0xf8, 0x8a, 0xec,
+	0x35, 0x99, 0x31, 0xb3, 0x96, 0x15, 0x5d, 0x5c, 0x0a, 0x42, 0xeb, 0xb0, 0xc8, 0x08, 0x63, 0x1e,
+	0x0d, 0xe2, 0x00, 0x61, 0xcc, 0xa9, 0x98, 0x39, 0x02, 0xa3, 0x77, 0x61, 0x21, 0xbd, 0x47, 0x7b,
+	0x4d, 0x19, 0xb5, 0x73, 0xd6, 0x08, 0x8a, 0x3e, 0x04, 0x23, 0x8d, 0x1c, 0xc8, 0xe8, 0x6d, 0xe1,
+	0xa0, 0x4d, 0x98, 0x91, 0x93, 0x13, 0x38, 0x53, 0x8e, 0x4c, 0x28, 0xc4, 0x93, 0xdb, 0x4f, 0x02,
+	0xf2, 0x10, 0x86, 0xee, 0x9c, 0xe5, 0x47, 0x79, 0xa9, 0x7c, 0x86, 0x4f, 0x7c, 0x91, 0x81, 0x42,
+	0xfa, 0xc1, 0x4d, 0x14, 0x03, 0x5d, 0x1c, 0x78, 0xc7, 0x84, 0x71, 0xf5, 0x22, 0xa6, 0x82, 0x69,
+	0x21, 0x06, 0xe5, 0x63, 0xd8, 0xab, 0xeb, 0xb8, 0x8a, 0x7e, 0x55, 0x76, 0x75, 0x1c, 0x38, 0x3b,
+	0x23, 0x48, 0x3d, 0xf3, 0x0f, 0x19, 0x28, 0x8d, 0x8a, 0x44, 0xe5, 0x8e, 0x43, 0xcf, 0x3e, 0x25,
+	0x91, 0xd8, 0x6d, 0x3d, 0x0b, 0xc0, 0xa1, 0xf7, 0x5c, 0x21, 0xe2, 0x0e, 0x9d, 0x78, 0x81, 0xab,
+	0x87, 0x97, 0xdf, 0x02, 0x93, 0x09, 0x4b, 0x1d, 0xb8, 0xfc, 0x46, 0xf7, 0x61, 0x2e, 0xc4, 0xdc,
+	0xe9, 0x10, 0x66, 0x4c, 0xcb, 0x2b, 0xf4, 0xf6, 0xd9, 0x13, 0xaa, 0x88, 0xd5, 0xe9, 0x9a, 0x55,
+	0x1b, 0x95, 0x6f, 0x41, 0x6e, 0x80, 0x8a, 0x01, 0x52, 0x9b, 0x22, 0xbf, 0xcd, 0xdf, 0xcc, 0xc0,
+	0xe2, 0xc8, 0x03, 0x38, 0x7a, 0x3e, 0xf1, 0xb1, 0x5a, 0xf9, 0xc8, 0x7b, 0x67, 0xbe, 0x9b, 0x57,
+	0xf4, 0xda, 0xf4, 0x2b, 0xfa, 0x84, 0xd7, 0x6a, 0x6b, 0xc2, 0x6b, 0xf5, 0xd4, 0xe5, 0x58, 0xc7,
+	0x1e, 0xac, 0x77, 0x53, 0x0f, 0xd6, 0xd9, 0xcb, 0x71, 0x25, 0x4f, 0xd7, 0x87, 0x93, 0x9e, 0xae,
+	0xa7, 0x2f, 0xc7, 0x36, 0xfe, 0x78, 0xdd, 0x1c, 0x7f, 0xbc, 0x9e, 0x91, 0x67, 0x78, 0x61, 0xce,
+	0xd1, 0x77, 0xec, 0xfd, 0xb1, 0x77, 0xec, 0xd9, 0xcb, 0x11, 0x0e, 0xbf, 0x69, 0x97, 0x1d, 0x28,
+	0x0e, 0xc9, 0x91, 0x01, 0x73, 0xc3, 0x77, 0x36, 0xfe, 0x89, 0xb6, 0x07, 0xff, 0x9f, 0x4c, 0xc9,
+	0xcc, 0xb6, 0x76, 0xf6, 0x90, 0x23, 0x7f, 0xa3, 0x6c, 0xc3, 0xac, 0x66, 0x4f, 0xf2, 0x4f, 0x01,
+	0xe6, 0x8f, 0x9a, 0x0f, 0xaa, 0x87, 0x7b, 0xfb, 0x8f, 0x54, 0x0a, 0x7a, 0x5c, 0xab, 0xd6, 0x0f,
+	0x1f, 0xbf, 0x50, 0x7d, 0x87, 0x6a, 0x46, 0xb2, 0xe6, 0xbf, 0x32, 0x90, 0x1b, 0x54, 0x8a, 0xe8,
+	0x7b, 0x30, 0xeb, 0x7b, 0x5d, 0x2f, 0x15, 0x4c, 0xc7, 0x9b, 0x8b, 0x4a, 0x5d, 0x6a, 0xa8, 0xf2,
+	0x54, 0xab, 0xa3, 0xef, 0xc3, 0x7c, 0x44, 0x7e, 0xde, 0x23, 0x8c, 0x8b, 0xc9, 0x67, 0x87, 0x8b,
+	0xf3, 0xc4, 0xd4, 0xd2, 0x3a, 0xca, 0x78, 0x60, 0x52, 0xbe, 0x07, 0xf9, 0x14, 0xeb, 0xa5, 0xaa,
+	0xb4, 0x8f, 0xa0, 0x38, 0xc4, 0x7a, 0x19, 0x63, 0xf3, 0xf7, 0x19, 0x78, 0xfd, 0x8c, 0xd6, 0x41,
+	0xc6, 0x39, 0x2f, 0xb0, 0xf1, 0x29, 0xf6, 0x7c, 0x51, 0x88, 0xe8, 0x8a, 0xaf, 0xd0, 0xf5, 0x82,
+	0x6a, 0x8c, 0xa1, 0x86, 0x70, 0x0d, 0x5d, 0xe5, 0x2b, 0x37, 0xdb, 0x4a, 0xe5, 0x9f, 0xc1, 0x9f,
+	0x77, 0x95, 0xf0, 0xa4, 0x2d, 0x00, 0x56, 0xe9, 0x12, 0x8e, 0x45, 0x46, 0xaa, 0xe3, 0x16, 0xf1,
+	0xe3, 0xda, 0xd4, 0x1a, 0x90, 0xa0, 0xf7, 0x60, 0xb1, 0x8b, 0x5f, 0xda, 0xbd, 0x20, 0x19, 0x57,
+	0x55, 0x8a, 0x0b, 0x5d, 0xfc, 0xf2, 0x28, 0x41, 0xcd, 0xfb, 0x00, 0x2a, 0x32, 0x3d, 0x25, 0x1c,
+	0x0f, 0xe2, 0xda, 0x4c, 0x2a, 0xae, 0x0d, 0xc5, 0xe0, 0xd9, 0x91, 0x18, 0x6c, 0xfe, 0x7b, 0x06,
+	0xe6, 0x0f, 0x09, 0xe3, 0xa2, 0x61, 0x40, 0xdf, 0x85, 0x2c, 0x09, 0x4e, 0x8d, 0x8f, 0x47, 0xff,
+	0xb1, 0x89, 0x15, 0x2a, 0xb5, 0xe0, 0x54, 0x9d, 0x99, 0xd0, 0x1b, 0x6e, 0x43, 0x9b, 0x57, 0x6d,
+	0x43, 0x9f, 0x5d, 0xb6, 0x0d, 0x4d, 0x77, 0x98, 0xcf, 0xbf, 0xe1, 0x0e, 0xf3, 0xd3, 0xaf, 0xd5,
+	0x61, 0x36, 0xc6, 0x3b, 0xcc, 0xcf, 0xe4, 0xde, 0xbe, 0x3b, 0x61, 0x6f, 0x2f, 0xd2, 0x52, 0xee,
+	0x8d, 0xb6, 0x94, 0x3f, 0x19, 0xcd, 0x54, 0x03, 0xba, 0xf3, 0x7a, 0xc8, 0x1f, 0xc2, 0xf2, 0xc9,
+	0x36, 0xb3, 0xa9, 0xbc, 0x3c, 0xb6, 0xe8, 0xb8, 0x22, 0xcf, 0x25, 0x17, 0xe8, 0xce, 0x96, 0x86,
+	0x10, 0x61, 0x54, 0xbe, 0x0b, 0xf3, 0xf1, 0xcd, 0xb8, 0x94, 0xd3, 0xfe, 0x0f, 0xb4, 0x77, 0x3b,
+	0xa5, 0x3f, 0x7e, 0xb9, 0x9a, 0xf9, 0xf3, 0x97, 0xab, 0x99, 0xbf, 0x7d, 0xb9, 0x9a, 0xf9, 0xf5,
+	0x57, 0xab, 0xd7, 0x5a, 0xb3, 0xb2, 0x11, 0xd9, 0xfa, 0x4f, 0x00, 0x00, 0x00, 0xff, 0xff, 0x87,
+	0xb4, 0x72, 0xbc, 0xf4, 0x1f, 0x00, 0x00,
 }
 
 func (m *IstioInstaller) Marshal() (dAtA []byte, err error) {
@@ -2785,24 +2812,6 @@ func (m *InstallerSpec) MarshalTo(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if len(m.InstallPackagePath) > 0 {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(m.InstallPackagePath)))
-		i += copy(dAtA[i:], m.InstallPackagePath)
-	}
-	if len(m.Hub) > 0 {
-		dAtA[i] = 0x1a
-		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(m.Hub)))
-		i += copy(dAtA[i:], m.Hub)
-	}
-	if len(m.Tag) > 0 {
-		dAtA[i] = 0x22
-		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(m.Tag)))
-		i += copy(dAtA[i:], m.Tag)
-	}
 	if len(m.DefaultNamespacePrefix) > 0 {
 		dAtA[i] = 0x2a
 		i++
@@ -2911,13 +2920,37 @@ func (m *InstallerSpec) MarshalTo(dAtA []byte) (int, error) {
 		}
 		i += n7
 	}
+	if len(m.CustomPackagePath) > 0 {
+		dAtA[i] = 0xa2
+		i++
+		dAtA[i] = 0x6
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(m.CustomPackagePath)))
+		i += copy(dAtA[i:], m.CustomPackagePath)
+	}
+	if len(m.Hub) > 0 {
+		dAtA[i] = 0xaa
+		i++
+		dAtA[i] = 0x6
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(m.Hub)))
+		i += copy(dAtA[i:], m.Hub)
+	}
+	if len(m.Tag) > 0 {
+		dAtA[i] = 0xb2
+		i++
+		dAtA[i] = 0x6
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(m.Tag)))
+		i += copy(dAtA[i:], m.Tag)
+	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
 
-func (m *TrafficManagementConfig) Marshal() (dAtA []byte, err error) {
+func (m *TrafficManagementFeatureSpec) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalTo(dAtA)
@@ -2927,7 +2960,7 @@ func (m *TrafficManagementConfig) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *TrafficManagementConfig) MarshalTo(dAtA []byte) (int, error) {
+func (m *TrafficManagementFeatureSpec) MarshalTo(dAtA []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
@@ -2998,7 +3031,7 @@ func (m *TrafficManagementConfig) MarshalTo(dAtA []byte) (int, error) {
 	return i, nil
 }
 
-func (m *PolicyTelemetryConfig) Marshal() (dAtA []byte, err error) {
+func (m *PolicyTelemetryFeatureSpec) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalTo(dAtA)
@@ -3008,7 +3041,7 @@ func (m *PolicyTelemetryConfig) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *PolicyTelemetryConfig) MarshalTo(dAtA []byte) (int, error) {
+func (m *PolicyTelemetryFeatureSpec) MarshalTo(dAtA []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
@@ -3058,7 +3091,7 @@ func (m *PolicyTelemetryConfig) MarshalTo(dAtA []byte) (int, error) {
 	return i, nil
 }
 
-func (m *SecurityConfig) Marshal() (dAtA []byte, err error) {
+func (m *SecurityFeatureSpec) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalTo(dAtA)
@@ -3068,7 +3101,7 @@ func (m *SecurityConfig) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *SecurityConfig) MarshalTo(dAtA []byte) (int, error) {
+func (m *SecurityFeatureSpec) MarshalTo(dAtA []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
@@ -3115,41 +3148,17 @@ func (m *SecurityConfig) MarshalTo(dAtA []byte) (int, error) {
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(m.TrustDomain)))
 		i += copy(dAtA[i:], m.TrustDomain)
 	}
-	if m.SelfSigned != nil {
-		dAtA[i] = 0x82
-		i++
-		dAtA[i] = 0x1
-		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.SelfSigned.Size()))
-		n18, err := m.SelfSigned.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n18
-	}
-	if m.CreateMeshPolicy != nil {
-		dAtA[i] = 0x8a
-		i++
-		dAtA[i] = 0x1
-		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.CreateMeshPolicy.Size()))
-		n19, err := m.CreateMeshPolicy.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n19
-	}
 	if m.Citadel != nil {
 		dAtA[i] = 0xa2
 		i++
 		dAtA[i] = 0x1
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Citadel.Size()))
-		n20, err := m.Citadel.MarshalTo(dAtA[i:])
+		n18, err := m.Citadel.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n20
+		i += n18
 	}
 	if m.CertManager != nil {
 		dAtA[i] = 0xaa
@@ -3157,11 +3166,11 @@ func (m *SecurityConfig) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x1
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.CertManager.Size()))
-		n21, err := m.CertManager.MarshalTo(dAtA[i:])
+		n19, err := m.CertManager.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n21
+		i += n19
 	}
 	if m.NodeAgent != nil {
 		dAtA[i] = 0xb2
@@ -3169,11 +3178,11 @@ func (m *SecurityConfig) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x1
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.NodeAgent.Size()))
-		n22, err := m.NodeAgent.MarshalTo(dAtA[i:])
+		n20, err := m.NodeAgent.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n22
+		i += n20
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
@@ -3181,7 +3190,7 @@ func (m *SecurityConfig) MarshalTo(dAtA []byte) (int, error) {
 	return i, nil
 }
 
-func (m *PilotComponentConfig) Marshal() (dAtA []byte, err error) {
+func (m *ConfigManagementFeatureSpec) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalTo(dAtA)
@@ -3191,7 +3200,38 @@ func (m *PilotComponentConfig) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *PilotComponentConfig) MarshalTo(dAtA []byte) (int, error) {
+func (m *ConfigManagementFeatureSpec) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if m.Galley != nil {
+		dAtA[i] = 0xa
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Galley.Size()))
+		n21, err := m.Galley.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n21
+	}
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	return i, nil
+}
+
+func (m *PilotComponentSpec) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *PilotComponentSpec) MarshalTo(dAtA []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
@@ -3200,17 +3240,48 @@ func (m *PilotComponentConfig) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Common.Size()))
-		n23, err := m.Common.MarshalTo(dAtA[i:])
+		n22, err := m.Common.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n23
+		i += n22
 	}
 	if m.Sidecar != nil {
 		dAtA[i] = 0x52
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Sidecar.Size()))
-		n24, err := m.Sidecar.MarshalTo(dAtA[i:])
+		n23, err := m.Sidecar.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n23
+	}
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	return i, nil
+}
+
+func (m *ProxyComponentSpec) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *ProxyComponentSpec) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if m.Common != nil {
+		dAtA[i] = 0xa
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Common.Size()))
+		n24, err := m.Common.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
@@ -3222,7 +3293,7 @@ func (m *PilotComponentConfig) MarshalTo(dAtA []byte) (int, error) {
 	return i, nil
 }
 
-func (m *ProxyComponentConfig) Marshal() (dAtA []byte, err error) {
+func (m *SidecarInjectorComponentSpec) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalTo(dAtA)
@@ -3232,7 +3303,7 @@ func (m *ProxyComponentConfig) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *ProxyComponentConfig) MarshalTo(dAtA []byte) (int, error) {
+func (m *SidecarInjectorComponentSpec) MarshalTo(dAtA []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
@@ -3247,13 +3318,23 @@ func (m *ProxyComponentConfig) MarshalTo(dAtA []byte) (int, error) {
 		}
 		i += n25
 	}
+	if m.EnableNamespacesByDefault != nil {
+		dAtA[i] = 0x52
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.EnableNamespacesByDefault.Size()))
+		n26, err := m.EnableNamespacesByDefault.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n26
+	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
 
-func (m *SidecarInjectorComponentConfig) Marshal() (dAtA []byte, err error) {
+func (m *PolicyComponentSpec) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalTo(dAtA)
@@ -3263,7 +3344,7 @@ func (m *SidecarInjectorComponentConfig) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *SidecarInjectorComponentConfig) MarshalTo(dAtA []byte) (int, error) {
+func (m *PolicyComponentSpec) MarshalTo(dAtA []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
@@ -3272,17 +3353,7 @@ func (m *SidecarInjectorComponentConfig) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Common.Size()))
-		n26, err := m.Common.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n26
-	}
-	if m.EnableNamespacesByDefault != nil {
-		dAtA[i] = 0x52
-		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.EnableNamespacesByDefault.Size()))
-		n27, err := m.EnableNamespacesByDefault.MarshalTo(dAtA[i:])
+		n27, err := m.Common.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
@@ -3294,7 +3365,7 @@ func (m *SidecarInjectorComponentConfig) MarshalTo(dAtA []byte) (int, error) {
 	return i, nil
 }
 
-func (m *PolicyComponentConfig) Marshal() (dAtA []byte, err error) {
+func (m *TelemetryComponentSpec) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalTo(dAtA)
@@ -3304,7 +3375,7 @@ func (m *PolicyComponentConfig) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *PolicyComponentConfig) MarshalTo(dAtA []byte) (int, error) {
+func (m *TelemetryComponentSpec) MarshalTo(dAtA []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
@@ -3325,7 +3396,7 @@ func (m *PolicyComponentConfig) MarshalTo(dAtA []byte) (int, error) {
 	return i, nil
 }
 
-func (m *TelemetryComponentConfig) Marshal() (dAtA []byte, err error) {
+func (m *CitadelComponentSpec) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalTo(dAtA)
@@ -3335,7 +3406,7 @@ func (m *TelemetryComponentConfig) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *TelemetryComponentConfig) MarshalTo(dAtA []byte) (int, error) {
+func (m *CitadelComponentSpec) MarshalTo(dAtA []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
@@ -3350,13 +3421,33 @@ func (m *TelemetryComponentConfig) MarshalTo(dAtA []byte) (int, error) {
 		}
 		i += n29
 	}
+	if m.SelfSigned {
+		dAtA[i] = 0x58
+		i++
+		if m.SelfSigned {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i++
+	}
+	if m.CreateMeshPolicy {
+		dAtA[i] = 0x60
+		i++
+		if m.CreateMeshPolicy {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i++
+	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
 
-func (m *CitadelComponentConfig) Marshal() (dAtA []byte, err error) {
+func (m *CertManagerComponentSpec) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalTo(dAtA)
@@ -3366,7 +3457,7 @@ func (m *CitadelComponentConfig) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *CitadelComponentConfig) MarshalTo(dAtA []byte) (int, error) {
+func (m *CertManagerComponentSpec) MarshalTo(dAtA []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
@@ -3387,7 +3478,7 @@ func (m *CitadelComponentConfig) MarshalTo(dAtA []byte) (int, error) {
 	return i, nil
 }
 
-func (m *CertManagerComponentConfig) Marshal() (dAtA []byte, err error) {
+func (m *NodeAgentComponentSpec) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalTo(dAtA)
@@ -3397,7 +3488,7 @@ func (m *CertManagerComponentConfig) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *CertManagerComponentConfig) MarshalTo(dAtA []byte) (int, error) {
+func (m *NodeAgentComponentSpec) MarshalTo(dAtA []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
@@ -3418,7 +3509,7 @@ func (m *CertManagerComponentConfig) MarshalTo(dAtA []byte) (int, error) {
 	return i, nil
 }
 
-func (m *NodeAgentComponentConfig) Marshal() (dAtA []byte, err error) {
+func (m *GalleyComponentSpec) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalTo(dAtA)
@@ -3428,7 +3519,7 @@ func (m *NodeAgentComponentConfig) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *NodeAgentComponentConfig) MarshalTo(dAtA []byte) (int, error) {
+func (m *GalleyComponentSpec) MarshalTo(dAtA []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
@@ -3449,7 +3540,7 @@ func (m *NodeAgentComponentConfig) MarshalTo(dAtA []byte) (int, error) {
 	return i, nil
 }
 
-func (m *ConfigManagementConfig) Marshal() (dAtA []byte, err error) {
+func (m *CommonComponentSpec) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalTo(dAtA)
@@ -3459,38 +3550,7 @@ func (m *ConfigManagementConfig) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *ConfigManagementConfig) MarshalTo(dAtA []byte) (int, error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	if m.Common != nil {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Common.Size()))
-		n33, err := m.Common.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n33
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	return i, nil
-}
-
-func (m *CommonComponentConfig) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *CommonComponentConfig) MarshalTo(dAtA []byte) (int, error) {
+func (m *CommonComponentSpec) MarshalTo(dAtA []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
@@ -3499,11 +3559,11 @@ func (m *CommonComponentConfig) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Enabled.Size()))
-		n34, err := m.Enabled.MarshalTo(dAtA[i:])
+		n33, err := m.Enabled.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n34
+		i += n33
 	}
 	if len(m.Namespace) > 0 {
 		dAtA[i] = 0x12
@@ -3516,77 +3576,17 @@ func (m *CommonComponentConfig) MarshalTo(dAtA []byte) (int, error) {
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Debug))
 	}
-	if len(m.Env) > 0 {
-		for k, _ := range m.Env {
-			dAtA[i] = 0xe2
-			i++
-			dAtA[i] = 0x3
-			i++
-			v := m.Env[k]
-			msgSize := 0
-			if v != nil {
-				msgSize = v.Size()
-				msgSize += 1 + sovIstioinstallerTypes(uint64(msgSize))
-			}
-			mapSize := 1 + len(k) + sovIstioinstallerTypes(uint64(len(k))) + msgSize
-			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(mapSize))
-			dAtA[i] = 0xa
-			i++
-			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(k)))
-			i += copy(dAtA[i:], k)
-			if v != nil {
-				dAtA[i] = 0x12
-				i++
-				i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(v.Size()))
-				n35, err := v.MarshalTo(dAtA[i:])
-				if err != nil {
-					return 0, err
-				}
-				i += n35
-			}
-		}
-	}
-	if len(m.Args) > 0 {
-		for k, _ := range m.Args {
-			dAtA[i] = 0xea
-			i++
-			dAtA[i] = 0x3
-			i++
-			v := m.Args[k]
-			msgSize := 0
-			if v != nil {
-				msgSize = v.Size()
-				msgSize += 1 + sovIstioinstallerTypes(uint64(msgSize))
-			}
-			mapSize := 1 + len(k) + sovIstioinstallerTypes(uint64(len(k))) + msgSize
-			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(mapSize))
-			dAtA[i] = 0xa
-			i++
-			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(k)))
-			i += copy(dAtA[i:], k)
-			if v != nil {
-				dAtA[i] = 0x12
-				i++
-				i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(v.Size()))
-				n36, err := v.MarshalTo(dAtA[i:])
-				if err != nil {
-					return 0, err
-				}
-				i += n36
-			}
-		}
-	}
 	if m.K8S != nil {
 		dAtA[i] = 0x82
 		i++
 		dAtA[i] = 0x5
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.K8S.Size()))
-		n37, err := m.K8S.MarshalTo(dAtA[i:])
+		n34, err := m.K8S.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n37
+		i += n34
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
@@ -3594,7 +3594,7 @@ func (m *CommonComponentConfig) MarshalTo(dAtA []byte) (int, error) {
 	return i, nil
 }
 
-func (m *CommonComponentConfig_UpdateSpec) Marshal() (dAtA []byte, err error) {
+func (m *CommonComponentSpec_UpdateSpec) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalTo(dAtA)
@@ -3604,7 +3604,7 @@ func (m *CommonComponentConfig_UpdateSpec) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *CommonComponentConfig_UpdateSpec) MarshalTo(dAtA []byte) (int, error) {
+func (m *CommonComponentSpec_UpdateSpec) MarshalTo(dAtA []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
@@ -3627,7 +3627,7 @@ func (m *CommonComponentConfig_UpdateSpec) MarshalTo(dAtA []byte) (int, error) {
 	return i, nil
 }
 
-func (m *KubernetesResourcesConfig) Marshal() (dAtA []byte, err error) {
+func (m *KubernetesResourcesSpec) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalTo(dAtA)
@@ -3637,7 +3637,7 @@ func (m *KubernetesResourcesConfig) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *KubernetesResourcesConfig) MarshalTo(dAtA []byte) (int, error) {
+func (m *KubernetesResourcesSpec) MarshalTo(dAtA []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
@@ -3646,21 +3646,21 @@ func (m *KubernetesResourcesConfig) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Resources.Size()))
-		n38, err := m.Resources.MarshalTo(dAtA[i:])
+		n35, err := m.Resources.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n38
+		i += n35
 	}
 	if m.ReadinessProbe != nil {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.ReadinessProbe.Size()))
-		n39, err := m.ReadinessProbe.MarshalTo(dAtA[i:])
+		n36, err := m.ReadinessProbe.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n39
+		i += n36
 	}
 	if m.ReplicaCount != 0 {
 		dAtA[i] = 0x18
@@ -3671,21 +3671,21 @@ func (m *KubernetesResourcesConfig) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x22
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.HpaSpec.Size()))
-		n40, err := m.HpaSpec.MarshalTo(dAtA[i:])
+		n37, err := m.HpaSpec.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n40
+		i += n37
 	}
 	if m.PodDisruptionBudget != nil {
 		dAtA[i] = 0x2a
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.PodDisruptionBudget.Size()))
-		n41, err := m.PodDisruptionBudget.MarshalTo(dAtA[i:])
+		n38, err := m.PodDisruptionBudget.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n41
+		i += n38
 	}
 	if len(m.PodAnnotations) > 0 {
 		for k, _ := range m.PodAnnotations {
@@ -3725,11 +3725,11 @@ func (m *KubernetesResourcesConfig) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x42
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.NodeAffinity.Size()))
-		n42, err := m.NodeAffinity.MarshalTo(dAtA[i:])
+		n39, err := m.NodeAffinity.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n42
+		i += n39
 	}
 	if len(m.ImagePullPolicy) > 0 {
 		dAtA[i] = 0x4a
@@ -3763,7 +3763,7 @@ func (m *KubernetesResourcesConfig) MarshalTo(dAtA []byte) (int, error) {
 	return i, nil
 }
 
-func (m *KubernetesResourcesConfig_NodeAffinity) Marshal() (dAtA []byte, err error) {
+func (m *KubernetesResourcesSpec_NodeAffinity) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalTo(dAtA)
@@ -3773,7 +3773,7 @@ func (m *KubernetesResourcesConfig_NodeAffinity) Marshal() (dAtA []byte, err err
 	return dAtA[:n], nil
 }
 
-func (m *KubernetesResourcesConfig_NodeAffinity) MarshalTo(dAtA []byte) (int, error) {
+func (m *KubernetesResourcesSpec_NodeAffinity) MarshalTo(dAtA []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
@@ -3799,7 +3799,7 @@ func (m *KubernetesResourcesConfig_NodeAffinity) MarshalTo(dAtA []byte) (int, er
 	return i, nil
 }
 
-func (m *IngressGatewayConfig) Marshal() (dAtA []byte, err error) {
+func (m *IngressGatewaySpec) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalTo(dAtA)
@@ -3809,7 +3809,7 @@ func (m *IngressGatewayConfig) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *IngressGatewayConfig) MarshalTo(dAtA []byte) (int, error) {
+func (m *IngressGatewaySpec) MarshalTo(dAtA []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
@@ -3818,36 +3818,26 @@ func (m *IngressGatewayConfig) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x52
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Gateway.Size()))
-		n43, err := m.Gateway.MarshalTo(dAtA[i:])
+		n40, err := m.Gateway.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n43
+		i += n40
 	}
 	if m.IngressType != 0 {
 		dAtA[i] = 0x58
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.IngressType))
 	}
-	if m.HttpsEnabled != nil {
-		dAtA[i] = 0x62
-		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.HttpsEnabled.Size()))
-		n44, err := m.HttpsEnabled.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n44
-	}
 	if m.LoadBalancer != nil {
 		dAtA[i] = 0x6a
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.LoadBalancer.Size()))
-		n45, err := m.LoadBalancer.MarshalTo(dAtA[i:])
+		n41, err := m.LoadBalancer.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n45
+		i += n41
 	}
 	if m.SdsEnabled != nil {
 		dAtA[i] = 0x82
@@ -3855,11 +3845,11 @@ func (m *IngressGatewayConfig) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x1
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.SdsEnabled.Size()))
-		n46, err := m.SdsEnabled.MarshalTo(dAtA[i:])
+		n42, err := m.SdsEnabled.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n46
+		i += n42
 	}
 	if m.ExternalTrafficPolicy != 0 {
 		dAtA[i] = 0x88
@@ -3874,7 +3864,7 @@ func (m *IngressGatewayConfig) MarshalTo(dAtA []byte) (int, error) {
 	return i, nil
 }
 
-func (m *EgressGatewayConfig) Marshal() (dAtA []byte, err error) {
+func (m *EgressGatewaySpec) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalTo(dAtA)
@@ -3884,7 +3874,7 @@ func (m *EgressGatewayConfig) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *EgressGatewayConfig) MarshalTo(dAtA []byte) (int, error) {
+func (m *EgressGatewaySpec) MarshalTo(dAtA []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
@@ -3893,11 +3883,11 @@ func (m *EgressGatewayConfig) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x52
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Gateway.Size()))
-		n47, err := m.Gateway.MarshalTo(dAtA[i:])
+		n43, err := m.Gateway.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n47
+		i += n43
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
@@ -3924,21 +3914,21 @@ func (m *LoadBalancingGatewayConfig) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x52
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Gateway.Size()))
-		n48, err := m.Gateway.MarshalTo(dAtA[i:])
+		n44, err := m.Gateway.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n48
+		i += n44
 	}
 	if m.LoadBalancer != nil {
 		dAtA[i] = 0x5a
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.LoadBalancer.Size()))
-		n49, err := m.LoadBalancer.MarshalTo(dAtA[i:])
+		n45, err := m.LoadBalancer.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n49
+		i += n45
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
@@ -3965,11 +3955,11 @@ func (m *GatewayConfig) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Common.Size()))
-		n50, err := m.Common.MarshalTo(dAtA[i:])
+		n46, err := m.Common.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n50
+		i += n46
 	}
 	if len(m.Type) > 0 {
 		dAtA[i] = 0x52
@@ -4076,7 +4066,7 @@ func (m *LoadBalancerConfig) MarshalTo(dAtA []byte) (int, error) {
 	return i, nil
 }
 
-func (m *OperatorConfig) Marshal() (dAtA []byte, err error) {
+func (m *OperatorSpec) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalTo(dAtA)
@@ -4086,7 +4076,7 @@ func (m *OperatorConfig) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *OperatorConfig) MarshalTo(dAtA []byte) (int, error) {
+func (m *OperatorSpec) MarshalTo(dAtA []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
@@ -4109,11 +4099,11 @@ func (m *OperatorConfig) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x6
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Spec.Size()))
-		n51, err := m.Spec.MarshalTo(dAtA[i:])
+		n47, err := m.Spec.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n51
+		i += n47
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
@@ -4136,15 +4126,62 @@ func (m *K8SObjectOverlay) MarshalTo(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.PatchType != 0 {
-		dAtA[i] = 0x8
+	if len(m.ApiVersion) > 0 {
+		dAtA[i] = 0xa
 		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.PatchType))
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(m.ApiVersion)))
+		i += copy(dAtA[i:], m.ApiVersion)
 	}
-	if m.Op != 0 {
-		dAtA[i] = 0x10
+	if len(m.Kind) > 0 {
+		dAtA[i] = 0x12
 		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Op))
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(m.Kind)))
+		i += copy(dAtA[i:], m.Kind)
+	}
+	if len(m.Name) > 0 {
+		dAtA[i] = 0x1a
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(m.Name)))
+		i += copy(dAtA[i:], m.Name)
+	}
+	if len(m.Patches) > 0 {
+		for _, msg := range m.Patches {
+			dAtA[i] = 0x22
+			i++
+			i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(msg.Size()))
+			n, err := msg.MarshalTo(dAtA[i:])
+			if err != nil {
+				return 0, err
+			}
+			i += n
+		}
+	}
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	return i, nil
+}
+
+func (m *K8SObjectOverlay_PathValue) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *K8SObjectOverlay_PathValue) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if len(m.Path) > 0 {
+		dAtA[i] = 0xa
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(m.Path)))
+		i += copy(dAtA[i:], m.Path)
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
@@ -4171,41 +4208,41 @@ func (m *InstallerStatus) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.TrafficManagement.Size()))
-		n52, err := m.TrafficManagement.MarshalTo(dAtA[i:])
+		n48, err := m.TrafficManagement.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n52
+		i += n48
 	}
 	if m.PolicyTelemetry != nil {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.PolicyTelemetry.Size()))
-		n53, err := m.PolicyTelemetry.MarshalTo(dAtA[i:])
+		n49, err := m.PolicyTelemetry.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n53
+		i += n49
 	}
 	if m.Security != nil {
 		dAtA[i] = 0x1a
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Security.Size()))
-		n54, err := m.Security.MarshalTo(dAtA[i:])
+		n50, err := m.Security.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n54
+		i += n50
 	}
 	if m.ConfigManagement != nil {
 		dAtA[i] = 0x22
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.ConfigManagement.Size()))
-		n55, err := m.ConfigManagement.MarshalTo(dAtA[i:])
+		n51, err := m.ConfigManagement.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n55
+		i += n51
 	}
 	if len(m.IngressGateway) > 0 {
 		for _, msg := range m.IngressGateway {
@@ -4348,11 +4385,11 @@ func (m *PodDisruptionBudgetSpec) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Selector.Size()))
-		n56, err := m.Selector.MarshalTo(dAtA[i:])
+		n52, err := m.Selector.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n56
+		i += n52
 	}
 	if m.MaxUnavailable != 0 {
 		dAtA[i] = 0x18
@@ -4438,11 +4475,11 @@ func (m *TestKube) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x5
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Resources.Size()))
-		n57, err := m.Resources.MarshalTo(dAtA[i:])
+		n53, err := m.Resources.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n57
+		i += n53
 	}
 	if m.ReadinessProbe != nil {
 		dAtA[i] = 0x8a
@@ -4450,11 +4487,11 @@ func (m *TestKube) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x5
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.ReadinessProbe.Size()))
-		n58, err := m.ReadinessProbe.MarshalTo(dAtA[i:])
+		n54, err := m.ReadinessProbe.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n58
+		i += n54
 	}
 	if m.HpaSpec != nil {
 		dAtA[i] = 0xb2
@@ -4462,11 +4499,11 @@ func (m *TestKube) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x5
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.HpaSpec.Size()))
-		n59, err := m.HpaSpec.MarshalTo(dAtA[i:])
+		n55, err := m.HpaSpec.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n59
+		i += n55
 	}
 	if m.PodDisruptionBudget != nil {
 		dAtA[i] = 0xba
@@ -4474,11 +4511,11 @@ func (m *TestKube) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x5
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.PodDisruptionBudget.Size()))
-		n60, err := m.PodDisruptionBudget.MarshalTo(dAtA[i:])
+		n56, err := m.PodDisruptionBudget.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n60
+		i += n56
 	}
 	if len(m.PodAnnotations) > 0 {
 		for k, _ := range m.PodAnnotations {
@@ -4573,18 +4610,6 @@ func (m *InstallerSpec) Size() (n int) {
 	}
 	var l int
 	_ = l
-	l = len(m.InstallPackagePath)
-	if l > 0 {
-		n += 1 + l + sovIstioinstallerTypes(uint64(l))
-	}
-	l = len(m.Hub)
-	if l > 0 {
-		n += 1 + l + sovIstioinstallerTypes(uint64(l))
-	}
-	l = len(m.Tag)
-	if l > 0 {
-		n += 1 + l + sovIstioinstallerTypes(uint64(l))
-	}
 	l = len(m.DefaultNamespacePrefix)
 	if l > 0 {
 		n += 1 + l + sovIstioinstallerTypes(uint64(l))
@@ -4627,13 +4652,25 @@ func (m *InstallerSpec) Size() (n int) {
 		l = m.K8SDefaults.Size()
 		n += 2 + l + sovIstioinstallerTypes(uint64(l))
 	}
+	l = len(m.CustomPackagePath)
+	if l > 0 {
+		n += 2 + l + sovIstioinstallerTypes(uint64(l))
+	}
+	l = len(m.Hub)
+	if l > 0 {
+		n += 2 + l + sovIstioinstallerTypes(uint64(l))
+	}
+	l = len(m.Tag)
+	if l > 0 {
+		n += 2 + l + sovIstioinstallerTypes(uint64(l))
+	}
 	if m.XXX_unrecognized != nil {
 		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
 
-func (m *TrafficManagementConfig) Size() (n int) {
+func (m *TrafficManagementFeatureSpec) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -4669,7 +4706,7 @@ func (m *TrafficManagementConfig) Size() (n int) {
 	return n
 }
 
-func (m *PolicyTelemetryConfig) Size() (n int) {
+func (m *PolicyTelemetryFeatureSpec) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -4696,7 +4733,7 @@ func (m *PolicyTelemetryConfig) Size() (n int) {
 	return n
 }
 
-func (m *SecurityConfig) Size() (n int) {
+func (m *SecurityFeatureSpec) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -4722,14 +4759,6 @@ func (m *SecurityConfig) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovIstioinstallerTypes(uint64(l))
 	}
-	if m.SelfSigned != nil {
-		l = m.SelfSigned.Size()
-		n += 2 + l + sovIstioinstallerTypes(uint64(l))
-	}
-	if m.CreateMeshPolicy != nil {
-		l = m.CreateMeshPolicy.Size()
-		n += 2 + l + sovIstioinstallerTypes(uint64(l))
-	}
 	if m.Citadel != nil {
 		l = m.Citadel.Size()
 		n += 2 + l + sovIstioinstallerTypes(uint64(l))
@@ -4748,7 +4777,23 @@ func (m *SecurityConfig) Size() (n int) {
 	return n
 }
 
-func (m *PilotComponentConfig) Size() (n int) {
+func (m *ConfigManagementFeatureSpec) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Galley != nil {
+		l = m.Galley.Size()
+		n += 1 + l + sovIstioinstallerTypes(uint64(l))
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func (m *PilotComponentSpec) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -4768,7 +4813,7 @@ func (m *PilotComponentConfig) Size() (n int) {
 	return n
 }
 
-func (m *ProxyComponentConfig) Size() (n int) {
+func (m *ProxyComponentSpec) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -4784,7 +4829,7 @@ func (m *ProxyComponentConfig) Size() (n int) {
 	return n
 }
 
-func (m *SidecarInjectorComponentConfig) Size() (n int) {
+func (m *SidecarInjectorComponentSpec) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -4804,7 +4849,7 @@ func (m *SidecarInjectorComponentConfig) Size() (n int) {
 	return n
 }
 
-func (m *PolicyComponentConfig) Size() (n int) {
+func (m *PolicyComponentSpec) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -4820,7 +4865,7 @@ func (m *PolicyComponentConfig) Size() (n int) {
 	return n
 }
 
-func (m *TelemetryComponentConfig) Size() (n int) {
+func (m *TelemetryComponentSpec) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -4836,7 +4881,29 @@ func (m *TelemetryComponentConfig) Size() (n int) {
 	return n
 }
 
-func (m *CitadelComponentConfig) Size() (n int) {
+func (m *CitadelComponentSpec) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Common != nil {
+		l = m.Common.Size()
+		n += 1 + l + sovIstioinstallerTypes(uint64(l))
+	}
+	if m.SelfSigned {
+		n += 2
+	}
+	if m.CreateMeshPolicy {
+		n += 2
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func (m *CertManagerComponentSpec) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -4852,7 +4919,7 @@ func (m *CitadelComponentConfig) Size() (n int) {
 	return n
 }
 
-func (m *CertManagerComponentConfig) Size() (n int) {
+func (m *NodeAgentComponentSpec) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -4868,7 +4935,7 @@ func (m *CertManagerComponentConfig) Size() (n int) {
 	return n
 }
 
-func (m *NodeAgentComponentConfig) Size() (n int) {
+func (m *GalleyComponentSpec) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -4884,23 +4951,7 @@ func (m *NodeAgentComponentConfig) Size() (n int) {
 	return n
 }
 
-func (m *ConfigManagementConfig) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.Common != nil {
-		l = m.Common.Size()
-		n += 1 + l + sovIstioinstallerTypes(uint64(l))
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
-	return n
-}
-
-func (m *CommonComponentConfig) Size() (n int) {
+func (m *CommonComponentSpec) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -4917,32 +4968,6 @@ func (m *CommonComponentConfig) Size() (n int) {
 	if m.Debug != 0 {
 		n += 1 + sovIstioinstallerTypes(uint64(m.Debug))
 	}
-	if len(m.Env) > 0 {
-		for k, v := range m.Env {
-			_ = k
-			_ = v
-			l = 0
-			if v != nil {
-				l = v.Size()
-				l += 1 + sovIstioinstallerTypes(uint64(l))
-			}
-			mapEntrySize := 1 + len(k) + sovIstioinstallerTypes(uint64(len(k))) + l
-			n += mapEntrySize + 2 + sovIstioinstallerTypes(uint64(mapEntrySize))
-		}
-	}
-	if len(m.Args) > 0 {
-		for k, v := range m.Args {
-			_ = k
-			_ = v
-			l = 0
-			if v != nil {
-				l = v.Size()
-				l += 1 + sovIstioinstallerTypes(uint64(l))
-			}
-			mapEntrySize := 1 + len(k) + sovIstioinstallerTypes(uint64(len(k))) + l
-			n += mapEntrySize + 2 + sovIstioinstallerTypes(uint64(mapEntrySize))
-		}
-	}
 	if m.K8S != nil {
 		l = m.K8S.Size()
 		n += 2 + l + sovIstioinstallerTypes(uint64(l))
@@ -4953,7 +4978,7 @@ func (m *CommonComponentConfig) Size() (n int) {
 	return n
 }
 
-func (m *CommonComponentConfig_UpdateSpec) Size() (n int) {
+func (m *CommonComponentSpec_UpdateSpec) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -4973,7 +4998,7 @@ func (m *CommonComponentConfig_UpdateSpec) Size() (n int) {
 	return n
 }
 
-func (m *KubernetesResourcesConfig) Size() (n int) {
+func (m *KubernetesResourcesSpec) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -5038,7 +5063,7 @@ func (m *KubernetesResourcesConfig) Size() (n int) {
 	return n
 }
 
-func (m *KubernetesResourcesConfig_NodeAffinity) Size() (n int) {
+func (m *KubernetesResourcesSpec_NodeAffinity) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -5059,7 +5084,7 @@ func (m *KubernetesResourcesConfig_NodeAffinity) Size() (n int) {
 	return n
 }
 
-func (m *IngressGatewayConfig) Size() (n int) {
+func (m *IngressGatewaySpec) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -5071,10 +5096,6 @@ func (m *IngressGatewayConfig) Size() (n int) {
 	}
 	if m.IngressType != 0 {
 		n += 1 + sovIstioinstallerTypes(uint64(m.IngressType))
-	}
-	if m.HttpsEnabled != nil {
-		l = m.HttpsEnabled.Size()
-		n += 1 + l + sovIstioinstallerTypes(uint64(l))
 	}
 	if m.LoadBalancer != nil {
 		l = m.LoadBalancer.Size()
@@ -5093,7 +5114,7 @@ func (m *IngressGatewayConfig) Size() (n int) {
 	return n
 }
 
-func (m *EgressGatewayConfig) Size() (n int) {
+func (m *EgressGatewaySpec) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -5199,7 +5220,7 @@ func (m *LoadBalancerConfig) Size() (n int) {
 	return n
 }
 
-func (m *OperatorConfig) Size() (n int) {
+func (m *OperatorSpec) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -5229,11 +5250,39 @@ func (m *K8SObjectOverlay) Size() (n int) {
 	}
 	var l int
 	_ = l
-	if m.PatchType != 0 {
-		n += 1 + sovIstioinstallerTypes(uint64(m.PatchType))
+	l = len(m.ApiVersion)
+	if l > 0 {
+		n += 1 + l + sovIstioinstallerTypes(uint64(l))
 	}
-	if m.Op != 0 {
-		n += 1 + sovIstioinstallerTypes(uint64(m.Op))
+	l = len(m.Kind)
+	if l > 0 {
+		n += 1 + l + sovIstioinstallerTypes(uint64(l))
+	}
+	l = len(m.Name)
+	if l > 0 {
+		n += 1 + l + sovIstioinstallerTypes(uint64(l))
+	}
+	if len(m.Patches) > 0 {
+		for _, e := range m.Patches {
+			l = e.Size()
+			n += 1 + l + sovIstioinstallerTypes(uint64(l))
+		}
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func (m *K8SObjectOverlay_PathValue) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Path)
+	if l > 0 {
+		n += 1 + l + sovIstioinstallerTypes(uint64(l))
 	}
 	if m.XXX_unrecognized != nil {
 		n += len(m.XXX_unrecognized)
@@ -5596,102 +5645,6 @@ func (m *InstallerSpec) Unmarshal(dAtA []byte) error {
 			return fmt.Errorf("proto: InstallerSpec: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field InstallPackagePath", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.InstallPackagePath = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Hub", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Hub = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 4:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Tag", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Tag = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
 		case 5:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field DefaultNamespacePrefix", wireType)
@@ -5754,7 +5707,7 @@ func (m *InstallerSpec) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.TrafficManagement == nil {
-				m.TrafficManagement = &TrafficManagementConfig{}
+				m.TrafficManagement = &TrafficManagementFeatureSpec{}
 			}
 			if err := m.TrafficManagement.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -5790,7 +5743,7 @@ func (m *InstallerSpec) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.PolicyTelemetry == nil {
-				m.PolicyTelemetry = &PolicyTelemetryConfig{}
+				m.PolicyTelemetry = &PolicyTelemetryFeatureSpec{}
 			}
 			if err := m.PolicyTelemetry.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -5826,7 +5779,7 @@ func (m *InstallerSpec) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Security == nil {
-				m.Security = &SecurityConfig{}
+				m.Security = &SecurityFeatureSpec{}
 			}
 			if err := m.Security.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -5862,7 +5815,7 @@ func (m *InstallerSpec) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.ConfigManagement == nil {
-				m.ConfigManagement = &ConfigManagementConfig{}
+				m.ConfigManagement = &ConfigManagementFeatureSpec{}
 			}
 			if err := m.ConfigManagement.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -5897,7 +5850,7 @@ func (m *InstallerSpec) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.IngressGateway = append(m.IngressGateway, &IngressGatewayConfig{})
+			m.IngressGateway = append(m.IngressGateway, &IngressGatewaySpec{})
 			if err := m.IngressGateway[len(m.IngressGateway)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -5931,7 +5884,7 @@ func (m *InstallerSpec) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.EgressGateway = append(m.EgressGateway, &EgressGatewayConfig{})
+			m.EgressGateway = append(m.EgressGateway, &EgressGatewaySpec{})
 			if err := m.EgressGateway[len(m.EgressGateway)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -5965,7 +5918,7 @@ func (m *InstallerSpec) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.ExternalOperators = append(m.ExternalOperators, &OperatorConfig{})
+			m.ExternalOperators = append(m.ExternalOperators, &OperatorSpec{})
 			if err := m.ExternalOperators[len(m.ExternalOperators)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -6000,11 +5953,107 @@ func (m *InstallerSpec) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.K8SDefaults == nil {
-				m.K8SDefaults = &KubernetesResourcesConfig{}
+				m.K8SDefaults = &KubernetesResourcesSpec{}
 			}
 			if err := m.K8SDefaults.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
+			iNdEx = postIndex
+		case 100:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CustomPackagePath", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.CustomPackagePath = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 101:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Hub", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Hub = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 102:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Tag", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Tag = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -6031,7 +6080,7 @@ func (m *InstallerSpec) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *TrafficManagementConfig) Unmarshal(dAtA []byte) error {
+func (m *TrafficManagementFeatureSpec) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -6054,10 +6103,10 @@ func (m *TrafficManagementConfig) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: TrafficManagementConfig: wiretype end group for non-group")
+			return fmt.Errorf("proto: TrafficManagementFeatureSpec: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: TrafficManagementConfig: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: TrafficManagementFeatureSpec: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -6190,7 +6239,7 @@ func (m *TrafficManagementConfig) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Pilot == nil {
-				m.Pilot = &PilotComponentConfig{}
+				m.Pilot = &PilotComponentSpec{}
 			}
 			if err := m.Pilot.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -6226,7 +6275,7 @@ func (m *TrafficManagementConfig) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Proxy == nil {
-				m.Proxy = &ProxyComponentConfig{}
+				m.Proxy = &ProxyComponentSpec{}
 			}
 			if err := m.Proxy.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -6262,7 +6311,7 @@ func (m *TrafficManagementConfig) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.SidecarInjector == nil {
-				m.SidecarInjector = &SidecarInjectorComponentConfig{}
+				m.SidecarInjector = &SidecarInjectorComponentSpec{}
 			}
 			if err := m.SidecarInjector.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -6293,7 +6342,7 @@ func (m *TrafficManagementConfig) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *PolicyTelemetryConfig) Unmarshal(dAtA []byte) error {
+func (m *PolicyTelemetryFeatureSpec) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -6316,10 +6365,10 @@ func (m *PolicyTelemetryConfig) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: PolicyTelemetryConfig: wiretype end group for non-group")
+			return fmt.Errorf("proto: PolicyTelemetryFeatureSpec: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: PolicyTelemetryConfig: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: PolicyTelemetryFeatureSpec: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 10:
@@ -6372,7 +6421,7 @@ func (m *PolicyTelemetryConfig) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.OutboundTrafficPolicyMode |= PolicyTelemetryConfig_OutboundPolicy(b&0x7F) << shift
+				m.OutboundTrafficPolicyMode |= PolicyTelemetryFeatureSpec_OutboundPolicy(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -6407,7 +6456,7 @@ func (m *PolicyTelemetryConfig) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Policy == nil {
-				m.Policy = &PolicyComponentConfig{}
+				m.Policy = &PolicyComponentSpec{}
 			}
 			if err := m.Policy.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -6443,7 +6492,7 @@ func (m *PolicyTelemetryConfig) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Telemetry == nil {
-				m.Telemetry = &TelemetryComponentConfig{}
+				m.Telemetry = &TelemetryComponentSpec{}
 			}
 			if err := m.Telemetry.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -6474,7 +6523,7 @@ func (m *PolicyTelemetryConfig) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *SecurityConfig) Unmarshal(dAtA []byte) error {
+func (m *SecurityFeatureSpec) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -6497,10 +6546,10 @@ func (m *SecurityConfig) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: SecurityConfig: wiretype end group for non-group")
+			return fmt.Errorf("proto: SecurityFeatureSpec: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: SecurityConfig: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: SecurityFeatureSpec: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -6675,78 +6724,6 @@ func (m *SecurityConfig) Unmarshal(dAtA []byte) error {
 			}
 			m.TrustDomain = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 16:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field SelfSigned", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.SelfSigned == nil {
-				m.SelfSigned = &protobuf.BoolValue{}
-			}
-			if err := m.SelfSigned.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 17:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field CreateMeshPolicy", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.CreateMeshPolicy == nil {
-				m.CreateMeshPolicy = &protobuf.BoolValue{}
-			}
-			if err := m.CreateMeshPolicy.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
 		case 20:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Citadel", wireType)
@@ -6777,7 +6754,7 @@ func (m *SecurityConfig) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Citadel == nil {
-				m.Citadel = &CitadelComponentConfig{}
+				m.Citadel = &CitadelComponentSpec{}
 			}
 			if err := m.Citadel.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -6813,7 +6790,7 @@ func (m *SecurityConfig) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.CertManager == nil {
-				m.CertManager = &CertManagerComponentConfig{}
+				m.CertManager = &CertManagerComponentSpec{}
 			}
 			if err := m.CertManager.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -6849,7 +6826,7 @@ func (m *SecurityConfig) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.NodeAgent == nil {
-				m.NodeAgent = &NodeAgentComponentConfig{}
+				m.NodeAgent = &NodeAgentComponentSpec{}
 			}
 			if err := m.NodeAgent.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -6880,7 +6857,7 @@ func (m *SecurityConfig) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *PilotComponentConfig) Unmarshal(dAtA []byte) error {
+func (m *ConfigManagementFeatureSpec) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -6903,10 +6880,100 @@ func (m *PilotComponentConfig) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: PilotComponentConfig: wiretype end group for non-group")
+			return fmt.Errorf("proto: ConfigManagementFeatureSpec: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: PilotComponentConfig: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: ConfigManagementFeatureSpec: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Galley", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Galley == nil {
+				m.Galley = &GalleyComponentSpec{}
+			}
+			if err := m.Galley.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipIstioinstallerTypes(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *PilotComponentSpec) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowIstioinstallerTypes
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: PilotComponentSpec: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: PilotComponentSpec: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -6939,7 +7006,7 @@ func (m *PilotComponentConfig) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Common == nil {
-				m.Common = &CommonComponentConfig{}
+				m.Common = &CommonComponentSpec{}
 			}
 			if err := m.Common.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -7006,7 +7073,7 @@ func (m *PilotComponentConfig) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *ProxyComponentConfig) Unmarshal(dAtA []byte) error {
+func (m *ProxyComponentSpec) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -7029,10 +7096,10 @@ func (m *ProxyComponentConfig) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: ProxyComponentConfig: wiretype end group for non-group")
+			return fmt.Errorf("proto: ProxyComponentSpec: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: ProxyComponentConfig: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: ProxyComponentSpec: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -7065,7 +7132,7 @@ func (m *ProxyComponentConfig) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Common == nil {
-				m.Common = &CommonComponentConfig{}
+				m.Common = &CommonComponentSpec{}
 			}
 			if err := m.Common.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -7096,7 +7163,7 @@ func (m *ProxyComponentConfig) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *SidecarInjectorComponentConfig) Unmarshal(dAtA []byte) error {
+func (m *SidecarInjectorComponentSpec) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -7119,10 +7186,10 @@ func (m *SidecarInjectorComponentConfig) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: SidecarInjectorComponentConfig: wiretype end group for non-group")
+			return fmt.Errorf("proto: SidecarInjectorComponentSpec: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: SidecarInjectorComponentConfig: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: SidecarInjectorComponentSpec: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -7155,7 +7222,7 @@ func (m *SidecarInjectorComponentConfig) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Common == nil {
-				m.Common = &CommonComponentConfig{}
+				m.Common = &CommonComponentSpec{}
 			}
 			if err := m.Common.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -7222,7 +7289,7 @@ func (m *SidecarInjectorComponentConfig) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *PolicyComponentConfig) Unmarshal(dAtA []byte) error {
+func (m *PolicyComponentSpec) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -7245,10 +7312,10 @@ func (m *PolicyComponentConfig) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: PolicyComponentConfig: wiretype end group for non-group")
+			return fmt.Errorf("proto: PolicyComponentSpec: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: PolicyComponentConfig: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: PolicyComponentSpec: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -7281,7 +7348,7 @@ func (m *PolicyComponentConfig) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Common == nil {
-				m.Common = &CommonComponentConfig{}
+				m.Common = &CommonComponentSpec{}
 			}
 			if err := m.Common.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -7312,7 +7379,7 @@ func (m *PolicyComponentConfig) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *TelemetryComponentConfig) Unmarshal(dAtA []byte) error {
+func (m *TelemetryComponentSpec) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -7335,10 +7402,10 @@ func (m *TelemetryComponentConfig) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: TelemetryComponentConfig: wiretype end group for non-group")
+			return fmt.Errorf("proto: TelemetryComponentSpec: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: TelemetryComponentConfig: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: TelemetryComponentSpec: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -7371,7 +7438,7 @@ func (m *TelemetryComponentConfig) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Common == nil {
-				m.Common = &CommonComponentConfig{}
+				m.Common = &CommonComponentSpec{}
 			}
 			if err := m.Common.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -7402,7 +7469,7 @@ func (m *TelemetryComponentConfig) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *CitadelComponentConfig) Unmarshal(dAtA []byte) error {
+func (m *CitadelComponentSpec) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -7425,10 +7492,10 @@ func (m *CitadelComponentConfig) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: CitadelComponentConfig: wiretype end group for non-group")
+			return fmt.Errorf("proto: CitadelComponentSpec: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: CitadelComponentConfig: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: CitadelComponentSpec: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -7461,12 +7528,52 @@ func (m *CitadelComponentConfig) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Common == nil {
-				m.Common = &CommonComponentConfig{}
+				m.Common = &CommonComponentSpec{}
 			}
 			if err := m.Common.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
+		case 11:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SelfSigned", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.SelfSigned = bool(v != 0)
+		case 12:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CreateMeshPolicy", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.CreateMeshPolicy = bool(v != 0)
 		default:
 			iNdEx = preIndex
 			skippy, err := skipIstioinstallerTypes(dAtA[iNdEx:])
@@ -7492,7 +7599,7 @@ func (m *CitadelComponentConfig) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *CertManagerComponentConfig) Unmarshal(dAtA []byte) error {
+func (m *CertManagerComponentSpec) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -7515,10 +7622,10 @@ func (m *CertManagerComponentConfig) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: CertManagerComponentConfig: wiretype end group for non-group")
+			return fmt.Errorf("proto: CertManagerComponentSpec: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: CertManagerComponentConfig: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: CertManagerComponentSpec: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -7551,7 +7658,7 @@ func (m *CertManagerComponentConfig) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Common == nil {
-				m.Common = &CommonComponentConfig{}
+				m.Common = &CommonComponentSpec{}
 			}
 			if err := m.Common.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -7582,7 +7689,7 @@ func (m *CertManagerComponentConfig) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *NodeAgentComponentConfig) Unmarshal(dAtA []byte) error {
+func (m *NodeAgentComponentSpec) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -7605,10 +7712,10 @@ func (m *NodeAgentComponentConfig) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: NodeAgentComponentConfig: wiretype end group for non-group")
+			return fmt.Errorf("proto: NodeAgentComponentSpec: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: NodeAgentComponentConfig: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: NodeAgentComponentSpec: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -7641,7 +7748,7 @@ func (m *NodeAgentComponentConfig) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Common == nil {
-				m.Common = &CommonComponentConfig{}
+				m.Common = &CommonComponentSpec{}
 			}
 			if err := m.Common.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -7672,7 +7779,7 @@ func (m *NodeAgentComponentConfig) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *ConfigManagementConfig) Unmarshal(dAtA []byte) error {
+func (m *GalleyComponentSpec) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -7695,10 +7802,10 @@ func (m *ConfigManagementConfig) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: ConfigManagementConfig: wiretype end group for non-group")
+			return fmt.Errorf("proto: GalleyComponentSpec: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: ConfigManagementConfig: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: GalleyComponentSpec: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -7731,7 +7838,7 @@ func (m *ConfigManagementConfig) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Common == nil {
-				m.Common = &CommonComponentConfig{}
+				m.Common = &CommonComponentSpec{}
 			}
 			if err := m.Common.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -7762,7 +7869,7 @@ func (m *ConfigManagementConfig) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *CommonComponentConfig) Unmarshal(dAtA []byte) error {
+func (m *CommonComponentSpec) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -7785,10 +7892,10 @@ func (m *CommonComponentConfig) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: CommonComponentConfig: wiretype end group for non-group")
+			return fmt.Errorf("proto: CommonComponentSpec: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: CommonComponentConfig: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: CommonComponentSpec: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -7873,269 +7980,11 @@ func (m *CommonComponentConfig) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.Debug |= CommonComponentConfig_LogLevel(b&0x7F) << shift
+				m.Debug |= CommonComponentSpec_LogLevel(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-		case 60:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Env", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Env == nil {
-				m.Env = make(map[string]*CommonComponentConfig_UpdateSpec)
-			}
-			var mapkey string
-			var mapvalue *CommonComponentConfig_UpdateSpec
-			for iNdEx < postIndex {
-				entryPreIndex := iNdEx
-				var wire uint64
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return ErrIntOverflowIstioinstallerTypes
-					}
-					if iNdEx >= l {
-						return io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					wire |= uint64(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				fieldNum := int32(wire >> 3)
-				if fieldNum == 1 {
-					var stringLenmapkey uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return ErrIntOverflowIstioinstallerTypes
-						}
-						if iNdEx >= l {
-							return io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						stringLenmapkey |= uint64(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					intStringLenmapkey := int(stringLenmapkey)
-					if intStringLenmapkey < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					postStringIndexmapkey := iNdEx + intStringLenmapkey
-					if postStringIndexmapkey < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					if postStringIndexmapkey > l {
-						return io.ErrUnexpectedEOF
-					}
-					mapkey = string(dAtA[iNdEx:postStringIndexmapkey])
-					iNdEx = postStringIndexmapkey
-				} else if fieldNum == 2 {
-					var mapmsglen int
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return ErrIntOverflowIstioinstallerTypes
-						}
-						if iNdEx >= l {
-							return io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						mapmsglen |= int(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					if mapmsglen < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					postmsgIndex := iNdEx + mapmsglen
-					if postmsgIndex < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					if postmsgIndex > l {
-						return io.ErrUnexpectedEOF
-					}
-					mapvalue = &CommonComponentConfig_UpdateSpec{}
-					if err := mapvalue.Unmarshal(dAtA[iNdEx:postmsgIndex]); err != nil {
-						return err
-					}
-					iNdEx = postmsgIndex
-				} else {
-					iNdEx = entryPreIndex
-					skippy, err := skipIstioinstallerTypes(dAtA[iNdEx:])
-					if err != nil {
-						return err
-					}
-					if skippy < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					if (iNdEx + skippy) > postIndex {
-						return io.ErrUnexpectedEOF
-					}
-					iNdEx += skippy
-				}
-			}
-			m.Env[mapkey] = mapvalue
-			iNdEx = postIndex
-		case 61:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Args", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Args == nil {
-				m.Args = make(map[string]*CommonComponentConfig_UpdateSpec)
-			}
-			var mapkey string
-			var mapvalue *CommonComponentConfig_UpdateSpec
-			for iNdEx < postIndex {
-				entryPreIndex := iNdEx
-				var wire uint64
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return ErrIntOverflowIstioinstallerTypes
-					}
-					if iNdEx >= l {
-						return io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					wire |= uint64(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				fieldNum := int32(wire >> 3)
-				if fieldNum == 1 {
-					var stringLenmapkey uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return ErrIntOverflowIstioinstallerTypes
-						}
-						if iNdEx >= l {
-							return io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						stringLenmapkey |= uint64(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					intStringLenmapkey := int(stringLenmapkey)
-					if intStringLenmapkey < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					postStringIndexmapkey := iNdEx + intStringLenmapkey
-					if postStringIndexmapkey < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					if postStringIndexmapkey > l {
-						return io.ErrUnexpectedEOF
-					}
-					mapkey = string(dAtA[iNdEx:postStringIndexmapkey])
-					iNdEx = postStringIndexmapkey
-				} else if fieldNum == 2 {
-					var mapmsglen int
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return ErrIntOverflowIstioinstallerTypes
-						}
-						if iNdEx >= l {
-							return io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						mapmsglen |= int(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					if mapmsglen < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					postmsgIndex := iNdEx + mapmsglen
-					if postmsgIndex < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					if postmsgIndex > l {
-						return io.ErrUnexpectedEOF
-					}
-					mapvalue = &CommonComponentConfig_UpdateSpec{}
-					if err := mapvalue.Unmarshal(dAtA[iNdEx:postmsgIndex]); err != nil {
-						return err
-					}
-					iNdEx = postmsgIndex
-				} else {
-					iNdEx = entryPreIndex
-					skippy, err := skipIstioinstallerTypes(dAtA[iNdEx:])
-					if err != nil {
-						return err
-					}
-					if skippy < 0 {
-						return ErrInvalidLengthIstioinstallerTypes
-					}
-					if (iNdEx + skippy) > postIndex {
-						return io.ErrUnexpectedEOF
-					}
-					iNdEx += skippy
-				}
-			}
-			m.Args[mapkey] = mapvalue
-			iNdEx = postIndex
 		case 80:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field K8S", wireType)
@@ -8166,7 +8015,7 @@ func (m *CommonComponentConfig) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.K8S == nil {
-				m.K8S = &KubernetesResourcesConfig{}
+				m.K8S = &KubernetesResourcesSpec{}
 			}
 			if err := m.K8S.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -8197,7 +8046,7 @@ func (m *CommonComponentConfig) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *CommonComponentConfig_UpdateSpec) Unmarshal(dAtA []byte) error {
+func (m *CommonComponentSpec_UpdateSpec) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -8315,7 +8164,7 @@ func (m *CommonComponentConfig_UpdateSpec) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *KubernetesResourcesConfig) Unmarshal(dAtA []byte) error {
+func (m *KubernetesResourcesSpec) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -8338,10 +8187,10 @@ func (m *KubernetesResourcesConfig) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: KubernetesResourcesConfig: wiretype end group for non-group")
+			return fmt.Errorf("proto: KubernetesResourcesSpec: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: KubernetesResourcesConfig: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: KubernetesResourcesSpec: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -8791,7 +8640,7 @@ func (m *KubernetesResourcesConfig) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.NodeAffinity == nil {
-				m.NodeAffinity = &KubernetesResourcesConfig_NodeAffinity{}
+				m.NodeAffinity = &KubernetesResourcesSpec_NodeAffinity{}
 			}
 			if err := m.NodeAffinity.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -8920,7 +8769,7 @@ func (m *KubernetesResourcesConfig) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *KubernetesResourcesConfig_NodeAffinity) Unmarshal(dAtA []byte) error {
+func (m *KubernetesResourcesSpec_NodeAffinity) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -9031,7 +8880,7 @@ func (m *KubernetesResourcesConfig_NodeAffinity) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *IngressGatewayConfig) Unmarshal(dAtA []byte) error {
+func (m *IngressGatewaySpec) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -9054,10 +8903,10 @@ func (m *IngressGatewayConfig) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: IngressGatewayConfig: wiretype end group for non-group")
+			return fmt.Errorf("proto: IngressGatewaySpec: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: IngressGatewayConfig: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: IngressGatewaySpec: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 10:
@@ -9110,47 +8959,11 @@ func (m *IngressGatewayConfig) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.IngressType |= IngressGatewayConfig_IngressType(b&0x7F) << shift
+				m.IngressType |= IngressGatewaySpec_IngressType(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-		case 12:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field HttpsEnabled", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowIstioinstallerTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthIstioinstallerTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.HttpsEnabled == nil {
-				m.HttpsEnabled = &protobuf.BoolValue{}
-			}
-			if err := m.HttpsEnabled.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
 		case 13:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field LoadBalancer", wireType)
@@ -9237,7 +9050,7 @@ func (m *IngressGatewayConfig) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.ExternalTrafficPolicy |= IngressGatewayConfig_ExternalTrafficPolicy(b&0x7F) << shift
+				m.ExternalTrafficPolicy |= IngressGatewaySpec_ExternalTrafficPolicy(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -9267,7 +9080,7 @@ func (m *IngressGatewayConfig) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *EgressGatewayConfig) Unmarshal(dAtA []byte) error {
+func (m *EgressGatewaySpec) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -9290,10 +9103,10 @@ func (m *EgressGatewayConfig) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: EgressGatewayConfig: wiretype end group for non-group")
+			return fmt.Errorf("proto: EgressGatewaySpec: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: EgressGatewayConfig: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: EgressGatewaySpec: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 10:
@@ -9542,7 +9355,7 @@ func (m *GatewayConfig) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Common == nil {
-				m.Common = &CommonComponentConfig{}
+				m.Common = &CommonComponentSpec{}
 			}
 			if err := m.Common.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -9917,7 +9730,7 @@ func (m *LoadBalancerConfig) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *OperatorConfig) Unmarshal(dAtA []byte) error {
+func (m *OperatorSpec) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -9940,10 +9753,10 @@ func (m *OperatorConfig) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: OperatorConfig: wiretype end group for non-group")
+			return fmt.Errorf("proto: OperatorSpec: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: OperatorConfig: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: OperatorSpec: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -10101,10 +9914,10 @@ func (m *K8SObjectOverlay) Unmarshal(dAtA []byte) error {
 		}
 		switch fieldNum {
 		case 1:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field PatchType", wireType)
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ApiVersion", wireType)
 			}
-			m.PatchType = 0
+			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowIstioinstallerTypes
@@ -10114,16 +9927,29 @@ func (m *K8SObjectOverlay) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.PatchType |= K8SObjectOverlay_PatchType(b&0x7F) << shift
+				stringLen |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ApiVersion = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
 		case 2:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Op", wireType)
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Kind", wireType)
 			}
-			m.Op = 0
+			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowIstioinstallerTypes
@@ -10133,11 +9959,176 @@ func (m *K8SObjectOverlay) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.Op |= K8SObjectOverlay_Op(b&0x7F) << shift
+				stringLen |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Kind = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Name = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Patches", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Patches = append(m.Patches, &K8SObjectOverlay_PathValue{})
+			if err := m.Patches[len(m.Patches)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipIstioinstallerTypes(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *K8SObjectOverlay_PathValue) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowIstioinstallerTypes
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: PathValue: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: PathValue: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Path", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Path = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipIstioinstallerTypes(dAtA[iNdEx:])

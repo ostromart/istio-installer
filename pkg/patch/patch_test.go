@@ -38,7 +38,7 @@ namespace: istio-system
 */
 
 func TestGetNode(t *testing.T) {
-	tr := map[string]interface {}{
+	/*tr := map[string]interface {}{
 		"a": map[string]interface {}{
 			"b": map[string]interface {}{
 				"c": []interface {}{
@@ -53,15 +53,15 @@ func TestGetNode(t *testing.T) {
 				},
 			},
 		},
-	}
+	}*/
 
 	tests := []struct {
-		desc    string
-		yAML    string
-		path    string
+		desc        string
+		yAML        string
+		path        string
 		createNodes bool
-		want    interface{}
-		wantErr string
+		want        interface{}
+		wantErr     string
 	}{
 		{
 			desc: "simple path",
@@ -83,7 +83,7 @@ a:
     - e: 2
       ee: 22
 `,
-			path: "a.b.c[d:1]",
+			path: "a.b.c.d:1",
 			want: "0",
 		},
 	}
@@ -97,11 +97,11 @@ a:
 			if err != nil {
 				t.Fatalf("yaml.Unmarshal(%s): got error %s", tt.desc, err)
 			}
-			_, gotNode, err := getNode(nil, root, util.PathFromString(tt.path), tt.createNodes)
+			inc, err := getNode(makeNodeContext(root), util.PathFromString(tt.path))
 			if gotErr, wantErr := errToString(err), tt.wantErr; gotErr != wantErr {
 				t.Fatalf("%s: gotErr:%s, wantErr:%s", tt.desc, gotErr, wantErr)
 			}
-			if got, want := fmt.Sprint(gotNode), tt.want; got != want {
+			if got, want := fmt.Sprint(inc.node), tt.want; got != want {
 				t.Errorf("%s: got:\n%s\n\nwant:\n%s", tt.desc, got, want)
 			}
 		})
@@ -120,57 +120,63 @@ func TestPatchYAMLManifest(t *testing.T) {
 			desc: "nil success",
 		},
 		{
-			desc: "Service",
+			desc: "Deployment",
 			base: `
-# Source: istio/charts/prometheus/templates/service.yaml
-apiVersion: v1
-kind: Service
+apiVersion: extensions/v1beta1
+kind: Deployment
 metadata:
-  name: promsd
+  name: istio-citadel
   namespace: istio-system
-  annotations:
-    prometheus.io/scrape: 'true'
-  labels:
-    kubernetes.io/cluster-service: "true"
-    name: promsd
+spec:
+  template:
+    spec:
+      containers:
+      - name: deleteThis
+        foo: bar
+      - name: galley
+        ports:
+        - containerPort: 443
+        - containerPort: 15014
+        - containerPort: 9901
+        command:
+        - /usr/local/bin/galley
+        - server
+        - --meshConfigFile=/etc/mesh-config/mesh
+        - --livenessProbeInterval=1s
+        - --validation-webhook-config-file
 `,
 			overlay: `
 overlays:
-- patchType: JSON
-  op: MERGE
-  data: 
-    apiVersion: v1
-    kind: Service
-    metadata:
-      name: promsd
-      namespace: istio-system
-      annotations:
-        prometheus.io/scrape: 'false'
+- kind: Deployment
+  name: istio-citadel
+  patches:
+    - path: spec.template.spec.containers.name:deleteThis
 `,
 			want: `
-apiVersion: v1
-kind: Service
-metadata:
-  name: promsd
-  namespace: istio-system
-  annotations:
-    prometheus.io/scrape: 'false'
-  labels:
-    kubernetes.io/cluster-service: "true"
-    name: promsd
 `,
 		},
 	}
+/*
+    - path: spec.template.spec.containers.name:galley.command.:--validation-webhook-config-file
+    - path: spec.template.spec.containers.name:galley.command.:--livenessProbeInterval=1s
+      value: --livenessProbeInterval=1111s
+    - path: spec.template.spec.containers.name:galley.ports.containerPort:15014
+      value: 22222
+    - path: spec.template.spec.containers.name:galley.ports.containerPort:9901
+    - path: spec.template.spec.containers.name:deleteThis
+
+*/
 
 	for _, tt := range tests {
 		fmt.Println(tt.desc)
 		t.Run(tt.desc, func(t *testing.T) {
-			rc := &v1alpha1.KubernetesResourcesConfig{}
+			rc := &v1alpha1.KubernetesResourcesSpec{}
 			err := unmarshalWithJSONPB(tt.overlay, rc)
 			if err != nil {
 				t.Fatalf("unmarshalWithJSONPB(%s): got error %s", tt.desc, err)
 			}
-			got, err := PatchYAMLManifest(tt.base, rc.Overlays)
+			//fmt.Println(pretty.Sprint(rc))
+			got, err := PatchYAMLManifest(tt.base, "istio-system", rc.Overlays)
 			if gotErr, wantErr := errToString(err), tt.wantErr; gotErr != wantErr {
 				t.Fatalf("PatchYAMLManifest(%s): gotErr:%s, wantErr:%s", tt.desc, gotErr, wantErr)
 			}

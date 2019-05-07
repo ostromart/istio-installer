@@ -1,7 +1,3 @@
-// TODO:
-// - Add pod (anti)affinity for all components.
-// - Debug level functionality (add to API, comment that it’s binary for now)
-
 syntax = "proto3";
 
 package v1alpha1;
@@ -11,7 +7,7 @@ import "k8s.io/api/autoscaling/v1/generated.proto";
 import "k8s.io/apimachinery/pkg/apis/meta/v1/generated.proto";
 import "github.com/gogo/protobuf/protobuf/google/protobuf/wrappers.proto";
 
-// 	protobuf "github.com/gogo/protobuf/types"
+//      protobuf "github.com/gogo/protobuf/types"
 
 message IstioInstaller {
     InstallerSpec spec = 3;
@@ -20,43 +16,42 @@ message IstioInstaller {
 
 // InstallerSpec defines the desired state of IstioInstaller.
 message InstallerSpec {
+    // Prefix added to all namespaces for any installed component.
+    string default_namespace_prefix = 5;
+
+    // Selection and configuration of core Istio features.
+    TrafficManagementFeatureSpec traffic_management = 25;
+    PolicyTelemetryFeatureSpec policy_telemetry = 26;
+    SecurityFeatureSpec security = 28;
+    ConfigManagementFeatureSpec config_management = 29;
+
+    // Ingress/egress gateway installation and configuration.
+    repeated IngressGatewaySpec ingress_gateway = 30;
+    repeated EgressGatewaySpec egress_gateway = 31;
+
+    // List of external operators that will be installed (but not managed)
+    // by the IstioInstaller e.g. prometheus, grafana, kiali.
+    repeated OperatorSpec external_operators = 50;
+
+    // Global k8s defaults. Can be overridden per component.
+    KubernetesResourcesSpec k8s_defaults = 80;
+
     // URL for the install package. e.g.
     //   http://github.com/istio/istio/releases/install/1.1.2
     //   http://github.com/istio/istio/releases/install/lts
     //   file://tmp/istio-installer/nightly
     // Uses compiled in install package by default.
-    string install_package_path = 1;
-
+    string custom_package_path = 100;
     // Root for docker image paths e.g. docker.io/istio-release.
     // Releases are published to docker hub under 'istio' project.
-    //  Daily builds from prow are on gcr.io, and nightly builds from circle on docker.io/istionightly
-    string hub = 3;
+    // Daily builds from prow are on gcr.io, and nightly builds from circle on docker.io/istionightly
+    string hub = 101;
     // Version tag for docker images e.g. 1.0.6
-    string tag = 4;
-
-    // Prefix added to all namespaces for any installed component.
-    string default_namespace_prefix = 5;
-
-    // Selection and configuration of core Istio features.
-    TrafficManagementConfig traffic_management = 25;
-    PolicyTelemetryConfig policy_telemetry = 26;
-    SecurityConfig security = 28;
-    ConfigManagementConfig config_management = 29;
-
-    // Ingress/egress gateway installation and configuration.
-    repeated IngressGatewayConfig ingress_gateway = 30;
-    repeated EgressGatewayConfig egress_gateway = 31;
-
-    // List of external operators that will be installed (but not managed)
-    // by the IstioInstaller e.g. prometheus, grafana, kiali.
-    repeated OperatorConfig external_operators = 50;
-
-    // Global k8s defaults. Can be overridden per component.
-    KubernetesResourcesConfig k8s_defaults = 80;
+    string tag = 102;
 }
 
 // Configuration options for traffic management.
-message TrafficManagementConfig {
+message TrafficManagementFeatureSpec {
     // Selects whether traffic management is installed.
     // Must be enabled to enable any sub-component.
     google.protobuf.BoolValue enabled = 1;
@@ -66,13 +61,13 @@ message TrafficManagementConfig {
     string cluster_domain = 24;
 
     // Component specific config.
-    PilotComponentConfig pilot = 30;
-    ProxyComponentConfig proxy = 31;
-    SidecarInjectorComponentConfig sidecar_injector = 32;
+    PilotComponentSpec pilot = 30;
+    ProxyComponentSpec proxy = 31;
+    SidecarInjectorComponentSpec sidecar_injector = 32;
 }
 
 // Configuration options for the policy and telemetry feature.
-message PolicyTelemetryConfig {
+message PolicyTelemetryFeatureSpec {
     // Default behavior of the sidecar for handling outbound traffic from the application.
     enum OutboundPolicy {
         // Outbound traffic to unknown destinations will be allowed, in case there are no
@@ -88,12 +83,12 @@ message PolicyTelemetryConfig {
     // Selects the outbound traffic policy mode.
     OutboundPolicy outbound_traffic_policy_mode = 11;
 
-    PolicyComponentConfig policy = 50;
-    TelemetryComponentConfig telemetry = 51;
+    PolicyComponentSpec policy = 50;
+    TelemetryComponentSpec telemetry = 51;
 }
 
 // Configuration options for security feature.
-message SecurityConfig {
+message SecurityFeatureSpec {
     // Selects whether security feature is installed. Must be set for any sub-component to be installed.
     google.protobuf.BoolValue enabled = 1;
 
@@ -109,67 +104,70 @@ message SecurityConfig {
 
     string trust_domain = 15;
 
-    google.protobuf.BoolValue self_signed = 16;
-    google.protobuf.BoolValue create_mesh_policy = 17;
+    CitadelComponentSpec citadel = 20;
+    CertManagerComponentSpec cert_manager = 21;
+    NodeAgentComponentSpec node_agent = 22;
+}
 
-    CitadelComponentConfig citadel = 20;
-    CertManagerComponentConfig cert_manager = 21;
-    NodeAgentComponentConfig node_agent = 22;
+// Configuration options for configuration management feature.
+message ConfigManagementFeatureSpec {
+    GalleyComponentSpec galley = 1;
 }
 
 // Configuration options for the pilot component.
-message PilotComponentConfig {
-    CommonComponentConfig common = 1;
+message PilotComponentSpec {
+    CommonComponentSpec common = 1;
 
     // Enables sidecar in the pilot pod.
     google.protobuf.BoolValue sidecar = 10;
 }
 
 // Configuration options for the proxy.
-message ProxyComponentConfig {
-    CommonComponentConfig common = 1;
+message ProxyComponentSpec {
+    CommonComponentSpec common = 1;
 }
 
 // Configuration options for the sidecar injector component.
-message SidecarInjectorComponentConfig {
-    CommonComponentConfig common = 1;
-
+message SidecarInjectorComponentSpec {
+    CommonComponentSpec common = 1;
     // Selects whether auto-injection is enabled in namespaces by default.
     google.protobuf.BoolValue enable_namespaces_by_default = 10;
 }
 
 // Configuration options for the policy enforcement component.
-message PolicyComponentConfig {
-    CommonComponentConfig common = 1;
+message PolicyComponentSpec {
+    CommonComponentSpec common = 1;
 }
 
 // Configuration options for the telemetry component.
-message TelemetryComponentConfig {
-    CommonComponentConfig common = 1;
+message TelemetryComponentSpec {
+    CommonComponentSpec common = 1;
 }
 
 // Configuration options for Citadel component.
-message CitadelComponentConfig {
-    CommonComponentConfig common = 1;
+message CitadelComponentSpec {
+    CommonComponentSpec common = 1;
+    bool self_signed = 11;
+    bool create_mesh_policy = 12;
 }
 
 // Configuration options for certificate manager component.
-message CertManagerComponentConfig {
-    CommonComponentConfig common = 1;
+message CertManagerComponentSpec {
+    CommonComponentSpec common = 1;
 }
 
 // Configuration options for node agent component.
-message NodeAgentComponentConfig {
-    CommonComponentConfig common = 1;
+message NodeAgentComponentSpec {
+    CommonComponentSpec common = 1;
 }
 
-// Configuration options for configuration management feature.
-message ConfigManagementConfig {
-    CommonComponentConfig common = 1;
+// Configuration options for node agent component.
+message GalleyComponentSpec {
+    CommonComponentSpec common = 1;
 }
 
 // Configuration common to all components.
-message CommonComponentConfig {
+message CommonComponentSpec {
     // Selects whether policy enforcement is installed.
     // Q. is this enough to cover both mixer.policy.enabled and disablePolicyChecks?
     google.protobuf.BoolValue enabled = 1;
@@ -190,21 +188,15 @@ message CommonComponentConfig {
         string old = 1;
         string new = 2;
     }
-    // Additional environment variables for the container.
-    map<string, UpdateSpec> env = 60;
-    // Additional command line arguments for the container.
-    map<string, UpdateSpec> args = 61;
-
     // Kubernetes resource spec.
-    KubernetesResourcesConfig k8s = 80;
+    KubernetesResourcesSpec k8s = 80;
 
     // Kustomize style overrides for default values.yaml.
-    // google.protobuf.Struct values_overrides = 100;
     // ValuesOverrides map[string]interface{} `protobuf:"bytes,6,opt,name=data" json:"valuesOverrides,omitempty"`
 }
 
 // KubernetesResourcesConfig is a common set of k8s resource configs for components.
-message KubernetesResourcesConfig {
+message KubernetesResourcesSpec {
     // k8s resources settings.
     // https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/#resource-requests-and-limits-of-pod-and-container
     Resources resources = 1;
@@ -249,7 +241,7 @@ message KubernetesResourcesConfig {
 }
 
 // Configuration options for ingress gateways.
-message IngressGatewayConfig {
+message IngressGatewaySpec {
     // Common gateway configuration.
     GatewayConfig gateway = 10;
     // Selects the type of ingress.
@@ -259,12 +251,6 @@ message IngressGatewayConfig {
         KUBERNETES = 1;
     }
     IngressType ingress_type = 11;
-
-    // enableHttps will add port 443 on the ingress.
-    // It REQUIRES that the certificates are installed  in the
-    // expected secrets - enabling this option without certificates
-    // will result in LDS rejection and the ingress will not work.
-    google.protobuf.BoolValue https_enabled = 12;
 
     LoadBalancerConfig load_balancer = 13;
 
@@ -284,7 +270,7 @@ message IngressGatewayConfig {
 }
 
 // Configuration options for egress gateways.
-message EgressGatewayConfig {
+message EgressGatewaySpec {
     // Common gateway configuration.
     GatewayConfig gateway = 10;
 }
@@ -300,7 +286,7 @@ message LoadBalancingGatewayConfig {
 
 // Common config for all gateway types.
 message GatewayConfig {
-    CommonComponentConfig common = 1;
+    CommonComponentSpec common = 1;
 
     // NodePort, ClusterIP or LoadBalancer.
     string type = 10;
@@ -373,7 +359,7 @@ message LoadBalancerConfig {
 }
 
 // OperatorConfig defines a config used to install an external operator.
-message OperatorConfig {
+message OperatorSpec {
     // manifest_path is the URL for the operator install manifest.
     string manifest_path = 1;
 
@@ -386,20 +372,29 @@ message OperatorConfig {
 
 // Patch for an existing k8s resource.
 message k8sObjectOverlay {
-    enum PatchType {
-        STRATEGIC = 0;
-        JSON = 1;
-    }
-    enum Op {
-        ADD = 0;
-        REMOVE = 1;
-        REPLACE = 2;
-    }
+    message PathValue {
+        // Path of the form a.b:c.e.:f
+        // Where b:c is a list element selector of the form key:value and :f is a list selector of the form :value.
+        // All path intermediate nodes must exist.
+        string path = 1;
+        // Value to add, delete or replace.
+        // For add, the path should be a new leaf.
+        // For delete, value should be unset.
+        // For replace, path should reference an existing node.
+        // All values are strings but are converted into appropriate type based on schema.
+//        Value                interface{}           `protobuf:"bytes,4,opt,name=value,proto3" json:"value,omitempty"`
 
-    PatchType patch_type = 1;
-    Op op = 2;
-    // google.protobuf.Struct Data = 6;
-    //    	Data                 *unstructured.Unstructured  `protobuf:"bytes,6,opt,name=data" json:"data,omitempty"`
+    }
+    // Resource API version.
+    string api_version = 1;
+    // Resource kind.
+    string kind = 2;
+    // Name of resource.
+    // Namespace is always the component namespace.
+    string name = 3;
+
+    // List of patches to apply to resource.
+    repeated PathValue patches = 4;
 }
 
 // Observed state of IstioInstaller.

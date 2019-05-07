@@ -1,39 +1,18 @@
---- pkg/apis/installer/v1alpha1/istioinstaller_types.pb.go.orig	2019-04-25 13:20:09.552551941 -0700
-+++ pkg/apis/installer/v1alpha1/istioinstaller_types.pb.go	2019-04-25 13:23:02.223917366 -0700
-@@ -4,14 +4,15 @@
- package v1alpha1
- 
- import (
--	fmt "fmt"
-+	"fmt"
- 	protobuf "github.com/gogo/protobuf/types"
--	proto "github.com/golang/protobuf/proto"
--	io "io"
-+	"github.com/golang/protobuf/proto"
-+	"io"
- 	v11 "k8s.io/api/autoscaling/v1"
--	v1 "k8s.io/api/core/v1"
-+	"k8s.io/api/core/v1"
- 	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
--	math "math"
-+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-+	"math"
- )
- 
- // Reference imports to suppress errors if they are not otherwise used.
-@@ -1198,6 +1199,7 @@
- 	Args map[string]string `protobuf:"bytes,61,rep,name=args,proto3" json:"args,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+--- pkg/apis/installer/v1alpha1/istioinstaller_types.pb.go.orig	2019-05-02 12:15:48.193013041 -0700
++++ pkg/apis/installer/v1alpha1/istioinstaller_types.pb.go	2019-05-02 12:16:43.984787873 -0700
+@@ -1186,6 +1186,7 @@
+ 	Debug     CommonComponentSpec_LogLevel `protobuf:"varint,3,opt,name=debug,proto3,enum=v1alpha1.CommonComponentSpec_LogLevel" json:"debug,omitempty"`
  	// Kubernetes resource spec.
- 	K8S                  *KubernetesResourcesConfig `protobuf:"bytes,80,opt,name=k8s,proto3" json:"k8s,omitempty"`
-+    ValuesOverrides      map[string]interface{}     `protobuf:"bytes,6,opt,name=data" json:"valuesOverrides,omitempty"`
- 	XXX_NoUnkeyedLiteral struct{}                   `json:"-"`
- 	XXX_unrecognized     []byte                     `json:"-"`
- 	XXX_sizecache        int32                      `json:"-"`
-@@ -1846,6 +1848,7 @@
- type K8SObjectOverlay struct {
- 	PatchType            K8SObjectOverlay_PatchType `protobuf:"varint,1,opt,name=patch_type,json=patchType,proto3,enum=v1alpha1.K8SObjectOverlay_PatchType" json:"patch_type,omitempty"`
- 	Op                   K8SObjectOverlay_Op        `protobuf:"varint,2,opt,name=op,proto3,enum=v1alpha1.K8SObjectOverlay_Op" json:"op,omitempty"`
-+	Data                 *unstructured.Unstructured `protobuf:"bytes,6,opt,name=data" json:"data,omitempty"`
- 	XXX_NoUnkeyedLiteral struct{}                   `json:"-"`
- 	XXX_unrecognized     []byte                     `json:"-"`
- 	XXX_sizecache        int32                      `json:"-"`
+ 	K8S                  *KubernetesResourcesSpec `protobuf:"bytes,80,opt,name=k8s,proto3" json:"k8s,omitempty"`
++	ValuesOverrides      map[string]interface{}   `protobuf:"bytes,6,opt,name=data" json:"valuesOverrides,omitempty"`
+ 	XXX_NoUnkeyedLiteral struct{}                 `json:"-"`
+ 	XXX_unrecognized     []byte                   `json:"-"`
+ 	XXX_sizecache        int32                    `json:"-"`
+@@ -2065,6 +2066,7 @@
+ 	// Where b:c is a list element selector of the form key:value and :f is a list selector of the form :value.
+ 	// All path intermediate nodes must exist.
+ 	Path                 string   `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
++	Value                interface{} `protobuf:"bytes,4,opt,name=value,proto3" json:"value,omitempty"`
+ 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+ 	XXX_unrecognized     []byte   `json:"-"`
+ 	XXX_sizecache        int32    `json:"-"`

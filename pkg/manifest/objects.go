@@ -231,7 +231,7 @@ func (o *Object) GroupVersionKind() schema.GroupVersionKind {
 }
 
 func (o *Object) Hash() string {
-	return strings.Join([]string{o.Group, o.Kind, o.Namespace, o.Name}, "/")
+	return Hash(o.Kind, o.Namespace, o.Name)
 }
 
 func (o *Objects) JSONManifest() (string, error) {
@@ -358,6 +358,6 @@ func NewObject(u *unstructured.Unstructured, json, yaml []byte) *Object {
 	return o
 }
 
-func Hash(u *unstructured.Unstructured) string {
-	return NewObject(u, nil, nil).Hash()
+func Hash(kind, namespace, name string) string {
+	return strings.Join([]string{kind, namespace, name}, "/")
 }
