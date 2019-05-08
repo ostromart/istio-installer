@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/ghodss/yaml"
 	"github.com/kr/pretty"
+	"github.com/kylelemons/godebug/diff"
 	"math/rand"
 	"reflect"
 	"regexp"
@@ -20,7 +21,11 @@ func init() {
 var (
 	letters       = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 	ValidKeyRegex = regexp.MustCompile("^[a-zA-Z0-9_-]*$")
+
+	// debugPackage controls verbose debugging in this package. Used for offline debugging.
+	debugPackage = false
 )
+
 
 func GetPathVal(tree map[string]interface{}, path string) (string, bool) {
 	path = strings.TrimPrefix(path, "/")
@@ -126,6 +131,7 @@ func IsNilOrInvalidValue(v reflect.Value) bool {
 
 // AppendToSlicePtr inserts value into parent which must be a slice ptr.
 func AppendToSlicePtr(parentSlice interface{}, value interface{}) error {
+	dbgPrint("AppendToSlicePtr slice=\n%s\nvalue=\n%v", pretty.Sprint(parentSlice), value)
 	pv := reflect.ValueOf(parentSlice)
 	v := reflect.ValueOf(value)
 
@@ -139,11 +145,11 @@ func AppendToSlicePtr(parentSlice interface{}, value interface{}) error {
 }
 
 func DeleteFromSlicePtr(parentSlice interface{}, index int) error {
-	fmt.Printf("DeleteFromSlicePtr index=%d, slice=\n%s\n", index, pretty.Sprint(parentSlice))
+	dbgPrint("DeleteFromSlicePtr index=%d, slice=\n%s", index, pretty.Sprint(parentSlice))
 	pv := reflect.ValueOf(parentSlice)
 
 	if !IsSliceInterfacePtr(parentSlice) {
-		return fmt.Errorf("AppendToSlicePtr parent type is %T, must be *[]interface{}", parentSlice)
+		return fmt.Errorf("DeleteFromSlicePtr parent type is %T, must be *[]interface{}", parentSlice)
 	}
 
 	pvv := pv.Elem()
@@ -154,16 +160,16 @@ func DeleteFromSlicePtr(parentSlice interface{}, index int) error {
 	ns := reflect.AppendSlice(pvv.Slice(0, index), pvv.Slice(index+1, pvv.Len()))
 	pv.Elem().Set(ns)
 
-	fmt.Printf("DeleteFromSlicePtr index=%d, slice=\n%s\n", index, pretty.Sprint(parentSlice))
 	return nil
 }
 
 func UpdateSlicePtr(parentSlice interface{}, index int, value interface{}) error {
+	dbgPrint("UpdateSlicePtr parent=\n%s\n, index=%d, value=\n%v", pretty.Sprint(parentSlice), index, value)
 	pv := reflect.ValueOf(parentSlice)
 	v := reflect.ValueOf(value)
 
 	if !IsSliceInterfacePtr(parentSlice) {
-		return fmt.Errorf("AppendToSlicePtr parent type is %T, must be *[]interface{}", parentSlice)
+		return fmt.Errorf("UpdateSlicePtr parent type is %T, must be *[]interface{}", parentSlice)
 	}
 
 	pvv := pv.Elem()
@@ -178,7 +184,7 @@ func UpdateSlicePtr(parentSlice interface{}, index int, value interface{}) error
 
 // InsertIntoMap inserts value with key into parent which must be a map, map ptr, or interface to map.
 func InsertIntoMap(parentMap interface{}, key interface{}, value interface{}) error {
-	fmt.Printf("InsertIntoMap key=%v, value=%s, map=\n%s\n", key, pretty.Sprint(value), pretty.Sprint(parentMap))
+	dbgPrint("InsertIntoMap key=%v, value=%s, map=\n%s", key, pretty.Sprint(value), pretty.Sprint(parentMap))
 	v := reflect.ValueOf(parentMap)
 	kv := reflect.ValueOf(key)
 	vv := reflect.ValueOf(value)
@@ -191,14 +197,12 @@ func InsertIntoMap(parentMap interface{}, key interface{}, value interface{}) er
 	}
 
 	if v.Type().Kind() != reflect.Map {
-		fmt.Printf("error %v\n", v.Type().Kind())
+		dbgPrint("error %v", v.Type().Kind())
 		return fmt.Errorf("InsertIntoMap parent type is %T, must be map", parentMap)
 	}
 
 	v.SetMapIndex(kv, vv)
 
-		fmt.Println("here")
-	fmt.Printf("after InsertIntoMap map=\n%s\n", pretty.Sprint(parentMap))
 	return nil
 }
 
@@ -208,14 +212,44 @@ func IsYAMLEqual(a, b string) bool {
 	}
 	ajb, err := yaml.YAMLToJSON([]byte(a))
 	if err != nil {
-		fmt.Printf("bad YAML in isYAMLEqual:\n%s\n", a)
+		dbgPrint("bad YAML in isYAMLEqual:\n%s", a)
 		return false
 	}
 	bjb, err := yaml.YAMLToJSON([]byte(b))
 	if err != nil {
-		fmt.Printf("bad YAML in isYAMLEqual:\n%s\n", b)
+		dbgPrint("bad YAML in isYAMLEqual:\n%s", b)
 		return false
 	}
 
 	return string(ajb) == string(bjb)
+}
+
+func YAMLDiff(a, b string) string {
+	ao, bo := make(map[string]interface{}), make(map[string]interface{})
+	if err := yaml.Unmarshal([]byte(a), &ao); err != nil {
+		return err.Error()
+	}
+	if err := yaml.Unmarshal([]byte(b), &bo); err != nil {
+		return err.Error()
+	}
+
+	ay, err := yaml.Marshal(ao)
+	if err != nil {
+		return err.Error()
+	}
+	by, err := yaml.Marshal(bo)
+	if err != nil {
+		return err.Error()
+	}
+
+	return diff.Diff(string(ay), string(by))
+}
+
+// dbgPrint prints v if the package global variable debugPackage is set.
+// v has the same format as Printf. A trailing newline is added to the output.
+func dbgPrint(v ...interface{}) {
+	if !debugPackage {
+		return
+	}
+	fmt.Println(fmt.Sprintf(v[0].(string), v[1:]...))
 }

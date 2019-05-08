@@ -2,9 +2,7 @@ package patch
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
-	"github.com/kr/pretty"
 	"github.com/ostromart/istio-installer/pkg/util"
 	"testing"
 
@@ -14,114 +12,8 @@ import (
 	"github.com/ostromart/istio-installer/pkg/apis/installer/v1alpha1"
 )
 
-/*
-apiVersion: v1
-kind: Deployment
-name: istio-galley
-namespace: istio-system
-- op: replace
-  path: spec/template/spec/containers[name: galley]/imagePullPolicy
-  value: Always
-- op: replace
-  path: spec/template/spec/containers[name: galley]/ports[containerPort: 443]
-  value: 123
-- op: add
-  path: spec/template/spec/containers[name: galley]/ports
-  value: --newFlag=true
-- op: add
-  path: spec/template/spec/containers
-  value:
-    name: newContainer
-    command:
-    - /bin/bash
-    - echo "Hello world"
-*/
-
-func TestGetNode(t *testing.T) {
-	/*tr := map[string]interface {}{
-		"a": map[string]interface {}{
-			"b": map[string]interface {}{
-				"c": []interface {}{
-					map[string]interface {}{
-						"d":  "1",
-						"dd": "11",
-					},
-					map[string]interface {}{
-						"e":  "2",
-						"ee": "22",
-					},
-				},
-			},
-		},
-	}*/
-
-	tests := []struct {
-		desc        string
-		yAML        string
-		path        string
-		createNodes bool
-		want        interface{}
-		wantErr     string
-	}{
-		{
-			desc: "simple path",
-			yAML: `
-a:
-  b:
-    c: d
-`,
-			path: "a.b.c",
-			want: "d",
-		},
-		{
-			desc: "leaf list",
-			yAML: `a:
-  b:
-    c:
-    - d: 1
-      dd: 11
-    - e: 2
-      ee: 22
-`,
-			path: "a.b.c.d:1",
-			want: "0",
-		},
-	}
-
-	for _, tt := range tests {
-		fmt.Println(tt.desc)
-		t.Run(tt.desc, func(t *testing.T) {
-			root := make(map[string]interface{})
-			err := yaml.Unmarshal([]byte(tt.yAML), &root)
-			fmt.Println(pretty.Sprint(root))
-			if err != nil {
-				t.Fatalf("yaml.Unmarshal(%s): got error %s", tt.desc, err)
-			}
-			inc, err := getNode(makeNodeContext(root), util.PathFromString(tt.path))
-			if gotErr, wantErr := errToString(err), tt.wantErr; gotErr != wantErr {
-				t.Fatalf("%s: gotErr:%s, wantErr:%s", tt.desc, gotErr, wantErr)
-			}
-			if got, want := fmt.Sprint(inc.node), tt.want; got != want {
-				t.Errorf("%s: got:\n%s\n\nwant:\n%s", tt.desc, got, want)
-			}
-		})
-	}
-}
-
-func TestPatchYAMLManifest(t *testing.T) {
-	tests := []struct {
-		desc    string
-		base    string
-		overlay string
-		want    string
-		wantErr string
-	}{
-		{
-			desc: "nil success",
-		},
-		{
-			desc: "Deployment",
-			base: `
+func TestPatchYAMLManifestRealSuccess(t *testing.T) {
+	base := `
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
@@ -144,47 +36,248 @@ spec:
         - --meshConfigFile=/etc/mesh-config/mesh
         - --livenessProbeInterval=1s
         - --validation-webhook-config-file
-`,
-			overlay: `
-overlays:
-- kind: Deployment
-  name: istio-citadel
-  patches:
-    - path: spec.template.spec.containers.name:deleteThis
-`,
+`
+
+	tests := []struct {
+		desc    string
+		path    string
+		value   string
+		want    string
+		wantErr string
+	}{
+		{
+			desc: "DeleteLeafListLeaf",
+			path: `spec.template.spec.containers.name:galley.command.:--validation-webhook-config-file`,
 			want: `
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: istio-citadel
+  namespace: istio-system
+spec:
+  template:
+    spec:
+      containers:
+      - foo: bar
+        name: deleteThis
+      - command:
+        - /usr/local/bin/galley
+        - server
+        - --meshConfigFile=/etc/mesh-config/mesh
+        - --livenessProbeInterval=1s
+        name: galley
+        ports:
+        - containerPort: 443
+        - containerPort: 15014
+        - containerPort: 9901
+`,
+		},
+		{
+			desc:  "UpdateListItem",
+			path:  `spec.template.spec.containers.name:galley.command.:--livenessProbeInterval=1s`,
+			value: `--livenessProbeInterval=1111s`,
+			want: `
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: istio-citadel
+  namespace: istio-system
+spec:
+  template:
+    spec:
+      containers:
+      - foo: bar
+        name: deleteThis
+      - command:
+        - /usr/local/bin/galley
+        - server
+        - --meshConfigFile=/etc/mesh-config/mesh
+        - --livenessProbeInterval=1111s
+        - --validation-webhook-config-file
+        name: galley
+        ports:
+        - containerPort: 443
+        - containerPort: 15014
+        - containerPort: 9901
+`,
+		},
+		{
+			desc:  "UpdateLeaf",
+			path:  `spec.template.spec.containers.name:galley.ports.containerPort:15014.containerPort`,
+			value: `22222`,
+			want: `
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: istio-citadel
+  namespace: istio-system
+spec:
+  template:
+    spec:
+      containers:
+      - foo: bar
+        name: deleteThis
+      - command:
+        - /usr/local/bin/galley
+        - server
+        - --meshConfigFile=/etc/mesh-config/mesh
+        - --livenessProbeInterval=1s
+        - --validation-webhook-config-file
+        name: galley
+        ports:
+        - containerPort: 443
+        - containerPort: 22222
+        - containerPort: 9901
+`,
+		},
+		{
+			desc: "DeleteLeafList",
+			path: `spec.template.spec.containers.name:galley.ports.containerPort:9901`,
+			want: `
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: istio-citadel
+  namespace: istio-system
+spec:
+  template:
+    spec:
+      containers:
+      - foo: bar
+        name: deleteThis
+      - command:
+        - /usr/local/bin/galley
+        - server
+        - --meshConfigFile=/etc/mesh-config/mesh
+        - --livenessProbeInterval=1s
+        - --validation-webhook-config-file
+        name: galley
+        ports:
+        - containerPort: 443
+        - containerPort: 15014
+`,
+		},
+		{
+			desc: "DeleteInternalNode",
+			path: `spec.template.spec.containers.name:deleteThis`,
+			want: `
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: istio-citadel
+  namespace: istio-system
+spec:
+  template:
+    spec:
+      containers:
+      - command:
+        - /usr/local/bin/galley
+        - server
+        - --meshConfigFile=/etc/mesh-config/mesh
+        - --livenessProbeInterval=1s
+        - --validation-webhook-config-file
+        name: galley
+        ports:
+        - containerPort: 443
+        - containerPort: 15014
+        - containerPort: 9901
+`,
+		},
+		{
+			desc: "DeleteLeafListentry",
+			path: `spec.template.spec.containers.name:galley.command.:--validation-webhook-config-file`,
+			want: `
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: istio-citadel
+  namespace: istio-system
+spec:
+  template:
+    spec:
+      containers:
+      - foo: bar
+        name: deleteThis
+      - command:
+        - /usr/local/bin/galley
+        - server
+        - --meshConfigFile=/etc/mesh-config/mesh
+        - --livenessProbeInterval=1s
+        name: galley
+        ports:
+        - containerPort: 443
+        - containerPort: 15014
+        - containerPort: 9901
+`,
+		},
+		{
+			desc: "UpdateInteriorNode",
+			path: `spec.template.spec.containers.name:galley.ports.containerPort:15014`,
+			value: `
+      fooPort: 15015`,
+			want: `
+    apiVersion: extensions/v1beta1
+    kind: Deployment
+    metadata:
+      name: istio-citadel
+      namespace: istio-system
+    spec:
+      template:
+        spec:
+          containers:
+          - foo: bar
+            name: deleteThis
+          - command:
+            - /usr/local/bin/galley
+            - server
+            - --meshConfigFile=/etc/mesh-config/mesh
+            - --livenessProbeInterval=1s
+            - --validation-webhook-config-file
+            name: galley
+            ports:
+            - containerPort: 443
+            - fooPort: 15015
+            - containerPort: 9901
 `,
 		},
 	}
-/*
-    - path: spec.template.spec.containers.name:galley.command.:--validation-webhook-config-file
-    - path: spec.template.spec.containers.name:galley.command.:--livenessProbeInterval=1s
-      value: --livenessProbeInterval=1111s
-    - path: spec.template.spec.containers.name:galley.ports.containerPort:15014
-      value: 22222
-    - path: spec.template.spec.containers.name:galley.ports.containerPort:9901
-    - path: spec.template.spec.containers.name:deleteThis
-
-*/
 
 	for _, tt := range tests {
-		fmt.Println(tt.desc)
 		t.Run(tt.desc, func(t *testing.T) {
 			rc := &v1alpha1.KubernetesResourcesSpec{}
-			err := unmarshalWithJSONPB(tt.overlay, rc)
+			err := unmarshalWithJSONPB(makeOverlay(tt.path, tt.value), rc)
 			if err != nil {
 				t.Fatalf("unmarshalWithJSONPB(%s): got error %s", tt.desc, err)
 			}
-			//fmt.Println(pretty.Sprint(rc))
-			got, err := PatchYAMLManifest(tt.base, "istio-system", rc.Overlays)
+			got, err := PatchYAMLManifest(base, "istio-system", rc.Overlays)
 			if gotErr, wantErr := errToString(err), tt.wantErr; gotErr != wantErr {
 				t.Fatalf("PatchYAMLManifest(%s): gotErr:%s, wantErr:%s", tt.desc, gotErr, wantErr)
 			}
 			if want := tt.want; !util.IsYAMLEqual(got, want) {
-				t.Errorf("PatchYAMLManifest(%s): got:\n%s\n\nwant:\n%s", tt.desc, got, want)
+				t.Errorf("PatchYAMLManifest(%s): got:\n%s\n\nwant:\n%s\nDiff:\n%s\n", tt.desc, got, want, util.YAMLDiff(got, want))
 			}
 		})
 	}
+}
+
+func makeOverlay(path, value string) string {
+	const (
+		patchCommon = `
+overlays:
+- kind: Deployment
+  name: istio-citadel
+  patches:
+`
+		pathStr  = `  - path: `
+		valueStr = `    value: `
+	)
+
+	ret := patchCommon
+	ret += fmt.Sprintf("%s%s\n", pathStr, path)
+	if value != "" {
+		ret += fmt.Sprintf("%s%s\n", valueStr, value)
+	}
+	return ret
 }
 
 func unmarshalWithJSONPB(y string, out proto.Message) error {
@@ -195,19 +288,6 @@ func unmarshalWithJSONPB(y string, out proto.Message) error {
 
 	u := jsonpb.Unmarshaler{}
 	err = u.Unmarshal(bytes.NewReader(jb), out)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func unmarshalWithJSON(y string, out proto.Message) error {
-	jb, err := yaml.YAMLToJSON([]byte(y))
-	if err != nil {
-		return err
-	}
-
-	err = json.Unmarshal(jb, out)
 	if err != nil {
 		return err
 	}
