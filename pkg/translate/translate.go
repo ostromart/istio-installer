@@ -6,11 +6,9 @@ import (
 	"github.com/ostromart/istio-installer/pkg/apis/installer/v1alpha1"
 	"github.com/ostromart/istio-installer/pkg/util"
 	"gopkg.in/yaml.v2"
-	"reflect"
-	//	"github.com/godebug/pretty"
 	"path/filepath"
+	"reflect"
 	"strings"
-	//	"strconv"
 )
 
 // TranslationFunc maps a yamlStr API path into a YAML values tree.
@@ -19,31 +17,34 @@ type TranslationFunc func(t *Translation, root util.Tree, valuesPath string, val
 // Translation is a mapping between a yamlStr data path and a YAML values path.
 type Translation struct {
 	yAMLPath        string
-	k8sPath		    string
+	k8sPath         string
 	translationFunc TranslationFunc
 }
 
 var (
+	// defaultMappings is a mapping between an API path and the corresponding values.yaml path using longest prefix
+	// match. If the path is a non-leaf node, the output path is the matching portion of the path, plus any remaining
+	// output path.
 	defaultMappings = map[string]*Translation{
-		"Hub": { "global.hub", "", nil },
-		"Tag": { "global.tag", "", nil },
-		"K8SDefaults.Resources.Requests.cpu": { "global.defaultResources.requests.cpu", "", nil },
+		"Hub":                                {"global.hub", "", nil},
+		"Tag":                                {"global.tag", "", nil},
+		"K8SDefaults.Resources.Requests.cpu": {"global.defaultResources.requests.cpu", "", nil},
 
-		"TrafficManagement.ClusterDomain": { "global.clusterDomain", "", nil },
-		"TrafficManagement.SidecarInjector.EnableNamespacesByDefault.Value": { "sidecarInjectorWebhook.enableNamespacesByDefault", "", nil },
-		"TrafficManagement.Proxy.Common.Resources.Requests.cpu": { "global.proxy.resources.requests.cpu", "", nil },
-		"TrafficManagement.Proxy.Common.Resources.Requests.memory": { "global.proxy.resources.requests.memory", "", nil },
-		"TrafficManagement.Proxy.Common.Resources.Limits.cpu": { "global.proxy.resources.limits.cpu", "", nil },
-		"TrafficManagement.Proxy.Common.Resources.Limits.memory": { "global.proxy.resources.limits.memory", "", nil },
+		"TrafficManagement.ClusterDomain":                                   {"global.clusterDomain", "", nil},
+		"TrafficManagement.SidecarInjector.EnableNamespacesByDefault.Value": {"sidecarInjectorWebhook.enableNamespacesByDefault", "", nil},
+		"TrafficManagement.Proxy.Common.Resources.Requests.cpu":             {"global.proxy.resources.requests.cpu", "", nil},
+		"TrafficManagement.Proxy.Common.Resources.Requests.memory":          {"global.proxy.resources.requests.memory", "", nil},
+		"TrafficManagement.Proxy.Common.Resources.Limits.cpu":               {"global.proxy.resources.limits.cpu", "", nil},
+		"TrafficManagement.Proxy.Common.Resources.Limits.memory":            {"global.proxy.resources.limits.memory", "", nil},
 
-		"PolicyTelemetry.PolicyCheckFailOpen": { "global.policyCheckFailOpen", "", nil	},
-		"PolicyTelemetry.OutboundTrafficPolicyMode": { "global.outboundTrafficPolicy.mode", "", nil	},
+		"PolicyTelemetry.PolicyCheckFailOpen":       {"global.policyCheckFailOpen", "", nil},
+		"PolicyTelemetry.OutboundTrafficPolicyMode": {"global.outboundTrafficPolicy.mode", "", nil},
 
-		"Security.ControlPlaneMtls.Value": { "global.controlPlaneSecurityEnabled", "", nil	},
-		"Security.DataPlaneMtls.Value": { "global.mtls.enabled", "", nil	},
-		"Security.TrustDomain": { "global.trustDomain", "", nil	},
-		"Security.SelfSigned.Value": { "security.selfSigned", "", nil	},
-		"Security.CreateMeshPolicy.Value": { "security.createMeshPolicy", "", nil	},
+		"Security.ControlPlaneMtls.Value":    {"global.controlPlaneSecurityEnabled", "", nil},
+		"Security.DataPlaneMtlsStrict.Value": {"global.mtls.enabled", "", nil},
+		"Security.TrustDomain":               {"global.trustDomain", "", nil},
+		"Security.SelfSigned.Value":          {"security.selfSigned", "", nil},
+		"Security.CreateMeshPolicy.Value":    {"security.createMeshPolicy", "", nil},
 	}
 )
 
@@ -52,30 +53,23 @@ func defaultTranslationFunc(m *Translation, root util.Tree, valuesPath string, v
 	var path []string
 
 	if util.IsEmptyString(value) {
-		fmt.Printf("Skip empty string value for path %s\n", m.k8sPath)
+		dbgPrint("Skip empty string value for path %s", m.k8sPath)
 		return nil
 	}
 	if valuesPath == "" {
-		fmt.Printf("Not mapping to values, resources path is %s\n", m.k8sPath)
+		dbgPrint("Not mapping to values, resources path is %s", m.k8sPath)
 		return nil
 	}
 
 	for _, p := range util.PathFromString(valuesPath) {
 		path = append(path, firstCharToLower(p))
 	}
-	/*	switch reflect.TypeOf(value).Kind() {
-		case reflect.String:
-			return setYAML(root, path, strconv.Quote(value.(string)))
-		}*/
+
 	return setYAML(root, path, value)
 }
 
-func firstCharToLower(s string) string {
-	return strings.ToLower(s[0:1]) + s[1:]
-}
-
 // ProtoToValues traverses the supplied InstallerSpec and returns a values.yaml translation from it. Mappings defines
-// a mapping set
+// a mapping set of translations.
 func ProtoToValues(mappings map[string]*Translation, ii *v1alpha1.InstallerSpec) (string, error) {
 	root := make(util.Tree)
 
@@ -98,7 +92,7 @@ func ProtoToValues(mappings map[string]*Translation, ii *v1alpha1.InstallerSpec)
 // found, it calls the associated mapping function if one is defined to populate the values YAML path.
 // If no mapping function is defined, it uses the default mapping function.
 func protoToValues(mappings map[string]*Translation, structPtr interface{}, root util.Tree, path util.Path) (errs util.Errors) {
-	//fmt.Printf("protoToValues with path %s, %v (%T)\n", path, structPtr, structPtr)
+	dbgPrint("protoToValues with path %s, %v (%T)", path, structPtr, structPtr)
 	if structPtr == nil {
 		return nil
 	}
@@ -122,39 +116,37 @@ func protoToValues(mappings map[string]*Translation, structPtr interface{}, root
 			continue
 		}
 
-		//fmt.Printf("Checking field %s : %v\n", fieldName, fieldValue)
-		fmt.Printf("Checking field %s\n", fieldName)
+		dbgPrint("Checking field %s", fieldName)
 		switch kind {
 		case reflect.Struct:
-			fmt.Println("Struct")
+			dbgPrint("Struct")
 			errs = util.AppendErrs(errs, protoToValues(mappings, fieldValue.Addr().Interface(), root, append(path, fieldName)))
 		case reflect.Map:
-			fmt.Println("Map")
+			dbgPrint("Map")
 			newPath := append(path, fieldName)
 			for _, key := range fieldValue.MapKeys() {
 				nnp := append(newPath, key.String())
 				errs = util.AppendErrs(errs, insertLeaf(mappings, root, nnp, fieldValue.MapIndex(key)))
 			}
 		case reflect.Slice:
-			fmt.Println("Slice")
+			dbgPrint("Slice")
 			for i := 0; i < fieldValue.Len(); i++ {
 				errs = util.AppendErrs(errs, protoToValues(mappings, fieldValue.Index(i).Elem().Interface(), root, path))
 			}
 		case reflect.Ptr:
 			if util.IsNilOrInvalidValue(fieldValue.Elem()) {
-				//fmt.Println("value is nil, skip")
 				continue
 			}
 			newPath := append(path, fieldName)
 			if fieldValue.Elem().Kind() == reflect.Struct {
-				fmt.Println("Struct Ptr")
+				dbgPrint("Struct Ptr")
 				errs = util.AppendErrs(errs, protoToValues(mappings, fieldValue.Interface(), root, newPath))
 			} else {
 				fmt.Println("Leaf Ptr")
 				errs = util.AppendErrs(errs, insertLeaf(mappings, root, newPath, fieldValue))
 			}
 		default:
-			fmt.Printf("field has kind %s\n", kind)
+			dbgPrint("field has kind %s", kind)
 			if structElems.Field(i).CanInterface() {
 				errs = util.AppendErrs(errs, insertLeaf(mappings, root, append(path, fieldName), fieldValue))
 			}
@@ -177,7 +169,6 @@ func insertLeaf(mappings map[string]*Translation, root util.Tree, newPath util.P
 		break
 	case m.translationFunc == nil:
 		// Use default translation which just maps to a different part of the tree.
-		//fmt.Printf("Using default translation for %s.\n", path)
 		errs = util.AppendErr(errs, defaultTranslationFunc(m, root, valuesPath, v))
 	default:
 		// Use a custom translation function.
@@ -192,7 +183,7 @@ func insertLeaf(mappings map[string]*Translation, root util.Tree, newPath util.P
 func getValuesPathMapping(mappings map[string]*Translation, path util.Path) (string, *Translation) {
 	p := path
 	var m *Translation
-	for ; len(p) > 0; p = p[0:len(p)-1] {
+	for ; len(p) > 0; p = p[0 : len(p)-1] {
 		m = mappings[p.String()]
 		if m != nil {
 			break
@@ -208,13 +199,13 @@ func getValuesPathMapping(mappings map[string]*Translation, path util.Path) (str
 
 	d := len(path) - len(p)
 	out := filepath.Join(m.yAMLPath, path[len(path)-d:].String())
-	fmt.Printf("translating %s to %s\n", path, out)
+	dbgPrint("translating %s to %s", path, out)
 	return out, m
 }
 
 // setYAML sets the YAML path in the given Tree to the given value, creating any required intermediate nodes.
 func setYAML(root util.Tree, path util.Path, value interface{}) error {
-	fmt.Printf("setYAML %s:%v\n", path, value)
+	dbgPrint("setYAML %s:%v", path, value)
 	if len(path) == 0 {
 		return fmt.Errorf("path cannot be empty")
 	}
@@ -227,4 +218,13 @@ func setYAML(root util.Tree, path util.Path, value interface{}) error {
 	}
 	setYAML(root[path[0]].(util.Tree), path[1:], value)
 	return nil
+}
+
+func dbgPrint(v ...interface{}) {
+	return
+	fmt.Println(fmt.Sprintf(v[0].(string), v[1:]...))
+}
+
+func firstCharToLower(s string) string {
+	return strings.ToLower(s[0:1]) + s[1:]
 }

@@ -1,7 +1,6 @@
 package validate
 
 import (
-	"fmt"
 	"github.com/ostromart/istio-installer/pkg/util"
 )
 
@@ -20,13 +19,13 @@ var (
 )
 
 // ValidateValues validates the values in the given tree, which follows the Istio values.yaml schema.
-func ValidateValues(validations map[string]ValidateFunc, root util.Tree) util.Errors {
+func ValidateValues(root util.Tree) util.Errors {
 	return validateValues(defaultValuesValidations, root, nil)
 }
 
 func validateValues(validations map[string]ValidateFunc, node interface{}, path util.Path) (errs util.Errors) {
 	pstr := path.String()
-	fmt.Printf("validateValues %s\n", pstr)
+	dbgPrint("validateValues %s", pstr)
 	vf := defaultValuesValidations[pstr]
 	if vf != nil {
 		errs = util.AppendErrs(errs, vf(path, node))

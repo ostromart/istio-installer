@@ -13,7 +13,7 @@ var (
 	defaultValidations = map[string]ValidateFunc{
 		"Hub":                    validateHub,
 		"Tag":                    validateTag,
-		"InstallPackagePath":     validateInstallPackagePath,
+		"CustomPackagePath":      validateInstallPackagePath,
 		"DefaultNamespacePrefix": validateDefaultNamespacePrefix,
 	}
 
@@ -22,14 +22,14 @@ var (
 	}
 )
 
-// ValidateInstallerSpec validates the values in the given Installer spec, using the field map defaultValidations to call the appropriate
-// validation function.
-func ValidateInstallerSpec(validations map[string]ValidateFunc, is *v1alpha1.InstallerSpec) util.Errors {
+// ValidateInstallerSpec validates the values in the given Installer spec, using the field map defaultValidations to
+// call the appropriate validation function.
+func ValidateInstallerSpec(is *v1alpha1.InstallerSpec) util.Errors {
 	return validate(defaultValidations, is, nil)
 }
 
 func validate(validations map[string]ValidateFunc, structPtr interface{}, path util.Path) (errs util.Errors) {
-	//fmt.Printf("validate with path %s, %v (%T)\n", path, structPtr, structPtr)
+	dbgPrint("validate with path %s, %v (%T)", path, structPtr, structPtr)
 	if structPtr == nil {
 		return nil
 	}
@@ -53,38 +53,31 @@ func validate(validations map[string]ValidateFunc, structPtr interface{}, path u
 			continue
 		}
 
-		//fmt.Printf("Checking field %s\n", fieldName)
+		dbgPrint("Checking field %s", fieldName)
 		switch kind {
 		case reflect.Struct:
-			//fmt.Println("Struct")
 			errs = util.AppendErrs(errs, validate(validations, fieldValue.Addr().Interface(), append(path, fieldName)))
 		case reflect.Map:
-			//fmt.Println("Map")
 			newPath := append(path, fieldName)
 			for _, key := range fieldValue.MapKeys() {
 				nnp := append(newPath, key.String())
 				errs = util.AppendErrs(errs, validateLeaf(validations, nnp, fieldValue.MapIndex(key)))
 			}
 		case reflect.Slice:
-			//fmt.Println("Slice")
 			for i := 0; i < fieldValue.Len(); i++ {
 				errs = util.AppendErrs(errs, validate(validations, fieldValue.Index(i).Elem().Interface(), path))
 			}
 		case reflect.Ptr:
 			if util.IsNilOrInvalidValue(fieldValue.Elem()) {
-				//fmt.Println("value is nil, skip")
 				continue
 			}
 			newPath := append(path, fieldName)
 			if fieldValue.Elem().Kind() == reflect.Struct {
-				//fmt.Println("Struct Ptr")
 				errs = util.AppendErrs(errs, validate(validations, fieldValue.Interface(), newPath))
 			} else {
-				//fmt.Println("Leaf Ptr")
 				errs = util.AppendErrs(errs, validateLeaf(validations, newPath, fieldValue))
 			}
 		default:
-			//fmt.Printf("field has kind %s\n", kind)
 			if structElems.Field(i).CanInterface() {
 				errs = util.AppendErrs(errs, validateLeaf(validations, append(path, fieldName), fieldValue.Interface()))
 			}
@@ -95,16 +88,16 @@ func validate(validations map[string]ValidateFunc, structPtr interface{}, path u
 
 func validateLeaf(validations map[string]ValidateFunc, path util.Path, val interface{}) util.Errors {
 	pstr := path.String()
-	fmt.Printf("validate %s:%v(%T) ", pstr, val, val)
+	dbgPrintC("validate %s:%v(%T) ", pstr, val, val)
 	if !requiredValues[pstr] && (util.IsValueNil(val) || util.IsEmptyString(val)) {
 		// TODO(mostrowski): handle required fields.
-		fmt.Printf("validate %s: OK (empty value)\n", pstr)
+		dbgPrint("validate %s: OK (empty value)", pstr)
 		return nil
 	}
 
 	vf, ok := validations[pstr]
 	if !ok {
-		fmt.Printf("validate %s: OK (no validation)\n", pstr)
+		dbgPrint("validate %s: OK (no validation)", pstr)
 		// No validation defined.
 		return nil
 	}
