@@ -13,6 +13,10 @@ message IstioInstaller {
 }
 
 // InstallerSpec defines the desired state of IstioInstaller.
+// The spec is a used to define a customization of the default values that are supplied with an Istio charts release.
+// It is grouped at the top level by feature, where behavior of Istio functional areas is specified.
+// Each feature contains components, where k8s resource level defaults can be overridden.
+// Because the spec is a customization API, specifying an empty InstallerSpec results in a default Istio installation.
 message InstallerSpec {
     // Prefix added to all namespaces for any installed component.
     string default_namespace_prefix = 5;
@@ -56,8 +60,6 @@ message TrafficManagementFeatureSpec {
     // Namespace that all traffic management components are installed into.
     string namespace = 2;
 
-    string cluster_domain = 24;
-
     // Component specific config.
     PilotComponentSpec pilot = 30;
     ProxyComponentSpec proxy = 31;
@@ -97,10 +99,8 @@ message SecurityFeatureSpec {
     // Will result in delays starting the pods while secrets are propagated, not recommended for tests.
     google.protobuf.BoolValue control_plane_mtls = 13;
 
-    // Enables MTLS for service to service traffic.
-    google.protobuf.BoolValue data_plane_mtls = 14;
-
-    string trust_domain = 15;
+    // Enables strict MTLS for service to service traffic, or permissive mode MTLS if unset.
+    google.protobuf.BoolValue data_plane_mtls_strict = 14;
 
     CitadelComponentSpec citadel = 20;
     CertManagerComponentSpec cert_manager = 21;
@@ -166,10 +166,9 @@ message GalleyComponentSpec {
 
 // Configuration common to all components.
 message CommonComponentSpec {
-    // Selects whether policy enforcement is installed.
-    // Q. is this enough to cover both mixer.policy.enabled and disablePolicyChecks?
+    // Selects whether this component is installed.
     google.protobuf.BoolValue enabled = 1;
-    // Namespace that all resources for this feature are installed into.
+    // Namespace that all resources for this component are installed into.
     string namespace = 2;
     // LogLevel sets the component log level. Mappings to underlying log levels are not necessarily 1:1 and depend on
     // component support of these levels e.g. DEBUG or INFO may result in the same log verbosity.
@@ -182,10 +181,6 @@ message CommonComponentSpec {
     }
     LogLevel debug = 3;
 
-    message UpdateSpec {
-        string old = 1;
-        string new = 2;
-    }
     // Kubernetes resource spec.
     KubernetesResourcesSpec k8s = 80;
 
@@ -234,7 +229,7 @@ message KubernetesResourcesSpec {
     // https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/#priorityclass
     string priority_class_name = 10;
 
-    // Kustomize style overrides for k8s resources in rendered manifests.
+    // Overlays for k8s resources in rendered manifests.
     repeated k8sObjectOverlay overlays = 100;
 }
 
@@ -242,8 +237,7 @@ message KubernetesResourcesSpec {
 message IngressGatewaySpec {
     // Common gateway configuration.
     GatewayConfig gateway = 10;
-    // Selects the type of ingress.
-    // Ingress type.
+
     enum IngressType {
         ISTIO = 0;
         KUBERNETES = 1;
@@ -255,8 +249,6 @@ message IngressGatewaySpec {
     // If true, ingress gateway fetches credentials from SDS server to handle TLS connections.
     google.protobuf.BoolValue sds_enabled = 16;
 
-    // change to Local to preserve source IP or Cluster for default behaviour or leave commented out
-    // ???
     // External traffic policy.
     enum ExternalTrafficPolicy {
         NONE = 0;

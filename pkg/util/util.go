@@ -20,36 +20,14 @@ func init() {
 
 var (
 	letters       = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+	//
 	ValidKeyRegex = regexp.MustCompile("^[a-zA-Z0-9_-]*$")
 
 	// debugPackage controls verbose debugging in this package. Used for offline debugging.
 	debugPackage = false
 )
 
-
-func GetPathVal(tree map[string]interface{}, path string) (string, bool) {
-	path = strings.TrimPrefix(path, "/")
-	path = strings.TrimSuffix(path, "/")
-	pv := strings.Split(path, "/")
-
-	for ; len(pv) > 0; pv = pv[1:] {
-		p := pv[0]
-		v, ok := tree[p]
-		if !ok {
-			return "", false
-		}
-		if len(pv) == 1 {
-			return fmt.Sprint(v), true
-		}
-		tree, ok = v.(map[string]interface{})
-		if !ok {
-			return "", false
-		}
-	}
-
-	return "", false
-}
-
+// RandomString returns a random string of length n.
 func RandomString(n int) string {
 	b := make([]rune, n)
 	for i := range b {

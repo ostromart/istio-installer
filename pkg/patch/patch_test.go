@@ -12,7 +12,147 @@ import (
 	"github.com/ostromart/istio-installer/pkg/apis/installer/v1alpha1"
 )
 
-func TestPatchYAMLManifestRealSuccess(t *testing.T) {
+func TestPatchYAMLManifestSuccess(t *testing.T) {
+	base := `
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: istio-citadel
+  namespace: istio-system
+a:
+  b:
+  - name: n1
+    value: v1
+  - name: n2
+    list: 
+    - v1
+    - v2
+    - v3_regex
+`
+	tests := []struct {
+		desc    string
+		path    string
+		value   string
+		want    string
+		wantErr string
+	}{
+		{
+			desc: "ModifyListEntryValue",
+			path: `a.b.name:n1.value`,
+			value: `v2`,
+			want: `
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: istio-citadel
+  namespace: istio-system
+a:
+  b:
+  - name: n1
+    value: v2
+  - list:
+    - v1
+    - v2
+    - v3_regex
+    name: n2
+`,
+		},
+		{
+			desc: "ModifyListEntry",
+			path: `a.b.name:n2.list.:v2`,
+			value: `v3`,
+			want: `
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: istio-citadel
+  namespace: istio-system
+a:
+  b:
+  - name: n1
+    value: v1
+  - list:
+    - v1
+    - v3
+    - v3_regex
+    name: n2
+`,
+		},
+		{
+			desc: "DeleteListEntry",
+			path: `a.b.name:n1`,
+			want: `
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: istio-citadel
+  namespace: istio-system
+a:
+  b:
+  - list:
+    - v1
+    - v2
+    - v3_regex
+    name: n2
+`,
+		},
+		{
+			desc: "DeleteListEntryValue",
+			path: `a.b.name:n2.list.:v2`,
+			want: `
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: istio-citadel
+  namespace: istio-system
+a:
+  b:
+  - name: n1
+    value: v1
+  - list:
+    - v1
+    - v3_regex
+    name: n2
+`,
+		},
+		{
+			desc: "DeleteListEntryValueRegex",
+			path: `a.b.name:n2.list.:v3`,
+			want: `
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: istio-citadel
+  namespace: istio-system
+a:
+  b:
+  - name: n1
+    value: v1
+  - list:
+    - v1
+    - v2
+    name: n2
+`,
+		},	}
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			rc := &v1alpha1.KubernetesResourcesSpec{}
+			err := unmarshalWithJSONPB(makeOverlay(tt.path, tt.value), rc)
+			if err != nil {
+				t.Fatalf("unmarshalWithJSONPB(%s): got error %s", tt.desc, err)
+			}
+			got, err := PatchYAMLManifest(base, "istio-system", rc.Overlays)
+			if gotErr, wantErr := errToString(err), tt.wantErr; gotErr != wantErr {
+				t.Fatalf("PatchYAMLManifest(%s): gotErr:%s, wantErr:%s", tt.desc, gotErr, wantErr)
+			}
+			if want := tt.want; !util.IsYAMLEqual(got, want) {
+				t.Errorf("PatchYAMLManifest(%s): got:\n%s\n\nwant:\n%s\nDiff:\n%s\n", tt.desc, got, want, util.YAMLDiff(got, want))
+			}
+		})
+	}
+}
+
+func TestPatchYAMLManifestRealYAMLSuccess(t *testing.T) {
 	base := `
 apiVersion: extensions/v1beta1
 kind: Deployment
@@ -74,7 +214,7 @@ spec:
 		},
 		{
 			desc:  "UpdateListItem",
-			path:  `spec.template.spec.containers.name:galley.command.:--livenessProbeInterval=1s`,
+			path:  `spec.template.spec.containers.name:galley.command.:--livenessProbeInterval`,
 			value: `--livenessProbeInterval=1111s`,
 			want: `
 apiVersion: extensions/v1beta1
@@ -216,28 +356,29 @@ spec:
 			value: `
       fooPort: 15015`,
 			want: `
-    apiVersion: extensions/v1beta1
-    kind: Deployment
-    metadata:
-      name: istio-citadel
-      namespace: istio-system
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: istio-citadel
+  namespace: istio-system
+spec:
+  template:
     spec:
-      template:
-        spec:
-          containers:
-          - foo: bar
-            name: deleteThis
-          - command:
-            - /usr/local/bin/galley
-            - server
-            - --meshConfigFile=/etc/mesh-config/mesh
-            - --livenessProbeInterval=1s
-            - --validation-webhook-config-file
-            name: galley
-            ports:
-            - containerPort: 443
-            - fooPort: 15015
-            - containerPort: 9901
+      containers:
+      - foo: bar
+        name: deleteThis
+      - command:
+        - /usr/local/bin/galley
+        - server
+        - --meshConfigFile=/etc/mesh-config/mesh
+        - --livenessProbeInterval=1s
+        - --validation-webhook-config-file
+        name: galley
+        ports:
+        - containerPort: 443
+        - fooPort: 15015
+        - containerPort: 9901
+
 `,
 		},
 	}

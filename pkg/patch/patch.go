@@ -1,9 +1,75 @@
+/*
+Package patch implements a simple patching mechanism for k8s resources.
+Paths are specified in the form a.b.c.key:value.d.:list_entry_value, where:
+ -  key:value selects a list entry in list c which contains an entry with key:value
+ -  :list_entry_value selects a list entry in list d which is a regex match of list_entry_value.
+
+Some examples are given below. Given a resource:
+
+kind: Deployment
+metadata:
+  name: istio-citadel
+  namespace: istio-system
+a:
+  b:
+  - name: n1
+    value: v1
+  - name: n2
+    list:
+    - vv1
+    - vv2=foo
+
+values and list entries can be added, modifed or deleted.
+
+MODIFY
+
+1. set v1 to v1new
+
+  path: a.b.name:n1:value
+  value: v1
+
+2. set vv1 to vv3
+
+  path: a.b.name:n2.list.:vv1
+  value: vv3
+
+3. set vv2=foo to vv2=bar (using regex match)
+
+  path: a.b.name:n2.list.:vv2
+  value: vv2=bar
+
+DELETE
+
+1. Delete container with name: n1
+
+  path: a.b.name:n1
+
+2. Delete list value vv1
+
+  path: a.b.name:n2.list.:vv1
+
+ADD
+
+1. Add vv3 to list
+
+  path: a.b.name:n2.list
+  value: vv3
+
+2. Add new key:value to container name: n1
+
+  path: a.b.name:n1
+  value:
+    new_attr: v3
+
+ */
+
 package patch
 
 import (
 	"context"
 	"fmt"
 	"reflect"
+	"regexp"
 	"strings"
 
 	"github.com/kr/pretty"
@@ -19,18 +85,18 @@ var (
 	debugPackage = false
 )
 
-// nodeContext provides a means for traversing a tree towards the root.
-type nodeContext struct {
-	// parent in the parent of this nodeContext
-	parent *nodeContext
+// pathContext provides a means for traversing a tree towards the root.
+type pathContext struct {
+	// parent in the parent of this pathContext.
+	parent *pathContext
 	// keyToChild is the key required to reach the child.
 	keyToChild interface{}
-	// node is the actual node in the data tree
+	// node is the actual node in the data tree.
 	node interface{}
 }
 
 // String implements the Stringer interface.
-func (nc *nodeContext) String() string {
+func (nc *pathContext) String() string {
 	ret := "\n--------------- NodeContext ------------------\n"
 	ret += fmt.Sprintf("parent.node=\n%s\n", pretty.Sprint(nc.parent.node))
 	ret += fmt.Sprintf("keyToChild=%v\n", nc.parent.keyToChild)
@@ -39,9 +105,9 @@ func (nc *nodeContext) String() string {
 	return ret
 }
 
-// makeNodeContext returns a nodeContext created from the given object.
-func makeNodeContext(obj interface{}) *nodeContext {
-	return &nodeContext{
+// makeNodeContext returns a pathContext created from the given object.
+func makeNodeContext(obj interface{}) *pathContext {
+	return &pathContext{
 		node: obj,
 	}
 }
@@ -80,7 +146,7 @@ func PatchYAMLManifest(baseYAML string, namespace string, overlays []*v1alpha1.K
 	// Render the remaining objects with no overlays.
 	for k, oo := range bom {
 		if oom[k] != nil {
-			// Skip objects that have overlays.
+			// Skip objects that have overlays, these were rendered above.
 			continue
 		}
 		oy, err := oo.YAML()
@@ -110,7 +176,6 @@ func applyPatches(base *manifest.Object, patches []*v1alpha1.K8SObjectOverlay_Pa
 		dbgPrint("applying path=%s, value=%s\n", p.Path, p.Value)
 		inc, err := getNode(makeNodeContext(bo), util.PathFromString(p.Path))
 		if err != nil {
-			fmt.Println(err)
 			errs = util.AppendErr(errs, err)
 			continue
 		}
@@ -125,7 +190,7 @@ func applyPatches(base *manifest.Object, patches []*v1alpha1.K8SObjectOverlay_Pa
 
 // getNode returns the node which has the given patch from the source node given by nc.
 // It creates a tree of nodeContexts during the traversal so that parent structures can be updated if required.
-func getNode(nc *nodeContext, path util.Path) (*nodeContext, error) {
+func getNode(nc *pathContext, path util.Path) (*pathContext, error) {
 	dbgPrint("getNode path=%s, node=%s", path, pretty.Sprint(nc.node))
 	if len(path) == 0 {
 		dbgPrint("terminate with nc=%s", nc)
@@ -141,10 +206,12 @@ func getNode(nc *nodeContext, path util.Path) (*nodeContext, error) {
 		v = v.Elem()
 	}
 	ncNode := v.Interface()
-	// list or leaf list
+	// For list types, we need a key to identify the selected list item. This can be either a a value key of the
+	// form :matching_value in the case of a leaf list, or a matching key:value in the case of a non-leaf list.
 	if lst, ok := ncNode.([]interface{}); ok {
 		dbgPrint("list type")
 		for idx, le := range lst {
+			// non-leaf list, expect to match item by key:value.
 			if lm, ok := le.(map[interface{}]interface{}); ok {
 				k, v, err := pathKV(pe)
 				if err != nil {
@@ -152,7 +219,7 @@ func getNode(nc *nodeContext, path util.Path) (*nodeContext, error) {
 				}
 				if stringsEqual(lm[k], v) {
 					dbgPrint("found matching kv %v:%v", k, v)
-					nn := &nodeContext{
+					nn := &pathContext{
 						parent: nc,
 						node:   lm,
 					}
@@ -166,14 +233,14 @@ func getNode(nc *nodeContext, path util.Path) (*nodeContext, error) {
 				}
 				continue
 			}
-			// Must be a leaf list
+			// leaf list, match based on value.
 			v, err := pathV(pe)
 			if err != nil {
 				return nil, err
 			}
-			if stringsEqual(v, le) {
+			if matchesRegex(v, le) {
 				dbgPrint("found matching key %v, index %d", le, idx)
-				nn := &nodeContext{
+				nn := &pathContext{
 					parent: nc,
 					node:   le,
 				}
@@ -185,11 +252,11 @@ func getNode(nc *nodeContext, path util.Path) (*nodeContext, error) {
 	}
 
 	dbgPrint("interior node")
-	// interior or non-leaf node
+	// non-list node.
 	if nnt, ok := nc.node.(map[interface{}]interface{}); ok {
 		var nn interface{}
 		nn = nnt[pe]
-		nnc := &nodeContext{
+		nnc := &pathContext{
 			parent: nc,
 			node:   nn,
 		}
@@ -204,9 +271,9 @@ func getNode(nc *nodeContext, path util.Path) (*nodeContext, error) {
 	return nil, fmt.Errorf("leaf type %T in non-leaf node %s", nc.node, path)
 }
 
-// writeNode writes the given value to the node in the given nodeContext.
-func writeNode(nc *nodeContext, value interface{}) error {
-	dbgPrint("writeNode nodeContext=%s, value=%v", nc, value)
+// writeNode writes the given value to the node in the given pathContext.
+func writeNode(nc *pathContext, value interface{}) error {
+	dbgPrint("writeNode pathContext=%s, value=%v", nc, value)
 
 	switch {
 	case value == nil:
@@ -293,6 +360,16 @@ func objectOverrideMap(oos []*v1alpha1.K8SObjectOverlay, namespace string) (map[
 
 func stringsEqual(a, b interface{}) bool {
 	return fmt.Sprint(a) == fmt.Sprint(b)
+}
+
+func matchesRegex(pattern, str interface{}) bool {
+	match, err := regexp.MatchString(fmt.Sprint(pattern), fmt.Sprint(str))
+	if err != nil {
+		log.Errorf("bad regex expression %s", fmt.Sprint(pattern))
+		return false
+	}
+	dbgPrint("%v regex %v? %v\n", pattern, str, match)
+	return match
 }
 
 func isSlice(v interface{}) bool {

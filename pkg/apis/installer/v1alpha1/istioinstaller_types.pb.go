@@ -1322,7 +1322,7 @@ type KubernetesResourcesSpec struct {
 	// k8s HorizontalPodAutoscaler settings.
 	// https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/
 	HpaSpec *v11.HorizontalPodAutoscalerSpec `protobuf:"bytes,4,opt,name=hpa_spec,json=hpaSpec,proto3" json:"hpa_spec,omitempty"`
-	// k8s PodDisruptionBudget settings.
+	// k8s DefaultPodDisruptionBudgetConfig settings.
 	// https://kubernetes.io/docs/concepts/workloads/pods/disruptions/#how-disruption-budgets-work
 	PodDisruptionBudget *PodDisruptionBudgetSpec `protobuf:"bytes,5,opt,name=pod_disruption_budget,json=podDisruptionBudget,proto3" json:"pod_disruption_budget,omitempty"`
 	// k8s pod annotations.
@@ -2311,7 +2311,7 @@ func (m *Resources) GetRequests() map[string]string {
 	return nil
 }
 
-// Mirrors k8s.io.api.policy.v1beta1.PodDisruptionBudget for unmarshaling.
+// Mirrors k8s.io.api.policy.v1beta1.DefaultPodDisruptionBudgetConfig for unmarshaling.
 type PodDisruptionBudgetSpec struct {
 	MinAvailable         uint32             `protobuf:"varint,1,opt,name=min_available,json=minAvailable,proto3" json:"min_available,omitempty"`
 	Selector             *v12.LabelSelector `protobuf:"bytes,2,opt,name=selector,proto3" json:"selector,omitempty"`
@@ -8322,7 +8322,7 @@ func (m *KubernetesResourcesSpec) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 5:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field PodDisruptionBudget", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field DefaultPodDisruptionBudgetConfig", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -11345,7 +11345,7 @@ func (m *TestKube) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 87:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field PodDisruptionBudget", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field DefaultPodDisruptionBudgetConfig", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
