@@ -26,32 +26,32 @@ var _ = math.Inf
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
 // Default behavior of the sidecar for handling outbound traffic from the application.
-type PolicyTelemetryFeatureSpec_OutboundPolicy int32
+type PolicyFeatureSpec_OutboundPolicy int32
 
 const (
 	// Outbound traffic to unknown destinations will be allowed, in case there are no
 	// services or ServiceEntries for the destination port
-	PolicyTelemetryFeatureSpec_ALLOW_ANY PolicyTelemetryFeatureSpec_OutboundPolicy = 0
+	PolicyFeatureSpec_ALLOW_ANY PolicyFeatureSpec_OutboundPolicy = 0
 	// Restrict outbound traffic to services defined in the service registry as well
 	// as those defined through ServiceEntries
-	PolicyTelemetryFeatureSpec_REGISTRY_ONLY PolicyTelemetryFeatureSpec_OutboundPolicy = 1
+	PolicyFeatureSpec_REGISTRY_ONLY PolicyFeatureSpec_OutboundPolicy = 1
 )
 
-var PolicyTelemetryFeatureSpec_OutboundPolicy_name = map[int32]string{
+var PolicyFeatureSpec_OutboundPolicy_name = map[int32]string{
 	0: "ALLOW_ANY",
 	1: "REGISTRY_ONLY",
 }
 
-var PolicyTelemetryFeatureSpec_OutboundPolicy_value = map[string]int32{
+var PolicyFeatureSpec_OutboundPolicy_value = map[string]int32{
 	"ALLOW_ANY":     0,
 	"REGISTRY_ONLY": 1,
 }
 
-func (x PolicyTelemetryFeatureSpec_OutboundPolicy) String() string {
-	return proto.EnumName(PolicyTelemetryFeatureSpec_OutboundPolicy_name, int32(x))
+func (x PolicyFeatureSpec_OutboundPolicy) String() string {
+	return proto.EnumName(PolicyFeatureSpec_OutboundPolicy_name, int32(x))
 }
 
-func (PolicyTelemetryFeatureSpec_OutboundPolicy) EnumDescriptor() ([]byte, []int) {
+func (PolicyFeatureSpec_OutboundPolicy) EnumDescriptor() ([]byte, []int) {
 	return fileDescriptor_d0a1188b3d395975, []int{3, 0}
 }
 
@@ -88,7 +88,7 @@ func (x CommonComponentSpec_LogLevel) String() string {
 }
 
 func (CommonComponentSpec_LogLevel) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{15, 0}
+	return fileDescriptor_d0a1188b3d395975, []int{16, 0}
 }
 
 type IngressGatewaySpec_IngressType int32
@@ -113,7 +113,7 @@ func (x IngressGatewaySpec_IngressType) String() string {
 }
 
 func (IngressGatewaySpec_IngressType) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{17, 0}
+	return fileDescriptor_d0a1188b3d395975, []int{18, 0}
 }
 
 // External traffic policy.
@@ -143,60 +143,60 @@ func (x IngressGatewaySpec_ExternalTrafficPolicy) String() string {
 }
 
 func (IngressGatewaySpec_ExternalTrafficPolicy) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{17, 1}
+	return fileDescriptor_d0a1188b3d395975, []int{18, 1}
 }
 
-type InstallerStatus_Status int32
+type InstallStatus_Status int32
 
 const (
-	InstallerStatus_NONE     InstallerStatus_Status = 0
-	InstallerStatus_UPDATING InstallerStatus_Status = 1
-	InstallerStatus_HEALTHY  InstallerStatus_Status = 2
-	InstallerStatus_ERROR    InstallerStatus_Status = 3
+	InstallStatus_NONE     InstallStatus_Status = 0
+	InstallStatus_UPDATING InstallStatus_Status = 1
+	InstallStatus_HEALTHY  InstallStatus_Status = 2
+	InstallStatus_ERROR    InstallStatus_Status = 3
 )
 
-var InstallerStatus_Status_name = map[int32]string{
+var InstallStatus_Status_name = map[int32]string{
 	0: "NONE",
 	1: "UPDATING",
 	2: "HEALTHY",
 	3: "ERROR",
 }
 
-var InstallerStatus_Status_value = map[string]int32{
+var InstallStatus_Status_value = map[string]int32{
 	"NONE":     0,
 	"UPDATING": 1,
 	"HEALTHY":  2,
 	"ERROR":    3,
 }
 
-func (x InstallerStatus_Status) String() string {
-	return proto.EnumName(InstallerStatus_Status_name, int32(x))
+func (x InstallStatus_Status) String() string {
+	return proto.EnumName(InstallStatus_Status_name, int32(x))
 }
 
-func (InstallerStatus_Status) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{24, 0}
+func (InstallStatus_Status) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_d0a1188b3d395975, []int{25, 0}
 }
 
-type IstioInstaller struct {
-	Spec                 *InstallerSpec   `protobuf:"bytes,3,opt,name=spec,proto3" json:"spec,omitempty"`
-	Status               *InstallerStatus `protobuf:"bytes,4,opt,name=status,proto3" json:"status,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}         `json:"-"`
-	XXX_unrecognized     []byte           `json:"-"`
-	XXX_sizecache        int32            `json:"-"`
+type IstioInstall struct {
+	Spec                 *InstallSpec   `protobuf:"bytes,3,opt,name=spec,proto3" json:"spec,omitempty"`
+	Status               *InstallStatus `protobuf:"bytes,4,opt,name=status,proto3" json:"status,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}       `json:"-"`
+	XXX_unrecognized     []byte         `json:"-"`
+	XXX_sizecache        int32          `json:"-"`
 }
 
-func (m *IstioInstaller) Reset()         { *m = IstioInstaller{} }
-func (m *IstioInstaller) String() string { return proto.CompactTextString(m) }
-func (*IstioInstaller) ProtoMessage()    {}
-func (*IstioInstaller) Descriptor() ([]byte, []int) {
+func (m *IstioInstall) Reset()         { *m = IstioInstall{} }
+func (m *IstioInstall) String() string { return proto.CompactTextString(m) }
+func (*IstioInstall) ProtoMessage()    {}
+func (*IstioInstall) Descriptor() ([]byte, []int) {
 	return fileDescriptor_d0a1188b3d395975, []int{0}
 }
-func (m *IstioInstaller) XXX_Unmarshal(b []byte) error {
+func (m *IstioInstall) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *IstioInstaller) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *IstioInstall) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_IstioInstaller.Marshal(b, m, deterministic)
+		return xxx_messageInfo_IstioInstall.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalTo(b)
@@ -206,43 +206,44 @@ func (m *IstioInstaller) XXX_Marshal(b []byte, deterministic bool) ([]byte, erro
 		return b[:n], nil
 	}
 }
-func (m *IstioInstaller) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_IstioInstaller.Merge(m, src)
+func (m *IstioInstall) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_IstioInstall.Merge(m, src)
 }
-func (m *IstioInstaller) XXX_Size() int {
+func (m *IstioInstall) XXX_Size() int {
 	return m.Size()
 }
-func (m *IstioInstaller) XXX_DiscardUnknown() {
-	xxx_messageInfo_IstioInstaller.DiscardUnknown(m)
+func (m *IstioInstall) XXX_DiscardUnknown() {
+	xxx_messageInfo_IstioInstall.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_IstioInstaller proto.InternalMessageInfo
+var xxx_messageInfo_IstioInstall proto.InternalMessageInfo
 
-func (m *IstioInstaller) GetSpec() *InstallerSpec {
+func (m *IstioInstall) GetSpec() *InstallSpec {
 	if m != nil {
 		return m.Spec
 	}
 	return nil
 }
 
-func (m *IstioInstaller) GetStatus() *InstallerStatus {
+func (m *IstioInstall) GetStatus() *InstallStatus {
 	if m != nil {
 		return m.Status
 	}
 	return nil
 }
 
-// InstallerSpec defines the desired state of IstioInstaller.
+// InstallSpec defines the desired state of IstioInstaller.
 // The spec is a used to define a customization of the default values that are supplied with an Istio charts release.
 // It is grouped at the top level by feature, where behavior of Istio functional areas is specified.
 // Each feature contains components, where k8s resource level defaults can be overridden.
-// Because the spec is a customization API, specifying an empty InstallerSpec results in a default Istio installation.
-type InstallerSpec struct {
+// Because the spec is a customization API, specifying an empty InstallSpec results in a default Istio installation.
+type InstallSpec struct {
 	// Prefix added to all namespaces for any installed component.
 	DefaultNamespacePrefix string `protobuf:"bytes,5,opt,name=default_namespace_prefix,json=defaultNamespacePrefix,proto3" json:"default_namespace_prefix,omitempty"`
 	// Selection and configuration of core Istio features.
 	TrafficManagement *TrafficManagementFeatureSpec `protobuf:"bytes,25,opt,name=traffic_management,json=trafficManagement,proto3" json:"traffic_management,omitempty"`
-	PolicyTelemetry   *PolicyTelemetryFeatureSpec   `protobuf:"bytes,26,opt,name=policy_telemetry,json=policyTelemetry,proto3" json:"policy_telemetry,omitempty"`
+	Policy            *PolicyFeatureSpec            `protobuf:"bytes,26,opt,name=policy,proto3" json:"policy,omitempty"`
+	Telemetry         *TelemetryFeatureSpec         `protobuf:"bytes,27,opt,name=telemetry,proto3" json:"telemetry,omitempty"`
 	Security          *SecurityFeatureSpec          `protobuf:"bytes,28,opt,name=security,proto3" json:"security,omitempty"`
 	ConfigManagement  *ConfigManagementFeatureSpec  `protobuf:"bytes,29,opt,name=config_management,json=configManagement,proto3" json:"config_management,omitempty"`
 	// Ingress/egress gateway installation and configuration.
@@ -270,18 +271,18 @@ type InstallerSpec struct {
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *InstallerSpec) Reset()         { *m = InstallerSpec{} }
-func (m *InstallerSpec) String() string { return proto.CompactTextString(m) }
-func (*InstallerSpec) ProtoMessage()    {}
-func (*InstallerSpec) Descriptor() ([]byte, []int) {
+func (m *InstallSpec) Reset()         { *m = InstallSpec{} }
+func (m *InstallSpec) String() string { return proto.CompactTextString(m) }
+func (*InstallSpec) ProtoMessage()    {}
+func (*InstallSpec) Descriptor() ([]byte, []int) {
 	return fileDescriptor_d0a1188b3d395975, []int{1}
 }
-func (m *InstallerSpec) XXX_Unmarshal(b []byte) error {
+func (m *InstallSpec) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *InstallerSpec) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *InstallSpec) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_InstallerSpec.Marshal(b, m, deterministic)
+		return xxx_messageInfo_InstallSpec.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalTo(b)
@@ -291,96 +292,103 @@ func (m *InstallerSpec) XXX_Marshal(b []byte, deterministic bool) ([]byte, error
 		return b[:n], nil
 	}
 }
-func (m *InstallerSpec) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_InstallerSpec.Merge(m, src)
+func (m *InstallSpec) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_InstallSpec.Merge(m, src)
 }
-func (m *InstallerSpec) XXX_Size() int {
+func (m *InstallSpec) XXX_Size() int {
 	return m.Size()
 }
-func (m *InstallerSpec) XXX_DiscardUnknown() {
-	xxx_messageInfo_InstallerSpec.DiscardUnknown(m)
+func (m *InstallSpec) XXX_DiscardUnknown() {
+	xxx_messageInfo_InstallSpec.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_InstallerSpec proto.InternalMessageInfo
+var xxx_messageInfo_InstallSpec proto.InternalMessageInfo
 
-func (m *InstallerSpec) GetDefaultNamespacePrefix() string {
+func (m *InstallSpec) GetDefaultNamespacePrefix() string {
 	if m != nil {
 		return m.DefaultNamespacePrefix
 	}
 	return ""
 }
 
-func (m *InstallerSpec) GetTrafficManagement() *TrafficManagementFeatureSpec {
+func (m *InstallSpec) GetTrafficManagement() *TrafficManagementFeatureSpec {
 	if m != nil {
 		return m.TrafficManagement
 	}
 	return nil
 }
 
-func (m *InstallerSpec) GetPolicyTelemetry() *PolicyTelemetryFeatureSpec {
+func (m *InstallSpec) GetPolicy() *PolicyFeatureSpec {
 	if m != nil {
-		return m.PolicyTelemetry
+		return m.Policy
 	}
 	return nil
 }
 
-func (m *InstallerSpec) GetSecurity() *SecurityFeatureSpec {
+func (m *InstallSpec) GetTelemetry() *TelemetryFeatureSpec {
+	if m != nil {
+		return m.Telemetry
+	}
+	return nil
+}
+
+func (m *InstallSpec) GetSecurity() *SecurityFeatureSpec {
 	if m != nil {
 		return m.Security
 	}
 	return nil
 }
 
-func (m *InstallerSpec) GetConfigManagement() *ConfigManagementFeatureSpec {
+func (m *InstallSpec) GetConfigManagement() *ConfigManagementFeatureSpec {
 	if m != nil {
 		return m.ConfigManagement
 	}
 	return nil
 }
 
-func (m *InstallerSpec) GetIngressGateway() []*IngressGatewaySpec {
+func (m *InstallSpec) GetIngressGateway() []*IngressGatewaySpec {
 	if m != nil {
 		return m.IngressGateway
 	}
 	return nil
 }
 
-func (m *InstallerSpec) GetEgressGateway() []*EgressGatewaySpec {
+func (m *InstallSpec) GetEgressGateway() []*EgressGatewaySpec {
 	if m != nil {
 		return m.EgressGateway
 	}
 	return nil
 }
 
-func (m *InstallerSpec) GetExternalOperators() []*OperatorSpec {
+func (m *InstallSpec) GetExternalOperators() []*OperatorSpec {
 	if m != nil {
 		return m.ExternalOperators
 	}
 	return nil
 }
 
-func (m *InstallerSpec) GetK8SDefaults() *KubernetesResourcesSpec {
+func (m *InstallSpec) GetK8SDefaults() *KubernetesResourcesSpec {
 	if m != nil {
 		return m.K8SDefaults
 	}
 	return nil
 }
 
-func (m *InstallerSpec) GetCustomPackagePath() string {
+func (m *InstallSpec) GetCustomPackagePath() string {
 	if m != nil {
 		return m.CustomPackagePath
 	}
 	return ""
 }
 
-func (m *InstallerSpec) GetHub() string {
+func (m *InstallSpec) GetHub() string {
 	if m != nil {
 		return m.Hub
 	}
 	return ""
 }
 
-func (m *InstallerSpec) GetTag() string {
+func (m *InstallSpec) GetTag() string {
 	if m != nil {
 		return m.Tag
 	}
@@ -471,31 +479,35 @@ func (m *TrafficManagementFeatureSpec) GetSidecarInjector() *SidecarInjectorComp
 	return nil
 }
 
-// Configuration options for the policy and telemetry feature.
-type PolicyTelemetryFeatureSpec struct {
+// Configuration options for the policy feature.
+type PolicyFeatureSpec struct {
+	// Selects whether policy is installed.
+	// Must be enabled to enable any sub-component.
+	Enabled *protobuf.BoolValue `protobuf:"bytes,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
+	// Namespace that all policy components are installed into.
+	Namespace string `protobuf:"bytes,2,opt,name=namespace,proto3" json:"namespace,omitempty"`
 	// If set, allows traffic in cases when the mixer policy service cannot be reached.
 	PolicyCheckFailOpen *protobuf.BoolValue `protobuf:"bytes,10,opt,name=policy_check_fail_open,json=policyCheckFailOpen,proto3" json:"policy_check_fail_open,omitempty"`
 	// Selects the outbound traffic policy mode.
-	OutboundTrafficPolicyMode PolicyTelemetryFeatureSpec_OutboundPolicy `protobuf:"varint,11,opt,name=outbound_traffic_policy_mode,json=outboundTrafficPolicyMode,proto3,enum=v1alpha1.PolicyTelemetryFeatureSpec_OutboundPolicy" json:"outbound_traffic_policy_mode,omitempty"`
-	Policy                    *PolicyComponentSpec                      `protobuf:"bytes,50,opt,name=policy,proto3" json:"policy,omitempty"`
-	Telemetry                 *TelemetryComponentSpec                   `protobuf:"bytes,51,opt,name=telemetry,proto3" json:"telemetry,omitempty"`
-	XXX_NoUnkeyedLiteral      struct{}                                  `json:"-"`
-	XXX_unrecognized          []byte                                    `json:"-"`
-	XXX_sizecache             int32                                     `json:"-"`
+	OutboundTrafficPolicyMode PolicyFeatureSpec_OutboundPolicy `protobuf:"varint,11,opt,name=outbound_traffic_policy_mode,json=outboundTrafficPolicyMode,proto3,enum=v1alpha1.PolicyFeatureSpec_OutboundPolicy" json:"outbound_traffic_policy_mode,omitempty"`
+	Policy                    *PolicyComponentSpec             `protobuf:"bytes,50,opt,name=policy,proto3" json:"policy,omitempty"`
+	XXX_NoUnkeyedLiteral      struct{}                         `json:"-"`
+	XXX_unrecognized          []byte                           `json:"-"`
+	XXX_sizecache             int32                            `json:"-"`
 }
 
-func (m *PolicyTelemetryFeatureSpec) Reset()         { *m = PolicyTelemetryFeatureSpec{} }
-func (m *PolicyTelemetryFeatureSpec) String() string { return proto.CompactTextString(m) }
-func (*PolicyTelemetryFeatureSpec) ProtoMessage()    {}
-func (*PolicyTelemetryFeatureSpec) Descriptor() ([]byte, []int) {
+func (m *PolicyFeatureSpec) Reset()         { *m = PolicyFeatureSpec{} }
+func (m *PolicyFeatureSpec) String() string { return proto.CompactTextString(m) }
+func (*PolicyFeatureSpec) ProtoMessage()    {}
+func (*PolicyFeatureSpec) Descriptor() ([]byte, []int) {
 	return fileDescriptor_d0a1188b3d395975, []int{3}
 }
-func (m *PolicyTelemetryFeatureSpec) XXX_Unmarshal(b []byte) error {
+func (m *PolicyFeatureSpec) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *PolicyTelemetryFeatureSpec) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *PolicyFeatureSpec) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_PolicyTelemetryFeatureSpec.Marshal(b, m, deterministic)
+		return xxx_messageInfo_PolicyFeatureSpec.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalTo(b)
@@ -505,40 +517,114 @@ func (m *PolicyTelemetryFeatureSpec) XXX_Marshal(b []byte, deterministic bool) (
 		return b[:n], nil
 	}
 }
-func (m *PolicyTelemetryFeatureSpec) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PolicyTelemetryFeatureSpec.Merge(m, src)
+func (m *PolicyFeatureSpec) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PolicyFeatureSpec.Merge(m, src)
 }
-func (m *PolicyTelemetryFeatureSpec) XXX_Size() int {
+func (m *PolicyFeatureSpec) XXX_Size() int {
 	return m.Size()
 }
-func (m *PolicyTelemetryFeatureSpec) XXX_DiscardUnknown() {
-	xxx_messageInfo_PolicyTelemetryFeatureSpec.DiscardUnknown(m)
+func (m *PolicyFeatureSpec) XXX_DiscardUnknown() {
+	xxx_messageInfo_PolicyFeatureSpec.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_PolicyTelemetryFeatureSpec proto.InternalMessageInfo
+var xxx_messageInfo_PolicyFeatureSpec proto.InternalMessageInfo
 
-func (m *PolicyTelemetryFeatureSpec) GetPolicyCheckFailOpen() *protobuf.BoolValue {
+func (m *PolicyFeatureSpec) GetEnabled() *protobuf.BoolValue {
+	if m != nil {
+		return m.Enabled
+	}
+	return nil
+}
+
+func (m *PolicyFeatureSpec) GetNamespace() string {
+	if m != nil {
+		return m.Namespace
+	}
+	return ""
+}
+
+func (m *PolicyFeatureSpec) GetPolicyCheckFailOpen() *protobuf.BoolValue {
 	if m != nil {
 		return m.PolicyCheckFailOpen
 	}
 	return nil
 }
 
-func (m *PolicyTelemetryFeatureSpec) GetOutboundTrafficPolicyMode() PolicyTelemetryFeatureSpec_OutboundPolicy {
+func (m *PolicyFeatureSpec) GetOutboundTrafficPolicyMode() PolicyFeatureSpec_OutboundPolicy {
 	if m != nil {
 		return m.OutboundTrafficPolicyMode
 	}
-	return PolicyTelemetryFeatureSpec_ALLOW_ANY
+	return PolicyFeatureSpec_ALLOW_ANY
 }
 
-func (m *PolicyTelemetryFeatureSpec) GetPolicy() *PolicyComponentSpec {
+func (m *PolicyFeatureSpec) GetPolicy() *PolicyComponentSpec {
 	if m != nil {
 		return m.Policy
 	}
 	return nil
 }
 
-func (m *PolicyTelemetryFeatureSpec) GetTelemetry() *TelemetryComponentSpec {
+// Configuration options for the telemetry feature.
+type TelemetryFeatureSpec struct {
+	// Selects whether telemetry is installed.
+	// Must be enabled to enable any sub-component.
+	Enabled *protobuf.BoolValue `protobuf:"bytes,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
+	// Namespace that all telemetry components are installed into.
+	Namespace            string                  `protobuf:"bytes,2,opt,name=namespace,proto3" json:"namespace,omitempty"`
+	Telemetry            *TelemetryComponentSpec `protobuf:"bytes,51,opt,name=telemetry,proto3" json:"telemetry,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}                `json:"-"`
+	XXX_unrecognized     []byte                  `json:"-"`
+	XXX_sizecache        int32                   `json:"-"`
+}
+
+func (m *TelemetryFeatureSpec) Reset()         { *m = TelemetryFeatureSpec{} }
+func (m *TelemetryFeatureSpec) String() string { return proto.CompactTextString(m) }
+func (*TelemetryFeatureSpec) ProtoMessage()    {}
+func (*TelemetryFeatureSpec) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d0a1188b3d395975, []int{4}
+}
+func (m *TelemetryFeatureSpec) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *TelemetryFeatureSpec) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_TelemetryFeatureSpec.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *TelemetryFeatureSpec) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TelemetryFeatureSpec.Merge(m, src)
+}
+func (m *TelemetryFeatureSpec) XXX_Size() int {
+	return m.Size()
+}
+func (m *TelemetryFeatureSpec) XXX_DiscardUnknown() {
+	xxx_messageInfo_TelemetryFeatureSpec.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_TelemetryFeatureSpec proto.InternalMessageInfo
+
+func (m *TelemetryFeatureSpec) GetEnabled() *protobuf.BoolValue {
+	if m != nil {
+		return m.Enabled
+	}
+	return nil
+}
+
+func (m *TelemetryFeatureSpec) GetNamespace() string {
+	if m != nil {
+		return m.Namespace
+	}
+	return ""
+}
+
+func (m *TelemetryFeatureSpec) GetTelemetry() *TelemetryComponentSpec {
 	if m != nil {
 		return m.Telemetry
 	}
@@ -568,7 +654,7 @@ func (m *SecurityFeatureSpec) Reset()         { *m = SecurityFeatureSpec{} }
 func (m *SecurityFeatureSpec) String() string { return proto.CompactTextString(m) }
 func (*SecurityFeatureSpec) ProtoMessage()    {}
 func (*SecurityFeatureSpec) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{4}
+	return fileDescriptor_d0a1188b3d395975, []int{5}
 }
 func (m *SecurityFeatureSpec) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -648,7 +734,11 @@ func (m *SecurityFeatureSpec) GetNodeAgent() *NodeAgentComponentSpec {
 
 // Configuration options for configuration management feature.
 type ConfigManagementFeatureSpec struct {
-	Galley               *GalleyComponentSpec `protobuf:"bytes,1,opt,name=galley,proto3" json:"galley,omitempty"`
+	// Selects whether security feature is installed. Must be set for any sub-component to be installed.
+	Enabled *protobuf.BoolValue `protobuf:"bytes,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
+	// Namespace that security components are installed into.
+	Namespace            string               `protobuf:"bytes,2,opt,name=namespace,proto3" json:"namespace,omitempty"`
+	Galley               *GalleyComponentSpec `protobuf:"bytes,20,opt,name=galley,proto3" json:"galley,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
 	XXX_unrecognized     []byte               `json:"-"`
 	XXX_sizecache        int32                `json:"-"`
@@ -658,7 +748,7 @@ func (m *ConfigManagementFeatureSpec) Reset()         { *m = ConfigManagementFea
 func (m *ConfigManagementFeatureSpec) String() string { return proto.CompactTextString(m) }
 func (*ConfigManagementFeatureSpec) ProtoMessage()    {}
 func (*ConfigManagementFeatureSpec) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{5}
+	return fileDescriptor_d0a1188b3d395975, []int{6}
 }
 func (m *ConfigManagementFeatureSpec) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -687,6 +777,20 @@ func (m *ConfigManagementFeatureSpec) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_ConfigManagementFeatureSpec proto.InternalMessageInfo
 
+func (m *ConfigManagementFeatureSpec) GetEnabled() *protobuf.BoolValue {
+	if m != nil {
+		return m.Enabled
+	}
+	return nil
+}
+
+func (m *ConfigManagementFeatureSpec) GetNamespace() string {
+	if m != nil {
+		return m.Namespace
+	}
+	return ""
+}
+
 func (m *ConfigManagementFeatureSpec) GetGalley() *GalleyComponentSpec {
 	if m != nil {
 		return m.Galley
@@ -708,7 +812,7 @@ func (m *PilotComponentSpec) Reset()         { *m = PilotComponentSpec{} }
 func (m *PilotComponentSpec) String() string { return proto.CompactTextString(m) }
 func (*PilotComponentSpec) ProtoMessage()    {}
 func (*PilotComponentSpec) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{6}
+	return fileDescriptor_d0a1188b3d395975, []int{7}
 }
 func (m *PilotComponentSpec) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -763,7 +867,7 @@ func (m *ProxyComponentSpec) Reset()         { *m = ProxyComponentSpec{} }
 func (m *ProxyComponentSpec) String() string { return proto.CompactTextString(m) }
 func (*ProxyComponentSpec) ProtoMessage()    {}
 func (*ProxyComponentSpec) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{7}
+	return fileDescriptor_d0a1188b3d395975, []int{8}
 }
 func (m *ProxyComponentSpec) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -813,7 +917,7 @@ func (m *SidecarInjectorComponentSpec) Reset()         { *m = SidecarInjectorCom
 func (m *SidecarInjectorComponentSpec) String() string { return proto.CompactTextString(m) }
 func (*SidecarInjectorComponentSpec) ProtoMessage()    {}
 func (*SidecarInjectorComponentSpec) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{8}
+	return fileDescriptor_d0a1188b3d395975, []int{9}
 }
 func (m *SidecarInjectorComponentSpec) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -868,7 +972,7 @@ func (m *PolicyComponentSpec) Reset()         { *m = PolicyComponentSpec{} }
 func (m *PolicyComponentSpec) String() string { return proto.CompactTextString(m) }
 func (*PolicyComponentSpec) ProtoMessage()    {}
 func (*PolicyComponentSpec) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{9}
+	return fileDescriptor_d0a1188b3d395975, []int{10}
 }
 func (m *PolicyComponentSpec) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -916,7 +1020,7 @@ func (m *TelemetryComponentSpec) Reset()         { *m = TelemetryComponentSpec{}
 func (m *TelemetryComponentSpec) String() string { return proto.CompactTextString(m) }
 func (*TelemetryComponentSpec) ProtoMessage()    {}
 func (*TelemetryComponentSpec) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{10}
+	return fileDescriptor_d0a1188b3d395975, []int{11}
 }
 func (m *TelemetryComponentSpec) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -966,7 +1070,7 @@ func (m *CitadelComponentSpec) Reset()         { *m = CitadelComponentSpec{} }
 func (m *CitadelComponentSpec) String() string { return proto.CompactTextString(m) }
 func (*CitadelComponentSpec) ProtoMessage()    {}
 func (*CitadelComponentSpec) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{11}
+	return fileDescriptor_d0a1188b3d395975, []int{12}
 }
 func (m *CitadelComponentSpec) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1028,7 +1132,7 @@ func (m *CertManagerComponentSpec) Reset()         { *m = CertManagerComponentSp
 func (m *CertManagerComponentSpec) String() string { return proto.CompactTextString(m) }
 func (*CertManagerComponentSpec) ProtoMessage()    {}
 func (*CertManagerComponentSpec) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{12}
+	return fileDescriptor_d0a1188b3d395975, []int{13}
 }
 func (m *CertManagerComponentSpec) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1076,7 +1180,7 @@ func (m *NodeAgentComponentSpec) Reset()         { *m = NodeAgentComponentSpec{}
 func (m *NodeAgentComponentSpec) String() string { return proto.CompactTextString(m) }
 func (*NodeAgentComponentSpec) ProtoMessage()    {}
 func (*NodeAgentComponentSpec) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{13}
+	return fileDescriptor_d0a1188b3d395975, []int{14}
 }
 func (m *NodeAgentComponentSpec) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1124,7 +1228,7 @@ func (m *GalleyComponentSpec) Reset()         { *m = GalleyComponentSpec{} }
 func (m *GalleyComponentSpec) String() string { return proto.CompactTextString(m) }
 func (*GalleyComponentSpec) ProtoMessage()    {}
 func (*GalleyComponentSpec) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{14}
+	return fileDescriptor_d0a1188b3d395975, []int{15}
 }
 func (m *GalleyComponentSpec) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1179,7 +1283,7 @@ func (m *CommonComponentSpec) Reset()         { *m = CommonComponentSpec{} }
 func (m *CommonComponentSpec) String() string { return proto.CompactTextString(m) }
 func (*CommonComponentSpec) ProtoMessage()    {}
 func (*CommonComponentSpec) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{15}
+	return fileDescriptor_d0a1188b3d395975, []int{16}
 }
 func (m *CommonComponentSpec) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1279,7 +1383,7 @@ func (m *KubernetesResourcesSpec) Reset()         { *m = KubernetesResourcesSpec
 func (m *KubernetesResourcesSpec) String() string { return proto.CompactTextString(m) }
 func (*KubernetesResourcesSpec) ProtoMessage()    {}
 func (*KubernetesResourcesSpec) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{16}
+	return fileDescriptor_d0a1188b3d395975, []int{17}
 }
 func (m *KubernetesResourcesSpec) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1403,7 +1507,7 @@ func (m *IngressGatewaySpec) Reset()         { *m = IngressGatewaySpec{} }
 func (m *IngressGatewaySpec) String() string { return proto.CompactTextString(m) }
 func (*IngressGatewaySpec) ProtoMessage()    {}
 func (*IngressGatewaySpec) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{17}
+	return fileDescriptor_d0a1188b3d395975, []int{18}
 }
 func (m *IngressGatewaySpec) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1480,7 +1584,7 @@ func (m *EgressGatewaySpec) Reset()         { *m = EgressGatewaySpec{} }
 func (m *EgressGatewaySpec) String() string { return proto.CompactTextString(m) }
 func (*EgressGatewaySpec) ProtoMessage()    {}
 func (*EgressGatewaySpec) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{18}
+	return fileDescriptor_d0a1188b3d395975, []int{19}
 }
 func (m *EgressGatewaySpec) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1531,7 +1635,7 @@ func (m *LoadBalancingGatewayConfig) Reset()         { *m = LoadBalancingGateway
 func (m *LoadBalancingGatewayConfig) String() string { return proto.CompactTextString(m) }
 func (*LoadBalancingGatewayConfig) ProtoMessage()    {}
 func (*LoadBalancingGatewayConfig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{19}
+	return fileDescriptor_d0a1188b3d395975, []int{20}
 }
 func (m *LoadBalancingGatewayConfig) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1588,7 +1692,7 @@ func (m *GatewayConfig) Reset()         { *m = GatewayConfig{} }
 func (m *GatewayConfig) String() string { return proto.CompactTextString(m) }
 func (*GatewayConfig) ProtoMessage()    {}
 func (*GatewayConfig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{20}
+	return fileDescriptor_d0a1188b3d395975, []int{21}
 }
 func (m *GatewayConfig) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1697,7 +1801,7 @@ func (m *LoadBalancerConfig) Reset()         { *m = LoadBalancerConfig{} }
 func (m *LoadBalancerConfig) String() string { return proto.CompactTextString(m) }
 func (*LoadBalancerConfig) ProtoMessage()    {}
 func (*LoadBalancerConfig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{21}
+	return fileDescriptor_d0a1188b3d395975, []int{22}
 }
 func (m *LoadBalancerConfig) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1799,7 +1903,7 @@ func (m *OperatorSpec) Reset()         { *m = OperatorSpec{} }
 func (m *OperatorSpec) String() string { return proto.CompactTextString(m) }
 func (*OperatorSpec) ProtoMessage()    {}
 func (*OperatorSpec) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{22}
+	return fileDescriptor_d0a1188b3d395975, []int{23}
 }
 func (m *OperatorSpec) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1869,7 +1973,7 @@ func (m *K8SObjectOverlay) Reset()         { *m = K8SObjectOverlay{} }
 func (m *K8SObjectOverlay) String() string { return proto.CompactTextString(m) }
 func (*K8SObjectOverlay) ProtoMessage()    {}
 func (*K8SObjectOverlay) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{23}
+	return fileDescriptor_d0a1188b3d395975, []int{24}
 }
 func (m *K8SObjectOverlay) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1941,7 +2045,7 @@ func (m *K8SObjectOverlay_PathValue) Reset()         { *m = K8SObjectOverlay_Pat
 func (m *K8SObjectOverlay_PathValue) String() string { return proto.CompactTextString(m) }
 func (*K8SObjectOverlay_PathValue) ProtoMessage()    {}
 func (*K8SObjectOverlay_PathValue) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{23, 0}
+	return fileDescriptor_d0a1188b3d395975, []int{24, 0}
 }
 func (m *K8SObjectOverlay_PathValue) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1977,31 +2081,31 @@ func (m *K8SObjectOverlay_PathValue) GetPath() string {
 	return ""
 }
 
-// Observed state of IstioInstaller.
-type InstallerStatus struct {
-	TrafficManagement    *InstallerStatus_VersionStatus   `protobuf:"bytes,1,opt,name=traffic_management,json=trafficManagement,proto3" json:"traffic_management,omitempty"`
-	PolicyTelemetry      *InstallerStatus_VersionStatus   `protobuf:"bytes,2,opt,name=policy_telemetry,json=policyTelemetry,proto3" json:"policy_telemetry,omitempty"`
-	Security             *InstallerStatus_VersionStatus   `protobuf:"bytes,3,opt,name=security,proto3" json:"security,omitempty"`
-	ConfigManagement     *InstallerStatus_VersionStatus   `protobuf:"bytes,4,opt,name=config_management,json=configManagement,proto3" json:"config_management,omitempty"`
-	IngressGateway       []*InstallerStatus_VersionStatus `protobuf:"bytes,5,rep,name=ingress_gateway,json=ingressGateway,proto3" json:"ingress_gateway,omitempty"`
-	EgressGateway        []*InstallerStatus_VersionStatus `protobuf:"bytes,6,rep,name=egress_gateway,json=egressGateway,proto3" json:"egress_gateway,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}                         `json:"-"`
-	XXX_unrecognized     []byte                           `json:"-"`
-	XXX_sizecache        int32                            `json:"-"`
+// Observed state of IstioInstall.
+type InstallStatus struct {
+	TrafficManagement    *InstallStatus_VersionStatus   `protobuf:"bytes,1,opt,name=traffic_management,json=trafficManagement,proto3" json:"traffic_management,omitempty"`
+	PolicyTelemetry      *InstallStatus_VersionStatus   `protobuf:"bytes,2,opt,name=policy_telemetry,json=policyTelemetry,proto3" json:"policy_telemetry,omitempty"`
+	Security             *InstallStatus_VersionStatus   `protobuf:"bytes,3,opt,name=security,proto3" json:"security,omitempty"`
+	ConfigManagement     *InstallStatus_VersionStatus   `protobuf:"bytes,4,opt,name=config_management,json=configManagement,proto3" json:"config_management,omitempty"`
+	IngressGateway       []*InstallStatus_VersionStatus `protobuf:"bytes,5,rep,name=ingress_gateway,json=ingressGateway,proto3" json:"ingress_gateway,omitempty"`
+	EgressGateway        []*InstallStatus_VersionStatus `protobuf:"bytes,6,rep,name=egress_gateway,json=egressGateway,proto3" json:"egress_gateway,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}                       `json:"-"`
+	XXX_unrecognized     []byte                         `json:"-"`
+	XXX_sizecache        int32                          `json:"-"`
 }
 
-func (m *InstallerStatus) Reset()         { *m = InstallerStatus{} }
-func (m *InstallerStatus) String() string { return proto.CompactTextString(m) }
-func (*InstallerStatus) ProtoMessage()    {}
-func (*InstallerStatus) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{24}
+func (m *InstallStatus) Reset()         { *m = InstallStatus{} }
+func (m *InstallStatus) String() string { return proto.CompactTextString(m) }
+func (*InstallStatus) ProtoMessage()    {}
+func (*InstallStatus) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d0a1188b3d395975, []int{25}
 }
-func (m *InstallerStatus) XXX_Unmarshal(b []byte) error {
+func (m *InstallStatus) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *InstallerStatus) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *InstallStatus) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_InstallerStatus.Marshal(b, m, deterministic)
+		return xxx_messageInfo_InstallStatus.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalTo(b)
@@ -2011,80 +2115,80 @@ func (m *InstallerStatus) XXX_Marshal(b []byte, deterministic bool) ([]byte, err
 		return b[:n], nil
 	}
 }
-func (m *InstallerStatus) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_InstallerStatus.Merge(m, src)
+func (m *InstallStatus) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_InstallStatus.Merge(m, src)
 }
-func (m *InstallerStatus) XXX_Size() int {
+func (m *InstallStatus) XXX_Size() int {
 	return m.Size()
 }
-func (m *InstallerStatus) XXX_DiscardUnknown() {
-	xxx_messageInfo_InstallerStatus.DiscardUnknown(m)
+func (m *InstallStatus) XXX_DiscardUnknown() {
+	xxx_messageInfo_InstallStatus.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_InstallerStatus proto.InternalMessageInfo
+var xxx_messageInfo_InstallStatus proto.InternalMessageInfo
 
-func (m *InstallerStatus) GetTrafficManagement() *InstallerStatus_VersionStatus {
+func (m *InstallStatus) GetTrafficManagement() *InstallStatus_VersionStatus {
 	if m != nil {
 		return m.TrafficManagement
 	}
 	return nil
 }
 
-func (m *InstallerStatus) GetPolicyTelemetry() *InstallerStatus_VersionStatus {
+func (m *InstallStatus) GetPolicyTelemetry() *InstallStatus_VersionStatus {
 	if m != nil {
 		return m.PolicyTelemetry
 	}
 	return nil
 }
 
-func (m *InstallerStatus) GetSecurity() *InstallerStatus_VersionStatus {
+func (m *InstallStatus) GetSecurity() *InstallStatus_VersionStatus {
 	if m != nil {
 		return m.Security
 	}
 	return nil
 }
 
-func (m *InstallerStatus) GetConfigManagement() *InstallerStatus_VersionStatus {
+func (m *InstallStatus) GetConfigManagement() *InstallStatus_VersionStatus {
 	if m != nil {
 		return m.ConfigManagement
 	}
 	return nil
 }
 
-func (m *InstallerStatus) GetIngressGateway() []*InstallerStatus_VersionStatus {
+func (m *InstallStatus) GetIngressGateway() []*InstallStatus_VersionStatus {
 	if m != nil {
 		return m.IngressGateway
 	}
 	return nil
 }
 
-func (m *InstallerStatus) GetEgressGateway() []*InstallerStatus_VersionStatus {
+func (m *InstallStatus) GetEgressGateway() []*InstallStatus_VersionStatus {
 	if m != nil {
 		return m.EgressGateway
 	}
 	return nil
 }
 
-type InstallerStatus_VersionStatus struct {
-	Version              string                 `protobuf:"bytes,1,opt,name=version,proto3" json:"version,omitempty"`
-	Status               InstallerStatus_Status `protobuf:"varint,2,opt,name=status,proto3,enum=v1alpha1.InstallerStatus_Status" json:"status,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}               `json:"-"`
-	XXX_unrecognized     []byte                 `json:"-"`
-	XXX_sizecache        int32                  `json:"-"`
+type InstallStatus_VersionStatus struct {
+	Version              string               `protobuf:"bytes,1,opt,name=version,proto3" json:"version,omitempty"`
+	Status               InstallStatus_Status `protobuf:"varint,2,opt,name=status,proto3,enum=v1alpha1.InstallStatus_Status" json:"status,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
+	XXX_unrecognized     []byte               `json:"-"`
+	XXX_sizecache        int32                `json:"-"`
 }
 
-func (m *InstallerStatus_VersionStatus) Reset()         { *m = InstallerStatus_VersionStatus{} }
-func (m *InstallerStatus_VersionStatus) String() string { return proto.CompactTextString(m) }
-func (*InstallerStatus_VersionStatus) ProtoMessage()    {}
-func (*InstallerStatus_VersionStatus) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{24, 0}
+func (m *InstallStatus_VersionStatus) Reset()         { *m = InstallStatus_VersionStatus{} }
+func (m *InstallStatus_VersionStatus) String() string { return proto.CompactTextString(m) }
+func (*InstallStatus_VersionStatus) ProtoMessage()    {}
+func (*InstallStatus_VersionStatus) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d0a1188b3d395975, []int{25, 0}
 }
-func (m *InstallerStatus_VersionStatus) XXX_Unmarshal(b []byte) error {
+func (m *InstallStatus_VersionStatus) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *InstallerStatus_VersionStatus) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *InstallStatus_VersionStatus) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_InstallerStatus_VersionStatus.Marshal(b, m, deterministic)
+		return xxx_messageInfo_InstallStatus_VersionStatus.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalTo(b)
@@ -2094,30 +2198,30 @@ func (m *InstallerStatus_VersionStatus) XXX_Marshal(b []byte, deterministic bool
 		return b[:n], nil
 	}
 }
-func (m *InstallerStatus_VersionStatus) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_InstallerStatus_VersionStatus.Merge(m, src)
+func (m *InstallStatus_VersionStatus) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_InstallStatus_VersionStatus.Merge(m, src)
 }
-func (m *InstallerStatus_VersionStatus) XXX_Size() int {
+func (m *InstallStatus_VersionStatus) XXX_Size() int {
 	return m.Size()
 }
-func (m *InstallerStatus_VersionStatus) XXX_DiscardUnknown() {
-	xxx_messageInfo_InstallerStatus_VersionStatus.DiscardUnknown(m)
+func (m *InstallStatus_VersionStatus) XXX_DiscardUnknown() {
+	xxx_messageInfo_InstallStatus_VersionStatus.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_InstallerStatus_VersionStatus proto.InternalMessageInfo
+var xxx_messageInfo_InstallStatus_VersionStatus proto.InternalMessageInfo
 
-func (m *InstallerStatus_VersionStatus) GetVersion() string {
+func (m *InstallStatus_VersionStatus) GetVersion() string {
 	if m != nil {
 		return m.Version
 	}
 	return ""
 }
 
-func (m *InstallerStatus_VersionStatus) GetStatus() InstallerStatus_Status {
+func (m *InstallStatus_VersionStatus) GetStatus() InstallStatus_Status {
 	if m != nil {
 		return m.Status
 	}
-	return InstallerStatus_NONE
+	return InstallStatus_NONE
 }
 
 // Mirrors k8s.io.api.core.v1.ResourceRequirements for unmarshaling.
@@ -2133,7 +2237,7 @@ func (m *Resources) Reset()         { *m = Resources{} }
 func (m *Resources) String() string { return proto.CompactTextString(m) }
 func (*Resources) ProtoMessage()    {}
 func (*Resources) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{25}
+	return fileDescriptor_d0a1188b3d395975, []int{26}
 }
 func (m *Resources) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -2190,7 +2294,7 @@ func (m *PodDisruptionBudgetSpec) Reset()         { *m = PodDisruptionBudgetSpec
 func (m *PodDisruptionBudgetSpec) String() string { return proto.CompactTextString(m) }
 func (*PodDisruptionBudgetSpec) ProtoMessage()    {}
 func (*PodDisruptionBudgetSpec) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{26}
+	return fileDescriptor_d0a1188b3d395975, []int{27}
 }
 func (m *PodDisruptionBudgetSpec) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -2253,7 +2357,7 @@ func (m *ObjectMeta) Reset()         { *m = ObjectMeta{} }
 func (m *ObjectMeta) String() string { return proto.CompactTextString(m) }
 func (*ObjectMeta) ProtoMessage()    {}
 func (*ObjectMeta) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{27}
+	return fileDescriptor_d0a1188b3d395975, []int{28}
 }
 func (m *ObjectMeta) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -2317,7 +2421,7 @@ func (m *TestKube) Reset()         { *m = TestKube{} }
 func (m *TestKube) String() string { return proto.CompactTextString(m) }
 func (*TestKube) ProtoMessage()    {}
 func (*TestKube) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d0a1188b3d395975, []int{28}
+	return fileDescriptor_d0a1188b3d395975, []int{29}
 }
 func (m *TestKube) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -2410,15 +2514,16 @@ func (m *TestKube) GetOverlays() []*K8SObjectOverlay {
 }
 
 func init() {
-	proto.RegisterEnum("v1alpha1.PolicyTelemetryFeatureSpec_OutboundPolicy", PolicyTelemetryFeatureSpec_OutboundPolicy_name, PolicyTelemetryFeatureSpec_OutboundPolicy_value)
+	proto.RegisterEnum("v1alpha1.PolicyFeatureSpec_OutboundPolicy", PolicyFeatureSpec_OutboundPolicy_name, PolicyFeatureSpec_OutboundPolicy_value)
 	proto.RegisterEnum("v1alpha1.CommonComponentSpec_LogLevel", CommonComponentSpec_LogLevel_name, CommonComponentSpec_LogLevel_value)
 	proto.RegisterEnum("v1alpha1.IngressGatewaySpec_IngressType", IngressGatewaySpec_IngressType_name, IngressGatewaySpec_IngressType_value)
 	proto.RegisterEnum("v1alpha1.IngressGatewaySpec_ExternalTrafficPolicy", IngressGatewaySpec_ExternalTrafficPolicy_name, IngressGatewaySpec_ExternalTrafficPolicy_value)
-	proto.RegisterEnum("v1alpha1.InstallerStatus_Status", InstallerStatus_Status_name, InstallerStatus_Status_value)
-	proto.RegisterType((*IstioInstaller)(nil), "v1alpha1.IstioInstaller")
-	proto.RegisterType((*InstallerSpec)(nil), "v1alpha1.InstallerSpec")
+	proto.RegisterEnum("v1alpha1.InstallStatus_Status", InstallStatus_Status_name, InstallStatus_Status_value)
+	proto.RegisterType((*IstioInstall)(nil), "v1alpha1.IstioInstall")
+	proto.RegisterType((*InstallSpec)(nil), "v1alpha1.InstallSpec")
 	proto.RegisterType((*TrafficManagementFeatureSpec)(nil), "v1alpha1.TrafficManagementFeatureSpec")
-	proto.RegisterType((*PolicyTelemetryFeatureSpec)(nil), "v1alpha1.PolicyTelemetryFeatureSpec")
+	proto.RegisterType((*PolicyFeatureSpec)(nil), "v1alpha1.PolicyFeatureSpec")
+	proto.RegisterType((*TelemetryFeatureSpec)(nil), "v1alpha1.TelemetryFeatureSpec")
 	proto.RegisterType((*SecurityFeatureSpec)(nil), "v1alpha1.SecurityFeatureSpec")
 	proto.RegisterType((*ConfigManagementFeatureSpec)(nil), "v1alpha1.ConfigManagementFeatureSpec")
 	proto.RegisterType((*PilotComponentSpec)(nil), "v1alpha1.PilotComponentSpec")
@@ -2442,8 +2547,8 @@ func init() {
 	proto.RegisterType((*OperatorSpec)(nil), "v1alpha1.OperatorSpec")
 	proto.RegisterType((*K8SObjectOverlay)(nil), "v1alpha1.k8sObjectOverlay")
 	proto.RegisterType((*K8SObjectOverlay_PathValue)(nil), "v1alpha1.k8sObjectOverlay.PathValue")
-	proto.RegisterType((*InstallerStatus)(nil), "v1alpha1.InstallerStatus")
-	proto.RegisterType((*InstallerStatus_VersionStatus)(nil), "v1alpha1.InstallerStatus.VersionStatus")
+	proto.RegisterType((*InstallStatus)(nil), "v1alpha1.InstallStatus")
+	proto.RegisterType((*InstallStatus_VersionStatus)(nil), "v1alpha1.InstallStatus.VersionStatus")
 	proto.RegisterType((*Resources)(nil), "v1alpha1.Resources")
 	proto.RegisterMapType((map[string]string)(nil), "v1alpha1.Resources.LimitsEntry")
 	proto.RegisterMapType((map[string]string)(nil), "v1alpha1.Resources.RequestsEntry")
@@ -2458,168 +2563,170 @@ func init() {
 func init() { proto.RegisterFile("istioinstaller_types.proto", fileDescriptor_d0a1188b3d395975) }
 
 var fileDescriptor_d0a1188b3d395975 = []byte{
-	// 2519 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xcc, 0x59, 0x4d, 0x73, 0xdb, 0xc6,
-	0xf9, 0x37, 0x45, 0xbd, 0x90, 0x0f, 0x45, 0x89, 0x5a, 0xc5, 0x0e, 0xcc, 0x28, 0xb2, 0xfe, 0xf8,
-	0xa7, 0x89, 0xfa, 0x46, 0x8d, 0xe5, 0x24, 0x55, 0x5e, 0xea, 0x94, 0x92, 0x69, 0x5b, 0x63, 0x5a,
-	0xa4, 0x21, 0xca, 0xa9, 0xd3, 0x4e, 0x31, 0x4b, 0x60, 0x05, 0xa2, 0x02, 0xb1, 0x28, 0x76, 0xa9,
-	0x98, 0xbd, 0xe5, 0x0b, 0xf4, 0xd0, 0x53, 0x3b, 0xd3, 0x63, 0xaf, 0xbd, 0xf4, 0xd4, 0x43, 0xcf,
-	0x9d, 0x1e, 0xfb, 0x11, 0x3a, 0xc9, 0xb1, 0xbd, 0xf5, 0xd8, 0x4b, 0x67, 0x77, 0x01, 0x02, 0x20,
-	0x29, 0xc9, 0x62, 0x9a, 0x99, 0xde, 0xc0, 0xe7, 0xf9, 0x3d, 0xbf, 0x7d, 0x7d, 0xde, 0x96, 0x50,
-	0x75, 0x19, 0x77, 0xa9, 0xeb, 0x33, 0x8e, 0x3d, 0x8f, 0x84, 0x26, 0x1f, 0x06, 0x84, 0xd5, 0x82,
-	0x90, 0x72, 0x8a, 0x0a, 0xe7, 0x77, 0xb1, 0x17, 0xf4, 0xf0, 0xdd, 0xaa, 0x7e, 0xb6, 0xc7, 0x6a,
-	0x2e, 0xdd, 0xc1, 0x81, 0xbb, 0x63, 0xd1, 0x90, 0xec, 0x9c, 0xdf, 0xdd, 0x71, 0x88, 0x4f, 0x42,
-	0xcc, 0x89, 0xad, 0xd0, 0xd5, 0x6f, 0xa7, 0x30, 0x78, 0xc0, 0x29, 0xb3, 0xb0, 0xe7, 0xfa, 0xce,
-	0x34, 0xe8, 0xbb, 0x09, 0xb4, 0x8f, 0xad, 0x9e, 0xeb, 0x93, 0x70, 0xb8, 0x13, 0x9c, 0x39, 0x42,
-	0xc0, 0x76, 0xfa, 0x84, 0xe3, 0x69, 0x56, 0x3f, 0x72, 0x5c, 0xde, 0x1b, 0x74, 0x6b, 0x16, 0xed,
-	0xef, 0x38, 0xd4, 0xa1, 0x3b, 0x52, 0xdc, 0x1d, 0x9c, 0x26, 0x1f, 0x0e, 0xa5, 0x8e, 0x47, 0x92,
-	0xdf, 0x9f, 0x87, 0x38, 0x08, 0x48, 0x18, 0x2d, 0x48, 0x0f, 0x60, 0xe5, 0x50, 0x2c, 0xf7, 0x30,
-	0x5e, 0x2e, 0xfa, 0x2e, 0xcc, 0xb3, 0x80, 0x58, 0x5a, 0x7e, 0x2b, 0xb7, 0x5d, 0xda, 0x7d, 0xbd,
-	0x16, 0xaf, 0xb8, 0x36, 0x82, 0x1c, 0x07, 0xc4, 0x32, 0x24, 0x08, 0xdd, 0x85, 0x45, 0xc6, 0x31,
-	0x1f, 0x30, 0x6d, 0x5e, 0xc2, 0x6f, 0x4f, 0x83, 0x4b, 0x80, 0x11, 0x01, 0xf5, 0x7f, 0x2e, 0x40,
-	0x39, 0x43, 0x85, 0xf6, 0x40, 0xb3, 0xc9, 0x29, 0x1e, 0x78, 0xdc, 0xf4, 0x71, 0x9f, 0xb0, 0x00,
-	0x5b, 0xc4, 0x0c, 0x42, 0x72, 0xea, 0xbe, 0xd4, 0x16, 0xb6, 0x72, 0xdb, 0x45, 0xe3, 0x56, 0xa4,
-	0x3f, 0x8a, 0xd5, 0x6d, 0xa9, 0x45, 0x27, 0x80, 0x78, 0x88, 0x4f, 0x4f, 0x5d, 0xcb, 0xec, 0x63,
-	0x1f, 0x3b, 0xa4, 0x4f, 0x7c, 0xae, 0xdd, 0x96, 0x53, 0x79, 0x3b, 0x99, 0x4a, 0x47, 0x61, 0x9e,
-	0x8e, 0x20, 0x0f, 0x09, 0xe6, 0x83, 0x90, 0xc8, 0x85, 0xac, 0xf1, 0x71, 0x2d, 0x6a, 0x41, 0x25,
-	0xa0, 0x9e, 0x6b, 0x0d, 0x4d, 0x4e, 0x3c, 0xd2, 0x27, 0x3c, 0x1c, 0x6a, 0x55, 0x49, 0xfa, 0x56,
-	0x42, 0xda, 0x96, 0x88, 0x4e, 0x0c, 0x48, 0x53, 0xae, 0x06, 0x59, 0x1d, 0xfa, 0x00, 0x0a, 0x8c,
-	0x58, 0x83, 0xd0, 0xe5, 0x43, 0x6d, 0x43, 0x12, 0xbd, 0x99, 0x10, 0x1d, 0x47, 0x9a, 0x34, 0xc3,
-	0x08, 0x8e, 0x0c, 0x58, 0xb3, 0xa8, 0x7f, 0xea, 0x3a, 0xe9, 0x15, 0xbe, 0x29, 0x39, 0xbe, 0x95,
-	0x70, 0x1c, 0x48, 0xc8, 0xf4, 0x05, 0x56, 0xac, 0x31, 0x25, 0x6a, 0xc0, 0xaa, 0xeb, 0x3b, 0x21,
-	0x61, 0xcc, 0x74, 0x30, 0x27, 0x9f, 0xe3, 0xa1, 0xb6, 0xb9, 0x95, 0xdf, 0x2e, 0xed, 0x6e, 0xa4,
-	0x8f, 0x4f, 0x02, 0x1e, 0x29, 0xbd, 0x24, 0x5a, 0x71, 0x33, 0x32, 0xb4, 0x0f, 0x2b, 0x24, 0xcb,
-	0x72, 0x47, 0xb2, 0xbc, 0x91, 0xb0, 0x34, 0x26, 0x48, 0xca, 0x24, 0xc3, 0xd1, 0x00, 0x44, 0x5e,
-	0x72, 0x12, 0xfa, 0xd8, 0x33, 0x69, 0x20, 0x2e, 0x37, 0x0d, 0x99, 0xb6, 0x2b, 0x79, 0x6e, 0x25,
-	0x3c, 0xad, 0x48, 0xa5, 0x4e, 0x2c, 0xb6, 0x88, 0xa5, 0x0c, 0x3d, 0x80, 0xe5, 0xb3, 0x3d, 0x66,
-	0x46, 0xd7, 0x84, 0x69, 0x6d, 0xb9, 0x41, 0xff, 0x97, 0x10, 0x3c, 0x19, 0x74, 0x49, 0xe8, 0x13,
-	0x4e, 0x98, 0x41, 0x18, 0x1d, 0x84, 0x16, 0x61, 0x92, 0xab, 0x74, 0xb6, 0xc7, 0x1e, 0x44, 0x56,
-	0xa8, 0x06, 0xeb, 0xd6, 0x80, 0x71, 0xda, 0x37, 0x03, 0x6c, 0x9d, 0x61, 0x87, 0x98, 0x01, 0xe6,
-	0x3d, 0xcd, 0x96, 0x77, 0x70, 0x4d, 0xa9, 0xda, 0x4a, 0xd3, 0xc6, 0xbc, 0x87, 0x2a, 0x90, 0xef,
-	0x0d, 0xba, 0x1a, 0x91, 0x7a, 0xf1, 0x29, 0x24, 0x1c, 0x3b, 0xda, 0xa9, 0x92, 0x70, 0xec, 0xe8,
-	0x7f, 0x98, 0x83, 0x8d, 0xcb, 0xee, 0x1f, 0x7a, 0x17, 0x96, 0x88, 0x8f, 0xbb, 0x1e, 0xb1, 0xb5,
-	0x9c, 0x9c, 0x75, 0xb5, 0xa6, 0x7c, 0xb6, 0x16, 0xfb, 0x6c, 0x6d, 0x9f, 0x52, 0xef, 0x39, 0xf6,
-	0x06, 0xc4, 0x88, 0xa1, 0x68, 0x03, 0x8a, 0x23, 0x5f, 0xd1, 0xe6, 0xe4, 0x70, 0x89, 0x00, 0xed,
-	0xc2, 0x42, 0xe0, 0x7a, 0x94, 0x6b, 0x9b, 0x92, 0x31, 0x75, 0xac, 0x6d, 0x21, 0x3e, 0xa0, 0xfd,
-	0x80, 0xfa, 0xc4, 0xe7, 0x72, 0x0b, 0x14, 0x54, 0xda, 0x84, 0xf4, 0xa5, 0x38, 0xc4, 0x71, 0x1b,
-	0x21, 0x1e, 0xb7, 0x11, 0x32, 0xf4, 0x0c, 0x2a, 0xcc, 0xb5, 0x89, 0x85, 0x43, 0xd3, 0xf5, 0x7f,
-	0x4e, 0x2c, 0x4e, 0x43, 0x6d, 0x6b, 0xdc, 0xfb, 0x8e, 0x15, 0xe2, 0x30, 0x02, 0x64, 0x89, 0x56,
-	0x59, 0x56, 0xab, 0xff, 0x2a, 0x0f, 0xd5, 0x8b, 0x5d, 0x0b, 0xb5, 0xe0, 0x56, 0xe4, 0x9a, 0x56,
-	0x8f, 0x58, 0x67, 0xe6, 0x29, 0x76, 0xe5, 0xc5, 0xf1, 0x35, 0xb8, 0x72, 0xf3, 0xd6, 0x95, 0xe5,
-	0x81, 0x30, 0x7c, 0x88, 0x5d, 0x71, 0x7d, 0x7c, 0xc4, 0x61, 0x83, 0x0e, 0x78, 0x97, 0x0e, 0x7c,
-	0xdb, 0x8c, 0x63, 0x49, 0x34, 0x42, 0x9f, 0xda, 0x44, 0x2b, 0x6d, 0xe5, 0xb6, 0x57, 0x76, 0xef,
-	0xbd, 0x8a, 0xdf, 0xd7, 0x5a, 0x11, 0x91, 0x82, 0x18, 0xb7, 0x63, 0xe2, 0xe8, 0xfc, 0x95, 0xf8,
-	0x29, 0xb5, 0x09, 0x7a, 0x0f, 0x16, 0xd5, 0x20, 0xda, 0xee, 0x78, 0x38, 0x50, 0xa8, 0xec, 0x2e,
-	0x45, 0x60, 0x74, 0x1f, 0x8a, 0x49, 0x44, 0xba, 0x27, 0x2d, 0xb7, 0x52, 0x61, 0x2e, 0x56, 0x65,
-	0x8d, 0x13, 0x13, 0x7d, 0x17, 0x56, 0xb2, 0x73, 0x44, 0x65, 0x28, 0xd6, 0x9b, 0xcd, 0xd6, 0xa7,
-	0x66, 0xfd, 0xe8, 0x45, 0xe5, 0x06, 0x5a, 0x83, 0xb2, 0xd1, 0x78, 0x74, 0x78, 0xdc, 0x31, 0x5e,
-	0x98, 0xad, 0xa3, 0xe6, 0x8b, 0x4a, 0x4e, 0xff, 0x4b, 0x1e, 0xd6, 0xa7, 0x84, 0xa8, 0x6f, 0xe4,
-	0xde, 0x3e, 0x06, 0x64, 0x51, 0x9f, 0x87, 0xd4, 0x33, 0x03, 0x0f, 0xfb, 0xc4, 0xec, 0x73, 0x8f,
-	0x69, 0xe5, 0x2b, 0xe9, 0x2b, 0x91, 0x55, 0x5b, 0x18, 0x3d, 0xe5, 0x1e, 0x13, 0xf7, 0xc4, 0xc6,
-	0x1c, 0xa7, 0x68, 0x4c, 0xc6, 0x43, 0xd7, 0xe2, 0xda, 0xca, 0xd5, 0xf7, 0x44, 0x58, 0x8e, 0xa8,
-	0x8e, 0xa5, 0x19, 0xda, 0x83, 0x25, 0xcb, 0xe5, 0xd8, 0x26, 0x9e, 0xf6, 0x9a, 0x64, 0xd8, 0x4c,
-	0x45, 0x5f, 0xa5, 0xc8, 0x6e, 0x7b, 0x0c, 0x47, 0x0d, 0x58, 0xb6, 0x48, 0xc8, 0xa3, 0xf8, 0x1d,
-	0x6a, 0x37, 0xa5, 0xb9, 0x9e, 0x32, 0x27, 0x21, 0x57, 0xb1, 0x61, 0xcc, 0x39, 0x4a, 0x56, 0xa2,
-	0x41, 0x9f, 0x00, 0xf8, 0xd4, 0x26, 0x26, 0x76, 0x44, 0x06, 0xb8, 0x35, 0x7e, 0xf8, 0x47, 0xd4,
-	0x26, 0x75, 0xa1, 0x1a, 0x3b, 0x7c, 0x3f, 0x96, 0xeb, 0x1d, 0x78, 0xe3, 0x92, 0x34, 0x21, 0xae,
-	0xa4, 0x23, 0x72, 0xf2, 0x30, 0x3a, 0xce, 0xd4, 0x95, 0x7c, 0x24, 0xe5, 0x63, 0x57, 0x52, 0x81,
-	0xf5, 0x2f, 0x72, 0x80, 0x26, 0x83, 0x8a, 0x60, 0xb3, 0x68, 0xbf, 0x4f, 0xfd, 0x49, 0xb6, 0x03,
-	0x29, 0x1f, 0x63, 0x53, 0x60, 0x71, 0xa9, 0xa2, 0x80, 0xf0, 0x0a, 0xfe, 0x1c, 0x43, 0xf5, 0x27,
-	0x80, 0x26, 0x63, 0xd4, 0x8c, 0x53, 0xd0, 0xff, 0x98, 0x83, 0x8d, 0xcb, 0x42, 0xd6, 0xac, 0x4b,
-	0xfb, 0x09, 0x6c, 0x28, 0x27, 0x48, 0x8a, 0x1c, 0x66, 0x76, 0x87, 0x71, 0xce, 0x7a, 0x85, 0xf5,
-	0xde, 0x56, 0xf6, 0xa3, 0x22, 0x88, 0xed, 0x0f, 0xa3, 0xd4, 0xa5, 0x37, 0x61, 0x7d, 0x4a, 0xdc,
-	0x98, 0x75, 0x0b, 0x5a, 0x70, 0x6b, 0x7a, 0x2c, 0x99, 0x95, 0xf0, 0x77, 0x39, 0x78, 0x6d, 0x9a,
-	0x93, 0xcc, 0xba, 0x97, 0x77, 0xa0, 0xc4, 0x88, 0x77, 0x6a, 0x32, 0xd7, 0xf1, 0x89, 0x2d, 0x63,
-	0x74, 0xc1, 0x00, 0x21, 0x3a, 0x96, 0x12, 0xf4, 0x3d, 0x40, 0x56, 0x48, 0x30, 0x27, 0x66, 0x9f,
-	0xb0, 0x5e, 0x14, 0xd0, 0xb5, 0x65, 0x89, 0xab, 0x28, 0xcd, 0x53, 0xc2, 0x7a, 0x6a, 0xcf, 0xf4,
-	0x67, 0xa0, 0x5d, 0xe4, 0x83, 0x5f, 0x63, 0x0b, 0xa7, 0x7b, 0xe4, 0xac, 0x84, 0x4d, 0x58, 0x9f,
-	0xe2, 0x86, 0x33, 0x1f, 0xc8, 0x1c, 0xac, 0x4f, 0xd1, 0x7f, 0x23, 0x41, 0xfd, 0x63, 0x58, 0xb0,
-	0x49, 0x77, 0xe0, 0xc8, 0x8e, 0x62, 0x25, 0x5d, 0x19, 0x4c, 0x99, 0x41, 0xad, 0x49, 0x9d, 0x26,
-	0x39, 0x27, 0x9e, 0xa1, 0x8c, 0xd0, 0x3d, 0xc8, 0x9f, 0xed, 0x5d, 0xa3, 0xa0, 0x13, 0x68, 0xfd,
-	0x3e, 0x14, 0x62, 0x1e, 0x54, 0x80, 0xf9, 0xa3, 0xd6, 0x51, 0xa3, 0x72, 0x03, 0x15, 0x61, 0xa1,
-	0x61, 0x18, 0x2d, 0xa3, 0x92, 0x13, 0xc2, 0x4f, 0xeb, 0xc6, 0x51, 0x65, 0x4e, 0x08, 0x1f, 0x34,
-	0xf6, 0x4f, 0x1e, 0x55, 0xf2, 0x42, 0x78, 0x78, 0xf4, 0xb0, 0x55, 0x99, 0xd7, 0xff, 0xb1, 0x08,
-	0xaf, 0x5f, 0x30, 0x00, 0xba, 0x0b, 0xc5, 0x30, 0x16, 0x44, 0x9b, 0xb4, 0x9e, 0x4c, 0x6b, 0x84,
-	0x35, 0x12, 0x14, 0xda, 0x87, 0xd5, 0x90, 0x60, 0xdb, 0xf5, 0x45, 0xad, 0x1c, 0x84, 0xb4, 0xab,
-	0x76, 0x49, 0xb4, 0x4b, 0xaa, 0xed, 0xab, 0xe1, 0xc0, 0xad, 0x89, 0x2e, 0xb2, 0x76, 0x2e, 0xcb,
-	0xad, 0x2e, 0x31, 0x56, 0x46, 0x16, 0xf2, 0x37, 0xfa, 0x7f, 0x28, 0x87, 0x24, 0xf0, 0x5c, 0x0b,
-	0x9b, 0x16, 0x1d, 0xf8, 0x5c, 0xee, 0x66, 0xd9, 0x58, 0x8e, 0x84, 0x07, 0x42, 0x86, 0x9e, 0x41,
-	0xa1, 0x17, 0x60, 0x53, 0xf6, 0x6f, 0xaa, 0x21, 0x7b, 0x3f, 0x3d, 0x42, 0xaa, 0x07, 0x15, 0x03,
-	0x3d, 0xa6, 0xa1, 0xfb, 0x4b, 0xea, 0x73, 0xec, 0xb5, 0xa9, 0x5d, 0x8f, 0x74, 0x51, 0x7b, 0xb7,
-	0xd4, 0x0b, 0xb0, 0x5c, 0xee, 0x09, 0xdc, 0x0c, 0xa8, 0x6d, 0xda, 0x2e, 0x0b, 0x07, 0x01, 0x77,
-	0xa9, 0x6f, 0x76, 0x07, 0xb6, 0x43, 0xb8, 0xec, 0xcc, 0x32, 0x27, 0xd2, 0xa6, 0xf6, 0x83, 0x11,
-	0x6a, 0x5f, 0x82, 0x24, 0xd5, 0x7a, 0x30, 0xa9, 0x40, 0x3f, 0x83, 0x55, 0x41, 0x8b, 0x7d, 0x9f,
-	0x72, 0x2c, 0xe4, 0x4c, 0x5b, 0x94, 0x45, 0xff, 0x7b, 0x57, 0x1e, 0xb1, 0x18, 0xa8, 0x9e, 0xd8,
-	0x35, 0x7c, 0x1e, 0x0e, 0x8d, 0x95, 0x20, 0x23, 0x44, 0x3f, 0x86, 0xb2, 0xcc, 0x96, 0x8c, 0x78,
-	0xaa, 0x2c, 0x5d, 0x92, 0xec, 0xf7, 0xae, 0x66, 0x17, 0x6e, 0x7b, 0x1c, 0x59, 0x29, 0xee, 0x65,
-	0x3f, 0x25, 0x42, 0x7b, 0x50, 0x10, 0xd5, 0x9c, 0x2f, 0x7a, 0xb9, 0x42, 0x54, 0x2a, 0x4f, 0x39,
-	0xc5, 0x7a, 0x84, 0x31, 0x46, 0x68, 0xf4, 0x1d, 0x58, 0x73, 0xfb, 0xb2, 0xab, 0x18, 0x78, 0x5e,
-	0x1c, 0x93, 0x8a, 0xd2, 0x5d, 0x56, 0xa5, 0xa2, 0x3d, 0xf0, 0xbc, 0xa8, 0x2e, 0xab, 0xc1, 0x7a,
-	0x10, 0xba, 0x54, 0x14, 0x5d, 0xa6, 0xe5, 0x61, 0xc6, 0x64, 0xd6, 0x90, 0x49, 0xa2, 0x68, 0xac,
-	0xc5, 0xaa, 0x03, 0xa1, 0x11, 0xf9, 0x00, 0xbd, 0x0f, 0x05, 0x7a, 0x4e, 0x42, 0x0f, 0x0f, 0x99,
-	0x66, 0xcb, 0xa5, 0x56, 0x93, 0xa5, 0x9e, 0xed, 0xb1, 0x56, 0x57, 0xa4, 0xb2, 0x96, 0x82, 0x18,
-	0x23, 0x6c, 0xb5, 0x2e, 0x12, 0xc7, 0xc4, 0x76, 0x8a, 0x3e, 0xe6, 0x2c, 0xaa, 0x04, 0x8a, 0x86,
-	0xf8, 0x44, 0xaf, 0xc1, 0xc2, 0xb9, 0xf0, 0xfa, 0xc8, 0xbf, 0xd5, 0x8f, 0x0f, 0xe7, 0xf6, 0x72,
-	0xd5, 0x4f, 0x60, 0x6d, 0x62, 0xcf, 0xae, 0x43, 0xa0, 0x7f, 0x95, 0x07, 0x34, 0xd9, 0x6e, 0xa2,
-	0xbb, 0xb0, 0x14, 0xf7, 0x95, 0x30, 0xfe, 0x16, 0x11, 0xe1, 0x54, 0x3d, 0x63, 0xc4, 0x38, 0xf4,
-	0x04, 0x96, 0xe3, 0xc6, 0x96, 0x0f, 0x83, 0xb8, 0x78, 0xdf, 0xbe, 0xac, 0xab, 0x8d, 0x45, 0x9d,
-	0x61, 0x40, 0x8c, 0x92, 0x9b, 0xfc, 0x40, 0x75, 0x28, 0x7b, 0x14, 0xdb, 0x66, 0x17, 0x7b, 0xd8,
-	0xb7, 0x48, 0x18, 0xd5, 0xa1, 0xa9, 0xc6, 0xa8, 0x49, 0xb1, 0xbd, 0x1f, 0x69, 0xa3, 0xa9, 0x2c,
-	0x7b, 0x29, 0x19, 0xfa, 0x08, 0x4a, 0xcc, 0x66, 0x66, 0x1c, 0x52, 0x2b, 0x57, 0x86, 0x54, 0x60,
-	0x36, 0x6b, 0x44, 0x51, 0xb5, 0x07, 0x37, 0xe3, 0x46, 0x37, 0xd3, 0x40, 0x68, 0x6b, 0x72, 0x55,
-	0xbb, 0x97, 0xae, 0xaa, 0x31, 0xcd, 0xd2, 0x98, 0x4e, 0xa8, 0x6f, 0x43, 0x29, 0xb5, 0x0b, 0x22,
-	0x24, 0x1e, 0x1e, 0x77, 0x0e, 0x5b, 0x95, 0x1b, 0x68, 0x05, 0xe0, 0xc9, 0xc9, 0x7e, 0xc3, 0x38,
-	0x6a, 0x74, 0x1a, 0xc7, 0x95, 0x9c, 0xfe, 0x01, 0xdc, 0x9c, 0xca, 0x9c, 0x8d, 0xb2, 0xcd, 0xd6,
-	0x41, 0xbd, 0x59, 0xc9, 0xa1, 0x12, 0x2c, 0x1d, 0x34, 0x4f, 0x8e, 0x3b, 0x0d, 0xa3, 0x32, 0xa7,
-	0x3f, 0x84, 0xb5, 0xc6, 0x7f, 0xe1, 0x8c, 0xf5, 0x5f, 0xe7, 0xa0, 0x9a, 0x6c, 0xbc, 0xeb, 0x3b,
-	0x19, 0xdc, 0x2c, 0xb7, 0x66, 0xe2, 0xa0, 0x4b, 0xd7, 0x3d, 0x68, 0xfd, 0x33, 0x28, 0x67, 0xa7,
-	0x31, 0x63, 0x61, 0x83, 0x60, 0x5e, 0x5e, 0x5c, 0xe5, 0xe7, 0xf2, 0x5b, 0xff, 0xd7, 0x1c, 0xa0,
-	0xc9, 0x09, 0xa0, 0xf7, 0x60, 0x21, 0xa0, 0x21, 0x17, 0x39, 0x48, 0xb8, 0xfb, 0x9d, 0x69, 0x41,
-	0xe8, 0x98, 0x84, 0xe7, 0xae, 0x45, 0xda, 0x34, 0xe4, 0x86, 0x42, 0x8b, 0x5c, 0x6d, 0x79, 0x03,
-	0xc6, 0x49, 0x78, 0xd8, 0x96, 0x39, 0xa4, 0x68, 0x24, 0x02, 0xb4, 0x05, 0xa5, 0xf8, 0x8a, 0x1c,
-	0xb6, 0x99, 0xb6, 0xb0, 0x95, 0xdf, 0x2e, 0x1a, 0x69, 0x11, 0xda, 0x86, 0x55, 0x46, 0x18, 0x73,
-	0xa9, 0x1f, 0x47, 0x38, 0x6d, 0x49, 0x85, 0xb0, 0x31, 0x31, 0x7a, 0x1b, 0x56, 0xd2, 0x7b, 0x74,
-	0xd8, 0x96, 0xe1, 0xb2, 0x68, 0x8c, 0x49, 0xd1, 0x87, 0xa0, 0xa5, 0x25, 0xc7, 0x32, 0x16, 0x1b,
-	0xd8, 0x77, 0x08, 0xd3, 0x8a, 0x72, 0x02, 0x17, 0xea, 0x91, 0x0e, 0xcb, 0xf1, 0xe4, 0x8e, 0x92,
-	0xf8, 0x98, 0x91, 0xa1, 0x77, 0x2f, 0xf2, 0xa3, 0x92, 0x04, 0x5f, 0xe0, 0x13, 0x5f, 0xe4, 0x60,
-	0x39, 0xfd, 0xea, 0x24, 0x12, 0x70, 0x1f, 0xfb, 0xee, 0x29, 0x61, 0x5c, 0x3d, 0x0b, 0xa9, 0xd8,
-	0xb6, 0x1c, 0x0b, 0xe5, 0x8b, 0xd0, 0xe5, 0x95, 0x50, 0x2d, 0x7a, 0x5a, 0xb5, 0xa3, 0x38, 0x70,
-	0x71, 0x80, 0x96, 0x38, 0xfd, 0xcf, 0x39, 0xa8, 0x8c, 0xab, 0x44, 0xed, 0x8b, 0x03, 0xd7, 0x3c,
-	0x27, 0xa1, 0xd8, 0xed, 0x68, 0x16, 0x80, 0x03, 0xf7, 0xb9, 0x92, 0x88, 0x3b, 0x74, 0xe6, 0xfa,
-	0x76, 0x34, 0xbc, 0xfc, 0x16, 0x32, 0x99, 0x3f, 0xd4, 0x81, 0xcb, 0x6f, 0x74, 0x1f, 0x96, 0x02,
-	0xcc, 0xad, 0x1e, 0x61, 0xda, 0xbc, 0xbc, 0x42, 0x6f, 0x5d, 0x3c, 0xa1, 0x9a, 0x58, 0x5d, 0x54,
-	0xf5, 0x45, 0x46, 0xd5, 0x3b, 0x50, 0x1c, 0x49, 0xc5, 0x00, 0xa9, 0x4d, 0x91, 0xdf, 0xfa, 0x6f,
-	0x17, 0x60, 0x75, 0xec, 0x15, 0x18, 0x3d, 0x9f, 0xfa, 0x62, 0xab, 0x7c, 0xe4, 0x9d, 0x0b, 0x1f,
-	0x8f, 0x6b, 0xd1, 0xda, 0xa2, 0xa7, 0xe4, 0x29, 0x4f, 0xb6, 0xc6, 0x94, 0x27, 0xdb, 0xb9, 0xeb,
-	0xb1, 0x4e, 0xbc, 0xda, 0x1e, 0xa4, 0x5e, 0x6d, 0xf3, 0xd7, 0xe3, 0x4a, 0xde, 0x6f, 0x3b, 0xd3,
-	0xde, 0x6f, 0xe7, 0xaf, 0xc7, 0x36, 0xf9, 0x82, 0xdb, 0x9e, 0x7c, 0xc1, 0x5d, 0x90, 0x67, 0xf8,
-	0xca, 0x9c, 0xe3, 0x8f, 0xb9, 0x47, 0x13, 0x8f, 0xb9, 0x8b, 0xd7, 0x23, 0xcc, 0x3e, 0xec, 0x56,
-	0x2d, 0x28, 0x67, 0xf4, 0x48, 0x83, 0xa5, 0xec, 0x9d, 0x8d, 0x7f, 0xa2, 0xbd, 0xd1, 0x9f, 0x08,
-	0x73, 0x32, 0xb3, 0x6d, 0x5d, 0x3c, 0xe4, 0xd8, 0x7f, 0x09, 0x7b, 0xb0, 0x18, 0xb1, 0x27, 0xf9,
-	0x67, 0x19, 0x0a, 0x27, 0xed, 0x07, 0xf5, 0xce, 0xe1, 0xd1, 0x23, 0x95, 0x82, 0x1e, 0x37, 0xea,
-	0xcd, 0xce, 0xe3, 0x17, 0xaa, 0xd6, 0x57, 0x0d, 0x40, 0x5e, 0xff, 0x77, 0x0e, 0x8a, 0xa3, 0xba,
-	0x0f, 0xfd, 0x00, 0x16, 0x3d, 0xb7, 0xef, 0xa6, 0x82, 0xe9, 0x64, 0x41, 0x5f, 0x6b, 0x4a, 0x84,
-	0x2a, 0x09, 0x23, 0x38, 0xfa, 0x21, 0x14, 0x42, 0xf2, 0x8b, 0x01, 0x61, 0x5c, 0x4c, 0x3e, 0x9f,
-	0x2d, 0x88, 0x13, 0x53, 0x23, 0xc2, 0x28, 0xe3, 0x91, 0x49, 0xf5, 0x03, 0x28, 0xa5, 0x58, 0xaf,
-	0x55, 0x75, 0x7d, 0x04, 0xe5, 0x0c, 0xeb, 0xb5, 0x2a, 0xae, 0x3f, 0xe5, 0xe0, 0xf5, 0x0b, 0xca,
-	0x75, 0x19, 0xe7, 0x5c, 0xdf, 0xc4, 0xe7, 0xd8, 0xf5, 0x44, 0x21, 0x22, 0x19, 0xcb, 0xc6, 0x72,
-	0xdf, 0xf5, 0xeb, 0xb1, 0x0c, 0xb5, 0x84, 0x6b, 0x44, 0x95, 0xb5, 0x72, 0xb3, 0x7b, 0xa9, 0xfc,
-	0x33, 0xfa, 0x07, 0xab, 0x16, 0x9c, 0x39, 0x42, 0xc0, 0x6a, 0x7d, 0xc2, 0xb1, 0xc8, 0x48, 0x4d,
-	0xdc, 0x25, 0x5e, 0x5c, 0x2a, 0x1a, 0x23, 0x12, 0xf4, 0x0e, 0xac, 0xf6, 0xf1, 0x4b, 0x73, 0xe0,
-	0x27, 0xe3, 0xaa, 0x06, 0x67, 0xa5, 0x8f, 0x5f, 0x9e, 0x24, 0x52, 0xfd, 0x3e, 0x80, 0x8a, 0x4c,
-	0x4f, 0x09, 0xc7, 0xa3, 0xb8, 0xb6, 0x90, 0x8a, 0x6b, 0x99, 0x18, 0xbc, 0x38, 0x16, 0x83, 0xf5,
-	0xdf, 0x2f, 0x42, 0xa1, 0x43, 0x18, 0x17, 0xe5, 0x3f, 0xfa, 0x3e, 0xe4, 0x89, 0x7f, 0xae, 0x7d,
-	0x3c, 0xfe, 0xb7, 0x45, 0x0c, 0xa8, 0x35, 0xfc, 0x73, 0x75, 0x66, 0x02, 0x97, 0x6d, 0xfd, 0xda,
-	0xb3, 0xb6, 0x7e, 0xcf, 0xae, 0xdb, 0xfa, 0xa5, 0xbb, 0xba, 0xe7, 0xdf, 0x70, 0x57, 0xf7, 0xe9,
-	0xd7, 0xea, 0xea, 0x66, 0xef, 0x8d, 0x5a, 0x93, 0xfd, 0xe0, 0x67, 0xf2, 0x54, 0xde, 0x9e, 0x72,
-	0x2a, 0xaf, 0xd2, 0x00, 0x1e, 0x8e, 0x37, 0x80, 0x3f, 0x1d, 0xcf, 0x71, 0x23, 0xba, 0xab, 0x3a,
-	0xbe, 0x59, 0x7b, 0xab, 0xf7, 0xa1, 0x10, 0xdf, 0x9f, 0x6b, 0xb9, 0xf6, 0xff, 0x40, 0x4f, 0xb6,
-	0x5f, 0xf9, 0xeb, 0x97, 0x9b, 0xb9, 0xbf, 0x7d, 0xb9, 0x99, 0xfb, 0xfb, 0x97, 0x9b, 0xb9, 0xdf,
-	0x7c, 0xb5, 0x79, 0xa3, 0xbb, 0x28, 0xdb, 0x95, 0x7b, 0xff, 0x09, 0x00, 0x00, 0xff, 0xff, 0xfc,
-	0x28, 0xe2, 0x0b, 0x1f, 0x1f, 0x00, 0x00,
+	// 2552 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xcc, 0x59, 0xcd, 0x73, 0x1b, 0x49,
+	0xd9, 0x8f, 0x2c, 0x7f, 0x48, 0x8f, 0x24, 0x5b, 0x6e, 0x27, 0xd9, 0x89, 0xd7, 0xeb, 0xf8, 0x9d,
+	0x17, 0x16, 0xef, 0x16, 0xc8, 0x15, 0x67, 0x13, 0xbc, 0x1f, 0x64, 0x91, 0x1d, 0x25, 0x71, 0x45,
+	0xb1, 0x94, 0xb1, 0xbd, 0x4b, 0x16, 0x8a, 0xa9, 0xd6, 0x4c, 0x7b, 0x34, 0xeb, 0xd1, 0xf4, 0x30,
+	0xdd, 0xf2, 0x46, 0xdc, 0xf6, 0x48, 0x15, 0x07, 0x8a, 0x13, 0x07, 0x8e, 0x1c, 0x28, 0xaa, 0xb8,
+	0x70, 0xe2, 0xc0, 0x99, 0xe2, 0xc8, 0x9f, 0x40, 0xed, 0x1e, 0x39, 0x72, 0xe4, 0x42, 0x75, 0xf7,
+	0x8c, 0x66, 0x46, 0x92, 0xed, 0x58, 0x4b, 0xaa, 0xb8, 0x8d, 0x9e, 0xe7, 0xf7, 0xfc, 0xfa, 0xf3,
+	0xf9, 0x6a, 0xc1, 0xaa, 0xcb, 0xb8, 0x4b, 0x5d, 0x9f, 0x71, 0xec, 0x79, 0x24, 0x34, 0xf9, 0x20,
+	0x20, 0xac, 0x16, 0x84, 0x94, 0x53, 0x54, 0x38, 0xbb, 0x83, 0xbd, 0xa0, 0x8b, 0xef, 0xac, 0xea,
+	0xa7, 0x3b, 0xac, 0xe6, 0xd2, 0x2d, 0x1c, 0xb8, 0x5b, 0x16, 0x0d, 0xc9, 0xd6, 0xd9, 0x9d, 0x2d,
+	0x87, 0xf8, 0x24, 0xc4, 0x9c, 0xd8, 0x0a, 0xbd, 0xfa, 0x4e, 0x0a, 0x83, 0xfb, 0x9c, 0x32, 0x0b,
+	0x7b, 0xae, 0xef, 0x4c, 0x82, 0xbe, 0x97, 0x40, 0x7b, 0xd8, 0xea, 0xba, 0x3e, 0x09, 0x07, 0x5b,
+	0xc1, 0xa9, 0x23, 0x04, 0x6c, 0xab, 0x47, 0x38, 0x9e, 0x64, 0xf5, 0x43, 0xc7, 0xe5, 0xdd, 0x7e,
+	0xa7, 0x66, 0xd1, 0xde, 0x96, 0x43, 0x1d, 0xba, 0x25, 0xc5, 0x9d, 0xfe, 0x49, 0xf2, 0xe1, 0x50,
+	0xea, 0x78, 0x24, 0xf9, 0xfd, 0x45, 0x88, 0x83, 0x80, 0x84, 0xd1, 0x82, 0xf4, 0xcf, 0xa1, 0xbc,
+	0x2f, 0x96, 0xbb, 0xaf, 0x96, 0x8b, 0xde, 0x81, 0x59, 0x16, 0x10, 0x4b, 0xcb, 0x6f, 0xe4, 0x36,
+	0x4b, 0xdb, 0x37, 0x6a, 0xf1, 0x7a, 0x6b, 0x11, 0xe0, 0x30, 0x20, 0x96, 0x21, 0x21, 0x68, 0x0b,
+	0xe6, 0x19, 0xc7, 0xbc, 0xcf, 0xb4, 0x59, 0x09, 0x7e, 0x63, 0x1c, 0x2c, 0xd5, 0x46, 0x04, 0xd3,
+	0x7f, 0x39, 0x0f, 0xa5, 0x14, 0x0d, 0xda, 0x01, 0xcd, 0x26, 0x27, 0xb8, 0xef, 0x71, 0xd3, 0xc7,
+	0x3d, 0xc2, 0x02, 0x6c, 0x11, 0x33, 0x08, 0xc9, 0x89, 0xfb, 0x52, 0x9b, 0xdb, 0xc8, 0x6d, 0x16,
+	0x8d, 0x9b, 0x91, 0xfe, 0x20, 0x56, 0xb7, 0xa5, 0x16, 0x1d, 0x03, 0xe2, 0x21, 0x3e, 0x39, 0x71,
+	0x2d, 0xb3, 0x87, 0x7d, 0xec, 0x90, 0x1e, 0xf1, 0xb9, 0x76, 0x4b, 0x4e, 0xe3, 0xed, 0x64, 0x1a,
+	0x47, 0x0a, 0xf3, 0x6c, 0x08, 0x79, 0x44, 0x30, 0xef, 0x87, 0x44, 0x2e, 0x62, 0x99, 0x8f, 0x6a,
+	0xd1, 0x5d, 0x98, 0x0f, 0xa8, 0xe7, 0x5a, 0x03, 0x6d, 0x55, 0x52, 0xbd, 0x99, 0x50, 0xb5, 0xa5,
+	0x3c, 0x6d, 0x1f, 0x41, 0xd1, 0x47, 0x50, 0xe4, 0xc4, 0x23, 0x3d, 0xc2, 0xc3, 0x81, 0xf6, 0xa6,
+	0xb4, 0x5b, 0x4f, 0x4d, 0x21, 0x56, 0xa5, 0x4d, 0x13, 0x03, 0xf4, 0x3e, 0x14, 0x18, 0xb1, 0xfa,
+	0xa1, 0xcb, 0x07, 0xda, 0x9a, 0x34, 0x7e, 0x2b, 0x31, 0x3e, 0x8c, 0x34, 0x69, 0xdb, 0x21, 0x1c,
+	0x19, 0xb0, 0x6c, 0x51, 0xff, 0xc4, 0x75, 0xd2, 0x7b, 0xf0, 0x96, 0xe4, 0xf8, 0x76, 0xc2, 0xb1,
+	0x27, 0x21, 0x93, 0xb7, 0xa0, 0x6a, 0x8d, 0x28, 0x51, 0x03, 0x96, 0x5c, 0xdf, 0x09, 0x09, 0x63,
+	0xa6, 0x83, 0x39, 0xf9, 0x02, 0x0f, 0xb4, 0xf5, 0x8d, 0xfc, 0x66, 0x69, 0x7b, 0x2d, 0x7d, 0xb8,
+	0x12, 0xf0, 0x58, 0xe9, 0x25, 0xd1, 0xa2, 0x9b, 0x91, 0xa1, 0x5d, 0x58, 0x24, 0x59, 0x96, 0xdb,
+	0x92, 0x25, 0xb5, 0xa1, 0x8d, 0x31, 0x92, 0x0a, 0xc9, 0x70, 0x34, 0x00, 0x91, 0x97, 0x9c, 0x84,
+	0x3e, 0xf6, 0x4c, 0x1a, 0x88, 0x6b, 0x4f, 0x43, 0xa6, 0x6d, 0x4b, 0x9e, 0x9b, 0x09, 0x4f, 0x2b,
+	0x52, 0xa9, 0x33, 0x8d, 0x2d, 0x62, 0x29, 0x43, 0x0f, 0xa1, 0x7c, 0xba, 0xc3, 0xcc, 0xe8, 0x22,
+	0x31, 0xad, 0x2d, 0x37, 0xe8, 0xff, 0x12, 0x82, 0xa7, 0xfd, 0x0e, 0x09, 0x7d, 0xc2, 0x09, 0x33,
+	0x08, 0xa3, 0xfd, 0xd0, 0x22, 0x4c, 0x72, 0x95, 0x4e, 0x77, 0xd8, 0xc3, 0xc8, 0x0a, 0xd5, 0x60,
+	0xc5, 0xea, 0x33, 0x4e, 0x7b, 0x66, 0x80, 0xad, 0x53, 0xec, 0x10, 0x33, 0xc0, 0xbc, 0xab, 0xd9,
+	0xf2, 0x96, 0x2e, 0x2b, 0x55, 0x5b, 0x69, 0xda, 0x98, 0x77, 0x51, 0x15, 0xf2, 0xdd, 0x7e, 0x47,
+	0x23, 0x52, 0x2f, 0x3e, 0x85, 0x84, 0x63, 0x47, 0x3b, 0x51, 0x12, 0x8e, 0x1d, 0xfd, 0x8f, 0x33,
+	0xb0, 0x76, 0xd1, 0x0d, 0x45, 0xef, 0xc1, 0x02, 0xf1, 0x71, 0xc7, 0x23, 0xb6, 0x96, 0x93, 0xb3,
+	0x5e, 0xad, 0x29, 0x6f, 0xae, 0xc5, 0xde, 0x5c, 0xdb, 0xa5, 0xd4, 0xfb, 0x04, 0x7b, 0x7d, 0x62,
+	0xc4, 0x50, 0xb4, 0x06, 0xc5, 0xa1, 0x37, 0x69, 0x33, 0x72, 0xb8, 0x44, 0x80, 0xb6, 0x61, 0x2e,
+	0x70, 0x3d, 0xca, 0xb5, 0x75, 0xc9, 0x98, 0x3a, 0xd6, 0xb6, 0x10, 0xef, 0xd1, 0x5e, 0x40, 0x7d,
+	0xe2, 0x73, 0xb9, 0x05, 0x0a, 0x2a, 0x6d, 0x42, 0xfa, 0x52, 0x1c, 0xe2, 0xa8, 0x8d, 0x10, 0x8f,
+	0xda, 0x08, 0x19, 0x7a, 0x0e, 0x55, 0xe6, 0xda, 0xc4, 0xc2, 0xa1, 0xe9, 0xfa, 0x9f, 0x13, 0x8b,
+	0xd3, 0x50, 0xdb, 0x18, 0xf5, 0xcf, 0x43, 0x85, 0xd8, 0x8f, 0x00, 0x59, 0xa2, 0x25, 0x96, 0xd5,
+	0xea, 0xbf, 0xca, 0xc3, 0xf2, 0x98, 0x1b, 0xbe, 0x96, 0x4d, 0x6a, 0xc1, 0x4d, 0xe5, 0xdc, 0xa6,
+	0xd5, 0x25, 0xd6, 0xa9, 0x79, 0x82, 0x5d, 0x79, 0x07, 0x7d, 0x0d, 0x2e, 0x1d, 0x62, 0x45, 0x59,
+	0xee, 0x09, 0xc3, 0x47, 0xd8, 0x15, 0x37, 0xd1, 0x47, 0xa7, 0xb0, 0x46, 0xfb, 0xbc, 0x43, 0xfb,
+	0xbe, 0x6d, 0xc6, 0x81, 0x2b, 0x1a, 0xa1, 0x47, 0x6d, 0xa2, 0x95, 0x36, 0x72, 0x9b, 0x8b, 0xdb,
+	0xef, 0x5e, 0x10, 0x6e, 0x6a, 0xad, 0xc8, 0x5e, 0x69, 0x8c, 0x5b, 0x31, 0x5f, 0x74, 0x83, 0x94,
+	0xf8, 0x19, 0xb5, 0x09, 0xba, 0x37, 0x8c, 0x62, 0xdb, 0xa3, 0x01, 0x45, 0xa1, 0xb2, 0xfb, 0x1c,
+	0x81, 0xf5, 0x6d, 0x58, 0xcc, 0x8e, 0x81, 0x2a, 0x50, 0xac, 0x37, 0x9b, 0xad, 0x4f, 0xcd, 0xfa,
+	0xc1, 0x8b, 0xea, 0x35, 0xb4, 0x0c, 0x15, 0xa3, 0xf1, 0x78, 0xff, 0xf0, 0xc8, 0x78, 0x61, 0xb6,
+	0x0e, 0x9a, 0x2f, 0xaa, 0x39, 0xfd, 0x0f, 0x39, 0xb8, 0x3e, 0x29, 0xc2, 0xbd, 0x96, 0x53, 0x79,
+	0x90, 0x0e, 0xb4, 0x77, 0x25, 0xeb, 0xc6, 0x84, 0x40, 0x9b, 0x5d, 0x5d, 0x62, 0xa2, 0xff, 0x35,
+	0x0f, 0x2b, 0x13, 0x22, 0xea, 0x6b, 0x99, 0xeb, 0x13, 0x40, 0x16, 0xf5, 0x79, 0x48, 0x3d, 0x33,
+	0xf0, 0xb0, 0x4f, 0xcc, 0x1e, 0xf7, 0x98, 0x56, 0xb9, 0x94, 0xbe, 0x1a, 0x59, 0xb5, 0x85, 0xd1,
+	0x33, 0xee, 0x31, 0x71, 0x17, 0x6d, 0xcc, 0x71, 0x8a, 0xc6, 0x64, 0x3c, 0x74, 0x2d, 0xae, 0x2d,
+	0x5e, 0x7e, 0x17, 0x85, 0xe5, 0x90, 0xea, 0x50, 0x9a, 0xa1, 0x1d, 0x58, 0xb0, 0x5c, 0x8e, 0x6d,
+	0xe2, 0x69, 0xd7, 0x47, 0xb3, 0xd5, 0x9e, 0x52, 0x64, 0xb7, 0x30, 0x86, 0xa3, 0x06, 0x94, 0x2d,
+	0x12, 0xf2, 0x28, 0xdd, 0x84, 0xda, 0x0d, 0x69, 0xae, 0xa7, 0xcc, 0x49, 0xc8, 0x55, 0x28, 0x1b,
+	0xf1, 0xe5, 0x92, 0x95, 0x68, 0xd0, 0xc7, 0x00, 0x3e, 0xb5, 0x89, 0x89, 0x1d, 0x91, 0xb0, 0x6e,
+	0x8e, 0x1e, 0xe4, 0x01, 0xb5, 0x49, 0x5d, 0xa8, 0x46, 0x0e, 0xd2, 0x8f, 0xe5, 0xfa, 0xef, 0x73,
+	0xf0, 0xe6, 0x05, 0x69, 0xed, 0xb5, 0x1c, 0xe8, 0x3d, 0x98, 0x77, 0x44, 0x39, 0x38, 0x88, 0x36,
+	0x2d, 0xe5, 0x54, 0x8f, 0xa5, 0x7c, 0xc4, 0xa9, 0x14, 0x58, 0xff, 0x32, 0x07, 0x68, 0x3c, 0xb0,
+	0x0a, 0x36, 0x8b, 0xf6, 0x7a, 0xd4, 0x8f, 0x26, 0xf8, 0x56, 0x3a, 0x5f, 0x0b, 0xf9, 0x08, 0x9b,
+	0x02, 0x8b, 0x85, 0x45, 0x41, 0xf1, 0x15, 0x02, 0x51, 0x0c, 0xd5, 0x9f, 0x02, 0x1a, 0x8f, 0xd3,
+	0x53, 0x4e, 0x41, 0xff, 0x53, 0x0e, 0xd6, 0x2e, 0x0a, 0xdb, 0xd3, 0x2e, 0xed, 0xc7, 0xb0, 0xa6,
+	0x0e, 0x22, 0x29, 0x05, 0x99, 0xd9, 0x19, 0xc4, 0x79, 0xfb, 0x15, 0xd6, 0x7b, 0x4b, 0xd9, 0x0f,
+	0x4b, 0x45, 0xb6, 0x3b, 0x88, 0xd2, 0xb7, 0xde, 0x84, 0x95, 0x09, 0x91, 0x6f, 0xda, 0x2d, 0x68,
+	0xc1, 0xcd, 0xc9, 0xc1, 0x66, 0x5a, 0xc2, 0xdf, 0xe6, 0xe0, 0xfa, 0x24, 0xcf, 0x9b, 0x76, 0x2f,
+	0x6f, 0x43, 0x89, 0x11, 0xef, 0xc4, 0x64, 0xae, 0xe3, 0x13, 0x5b, 0x26, 0x97, 0x82, 0x01, 0x42,
+	0x74, 0x28, 0x25, 0xe8, 0xbb, 0x80, 0xac, 0x90, 0x60, 0x4e, 0xcc, 0x1e, 0x61, 0xdd, 0x28, 0x13,
+	0x69, 0x65, 0x89, 0xab, 0x2a, 0xcd, 0x33, 0xc2, 0xba, 0x6a, 0xcf, 0xf4, 0xe7, 0xa0, 0x9d, 0xe7,
+	0xd8, 0xdf, 0x60, 0x0b, 0x27, 0xbb, 0xf9, 0xb4, 0x84, 0x4d, 0x58, 0x99, 0xe0, 0x86, 0x53, 0x1f,
+	0xc8, 0x0c, 0xac, 0x4c, 0xd0, 0xbf, 0x96, 0xc0, 0xf2, 0x11, 0xcc, 0xd9, 0xa4, 0xd3, 0x77, 0x64,
+	0xc7, 0xb5, 0x98, 0xae, 0x8e, 0x26, 0xcc, 0xa0, 0xd6, 0xa4, 0x4e, 0x93, 0x9c, 0x11, 0xcf, 0x50,
+	0x46, 0xe8, 0x2e, 0xe4, 0x4f, 0x77, 0xae, 0x50, 0xd4, 0x0a, 0xb4, 0xfe, 0x00, 0x0a, 0x31, 0x0f,
+	0x2a, 0xc0, 0xec, 0x41, 0xeb, 0xa0, 0x51, 0xbd, 0x86, 0x8a, 0x30, 0xd7, 0x30, 0x8c, 0x96, 0x51,
+	0xcd, 0x09, 0xe1, 0xa7, 0x75, 0xe3, 0xa0, 0x3a, 0x23, 0x84, 0x0f, 0x1b, 0xbb, 0xc7, 0x8f, 0xab,
+	0x79, 0x21, 0xdc, 0x3f, 0x78, 0xd4, 0xaa, 0xce, 0xea, 0xff, 0x9c, 0x87, 0x37, 0xce, 0x19, 0x00,
+	0xdd, 0x81, 0x62, 0x18, 0x0b, 0xa2, 0x4d, 0x5a, 0x49, 0xa6, 0x35, 0xc4, 0x1a, 0x09, 0x0a, 0xed,
+	0xc2, 0x52, 0x48, 0xb0, 0xed, 0xfa, 0xa2, 0x5f, 0x08, 0x42, 0xda, 0x51, 0xbb, 0x54, 0xda, 0xbe,
+	0x55, 0x53, 0x4d, 0x71, 0x0d, 0x07, 0x6e, 0x4d, 0xf4, 0xd8, 0xb5, 0x33, 0x59, 0x72, 0x76, 0x88,
+	0xb1, 0x38, 0xb4, 0x90, 0xbf, 0xd1, 0xff, 0x43, 0x25, 0x24, 0x81, 0xe7, 0x5a, 0xd8, 0xb4, 0x68,
+	0xdf, 0xe7, 0x72, 0x37, 0x2b, 0x46, 0x39, 0x12, 0xee, 0x09, 0x19, 0x7a, 0x0e, 0x85, 0x6e, 0x80,
+	0x4d, 0xd9, 0xdf, 0xaa, 0x96, 0xf5, 0x7e, 0x7a, 0x84, 0x54, 0x87, 0x2e, 0x06, 0x7a, 0x42, 0x43,
+	0xf7, 0xe7, 0xd4, 0xe7, 0xd8, 0x6b, 0x53, 0xbb, 0x1e, 0xe9, 0x88, 0xea, 0x33, 0x16, 0xba, 0x01,
+	0x96, 0xcb, 0x3d, 0x86, 0x1b, 0x01, 0xb5, 0x4d, 0xdb, 0x65, 0x61, 0x3f, 0xe0, 0x2e, 0xf5, 0xcd,
+	0x4e, 0xdf, 0x76, 0x08, 0x97, 0xfd, 0x6b, 0xe6, 0x44, 0xda, 0xd4, 0x7e, 0x38, 0x44, 0xed, 0x4a,
+	0x90, 0xa4, 0x5a, 0x09, 0xc6, 0x15, 0xe8, 0xa7, 0xb0, 0x24, 0x68, 0xb1, 0xef, 0x53, 0x8e, 0x85,
+	0x9c, 0x69, 0xf3, 0xb2, 0xf1, 0xb9, 0x77, 0xe9, 0x11, 0x8b, 0x81, 0xea, 0x89, 0x5d, 0xc3, 0xe7,
+	0xe1, 0xc0, 0x58, 0x0c, 0x32, 0x42, 0xf4, 0x23, 0xa8, 0xc8, 0x14, 0xcc, 0x88, 0xa7, 0x4a, 0xf3,
+	0x05, 0xc9, 0x7e, 0xf7, 0x72, 0x76, 0xe1, 0xb6, 0x87, 0x91, 0x95, 0xe2, 0x2e, 0xfb, 0x29, 0x11,
+	0xda, 0x81, 0x82, 0xa8, 0x47, 0x7d, 0xd1, 0xcf, 0x16, 0xa2, 0x76, 0x61, 0xc2, 0x29, 0xd6, 0x23,
+	0x8c, 0x31, 0x44, 0xa3, 0x77, 0x61, 0xd9, 0xed, 0xc9, 0xce, 0xaa, 0xef, 0x79, 0x71, 0x4c, 0x2a,
+	0x4a, 0x77, 0x59, 0x92, 0x8a, 0x76, 0xdf, 0xf3, 0xa2, 0xca, 0xb4, 0x06, 0x2b, 0x41, 0xe8, 0x52,
+	0x51, 0xc9, 0x99, 0x96, 0x87, 0x19, 0x93, 0x59, 0x43, 0x26, 0x89, 0xa2, 0xb1, 0x1c, 0xab, 0xf6,
+	0x84, 0x46, 0xe4, 0x03, 0x74, 0x1f, 0x0a, 0xf4, 0x8c, 0x84, 0x1e, 0x1e, 0x30, 0xcd, 0x96, 0x4b,
+	0x5d, 0x4d, 0x96, 0x7a, 0xba, 0xc3, 0x5a, 0x1d, 0x91, 0xca, 0x5a, 0x0a, 0x62, 0x0c, 0xb1, 0xab,
+	0x75, 0x91, 0x38, 0xc6, 0xb6, 0x53, 0xf4, 0x72, 0xa7, 0x64, 0x20, 0xaf, 0x77, 0xd1, 0x10, 0x9f,
+	0xe8, 0x3a, 0xcc, 0x9d, 0x09, 0xaf, 0x8f, 0xfc, 0x5b, 0xfd, 0xf8, 0x60, 0x66, 0x27, 0xb7, 0xfa,
+	0x31, 0x2c, 0x8f, 0xed, 0xd9, 0x55, 0x08, 0xf4, 0xaf, 0xf3, 0x80, 0xc6, 0x5b, 0x6e, 0x74, 0x07,
+	0x16, 0xe2, 0xde, 0x1a, 0x46, 0x9f, 0x5f, 0x22, 0x9c, 0xaa, 0x91, 0x8c, 0x18, 0x87, 0x9e, 0x42,
+	0x39, 0x6e, 0xee, 0xf9, 0x20, 0x88, 0xbb, 0x8e, 0xcd, 0x8b, 0x3a, 0xfb, 0x58, 0x74, 0x34, 0x08,
+	0x88, 0x51, 0x72, 0x93, 0x1f, 0xa8, 0x0e, 0x15, 0x8f, 0x62, 0xdb, 0xec, 0x60, 0x0f, 0xfb, 0x16,
+	0x09, 0xa3, 0xe2, 0x36, 0xd5, 0x1c, 0x36, 0x29, 0xb6, 0x77, 0x23, 0x6d, 0x34, 0x95, 0xb2, 0x97,
+	0x92, 0xa1, 0x0f, 0xa1, 0xc4, 0x6c, 0x66, 0xc6, 0x21, 0xb5, 0x7a, 0x69, 0x48, 0x05, 0x66, 0xb3,
+	0x46, 0x14, 0x55, 0xbb, 0x70, 0x23, 0x6e, 0xf6, 0x33, 0x2d, 0x90, 0xb6, 0x2c, 0x57, 0xb5, 0x7d,
+	0xe1, 0xaa, 0x1a, 0x93, 0x2c, 0x8d, 0xc9, 0x84, 0xfa, 0x26, 0x94, 0x52, 0xbb, 0x20, 0x42, 0xe2,
+	0xfe, 0xe1, 0xd1, 0x7e, 0xab, 0x7a, 0x0d, 0x2d, 0x02, 0x3c, 0x3d, 0xde, 0x6d, 0x18, 0x07, 0x8d,
+	0xa3, 0xc6, 0x61, 0x35, 0xa7, 0xbf, 0x0f, 0x37, 0x26, 0x32, 0x67, 0xa3, 0x6c, 0xb3, 0xb5, 0x57,
+	0x6f, 0x56, 0x73, 0xa8, 0x04, 0x0b, 0x7b, 0xcd, 0xe3, 0xc3, 0xa3, 0x86, 0x51, 0x9d, 0xd1, 0x1f,
+	0xc1, 0x72, 0xe3, 0xbf, 0x70, 0xc6, 0xfa, 0xaf, 0x73, 0xb0, 0x9a, 0x6c, 0xbc, 0xeb, 0x3b, 0x19,
+	0xdc, 0x34, 0xb7, 0x66, 0xec, 0xa0, 0x4b, 0x57, 0x3d, 0x68, 0xfd, 0x33, 0xa8, 0x64, 0xa7, 0x31,
+	0x65, 0x61, 0x83, 0x60, 0x56, 0x5e, 0x5c, 0xe5, 0xe7, 0xf2, 0x5b, 0xff, 0xd7, 0x0c, 0xa0, 0xf1,
+	0x09, 0xa0, 0x7b, 0x30, 0x17, 0xd0, 0x90, 0x8b, 0x1c, 0x24, 0xdc, 0xfd, 0xf6, 0xa4, 0x20, 0x74,
+	0x48, 0xc2, 0x33, 0xd7, 0x22, 0x6d, 0x1a, 0x72, 0x43, 0xa1, 0x45, 0xae, 0xb6, 0xbc, 0x3e, 0xe3,
+	0x24, 0xdc, 0x6f, 0xcb, 0x1c, 0x52, 0x34, 0x12, 0x01, 0xda, 0x80, 0x52, 0x7c, 0x45, 0xf6, 0xdb,
+	0x4c, 0x9b, 0xdb, 0xc8, 0x6f, 0x16, 0x8d, 0xb4, 0x08, 0x6d, 0xc2, 0x12, 0x23, 0x8c, 0xb9, 0xd4,
+	0x8f, 0x23, 0x9c, 0xb6, 0xa0, 0x42, 0xd8, 0x88, 0x18, 0xbd, 0x0d, 0x8b, 0xe9, 0x3d, 0xda, 0x6f,
+	0xcb, 0x70, 0x59, 0x34, 0x46, 0xa4, 0xe8, 0x03, 0xd0, 0xd2, 0x92, 0x43, 0x19, 0x8b, 0x0d, 0xec,
+	0x3b, 0x84, 0x69, 0x45, 0x39, 0x81, 0x73, 0xf5, 0x48, 0x87, 0x72, 0x3c, 0xb9, 0x83, 0x24, 0x3e,
+	0x66, 0x64, 0xe8, 0xbd, 0xf3, 0xfc, 0xa8, 0x24, 0xc1, 0xe7, 0xf8, 0xc4, 0x97, 0x39, 0x28, 0xa7,
+	0x5f, 0xde, 0x44, 0x02, 0xee, 0x61, 0xdf, 0x3d, 0x21, 0x8c, 0xab, 0xa7, 0x31, 0x15, 0xdb, 0xca,
+	0xb1, 0x50, 0xbe, 0x8a, 0x5d, 0x5c, 0x09, 0xd5, 0xa2, 0xa7, 0x67, 0x3b, 0x8a, 0x03, 0xe7, 0x07,
+	0x68, 0x89, 0xd3, 0xff, 0x92, 0x83, 0xea, 0xa8, 0x4a, 0xd4, 0xbe, 0x38, 0x70, 0xcd, 0x33, 0x12,
+	0x8a, 0xdd, 0x8e, 0x66, 0x01, 0x38, 0x70, 0x3f, 0x51, 0x12, 0x71, 0x87, 0x4e, 0x5d, 0xdf, 0x8e,
+	0x86, 0x97, 0xdf, 0x42, 0x26, 0xf3, 0x87, 0x3a, 0x70, 0xf9, 0x8d, 0x1e, 0xc0, 0x42, 0x80, 0xb9,
+	0xd5, 0x25, 0x4c, 0x9b, 0x95, 0x57, 0xe8, 0x5b, 0xe7, 0x4f, 0xa8, 0x26, 0x56, 0x17, 0x55, 0x7d,
+	0x91, 0xd1, 0xea, 0x6d, 0x28, 0x0e, 0xa5, 0x62, 0x80, 0xd4, 0xa6, 0xc8, 0x6f, 0xfd, 0x17, 0x73,
+	0x50, 0xc9, 0xbc, 0x93, 0xa3, 0xa3, 0x89, 0xaf, 0xda, 0xb9, 0xd1, 0x17, 0xdd, 0x8c, 0x51, 0x2d,
+	0x5a, 0x57, 0xf4, 0xd4, 0x3e, 0xe1, 0x51, 0xbb, 0x0d, 0xd5, 0xe8, 0xa9, 0x29, 0x79, 0x3d, 0x99,
+	0xb9, 0x0a, 0xe7, 0x92, 0x32, 0x1f, 0xf6, 0x3c, 0xa8, 0x9e, 0x7a, 0xb3, 0xce, 0x5f, 0x85, 0xe9,
+	0x92, 0xb7, 0xeb, 0xd9, 0xab, 0x70, 0x8d, 0xbf, 0x5d, 0x1f, 0x8c, 0xbf, 0x5d, 0xcf, 0xc9, 0x93,
+	0x7b, 0x45, 0xc6, 0xd1, 0x47, 0xec, 0xe6, 0xd8, 0x23, 0xf6, 0xfc, 0x55, 0xe8, 0xb2, 0xcf, 0xd9,
+	0xab, 0x18, 0x2a, 0x19, 0x3d, 0xd2, 0x60, 0x21, 0x7b, 0x4b, 0xe3, 0x9f, 0xe8, 0xfe, 0xf0, 0x8f,
+	0x95, 0x19, 0x99, 0xcb, 0xd6, 0xcf, 0x1b, 0x70, 0xe4, 0xff, 0x95, 0x1d, 0x98, 0x8f, 0xb8, 0x93,
+	0x7c, 0x53, 0x86, 0xc2, 0x71, 0xfb, 0x61, 0xfd, 0x68, 0xff, 0xe0, 0xb1, 0x4a, 0x39, 0x4f, 0x1a,
+	0xf5, 0xe6, 0xd1, 0x93, 0x17, 0xaa, 0xb6, 0x57, 0x05, 0x7f, 0x5e, 0xff, 0x77, 0x0e, 0x8a, 0xc3,
+	0x3a, 0x0f, 0x7d, 0x1f, 0xe6, 0x3d, 0xb7, 0xe7, 0xa6, 0x82, 0xe7, 0x78, 0x01, 0x5f, 0x6b, 0x4a,
+	0x84, 0x2a, 0x01, 0x23, 0x38, 0xfa, 0x01, 0x14, 0x42, 0xf2, 0xb3, 0x3e, 0x61, 0x5c, 0x4c, 0x3d,
+	0x9f, 0x2d, 0x80, 0x13, 0x53, 0x23, 0xc2, 0x28, 0xe3, 0xa1, 0xc9, 0xea, 0xfb, 0x50, 0x4a, 0xb1,
+	0x5e, 0xa9, 0xca, 0xfa, 0x10, 0x2a, 0x19, 0xd6, 0x2b, 0x55, 0x58, 0x7f, 0xce, 0xc1, 0x1b, 0xe7,
+	0x94, 0xe7, 0x32, 0xae, 0xb9, 0xbe, 0x89, 0xcf, 0xb0, 0xeb, 0x89, 0xc2, 0x43, 0x32, 0x56, 0x8c,
+	0x72, 0xcf, 0xf5, 0xeb, 0xb1, 0x0c, 0xb5, 0x84, 0x43, 0x44, 0x95, 0xb4, 0x72, 0xad, 0xbb, 0xa9,
+	0x7c, 0x33, 0xfc, 0x3f, 0xaf, 0x16, 0x9c, 0x3a, 0x42, 0xc0, 0x6a, 0x3d, 0xc2, 0xb1, 0xc8, 0x40,
+	0x4d, 0xdc, 0x21, 0x5e, 0x5c, 0x1a, 0x1a, 0x43, 0x12, 0xf4, 0x1d, 0x58, 0xea, 0xe1, 0x97, 0x66,
+	0xdf, 0x4f, 0xc6, 0x55, 0x0d, 0xcd, 0x62, 0x0f, 0xbf, 0x3c, 0x4e, 0xa4, 0xfa, 0x03, 0x00, 0x15,
+	0x89, 0x9e, 0x11, 0x8e, 0x87, 0x71, 0x6c, 0x2e, 0x15, 0xc7, 0x32, 0x31, 0x77, 0x7e, 0x24, 0xe6,
+	0xea, 0xbf, 0x9b, 0x87, 0xc2, 0x11, 0x61, 0x5c, 0x94, 0xfb, 0xe8, 0x7b, 0x90, 0x27, 0xfe, 0x99,
+	0xf6, 0xd1, 0xe8, 0x5f, 0x35, 0x31, 0xa0, 0xd6, 0xf0, 0xcf, 0xd4, 0x99, 0x09, 0x5c, 0xb6, 0xd5,
+	0x6b, 0x4f, 0xdb, 0xea, 0x3d, 0xbf, 0x6a, 0xab, 0x97, 0xee, 0xe2, 0x3e, 0x79, 0xcd, 0x5d, 0xdc,
+	0xa7, 0xdf, 0xa8, 0x8b, 0x9b, 0xbe, 0x17, 0x6a, 0x8d, 0xf7, 0x7f, 0x9f, 0xc9, 0x53, 0x79, 0x7b,
+	0xc2, 0xa9, 0xbc, 0x4a, 0xc3, 0xb7, 0x3f, 0xda, 0xf0, 0xfd, 0x64, 0x34, 0xa7, 0x0d, 0xe9, 0x2e,
+	0xeb, 0xf0, 0xa6, 0xed, 0xa5, 0xee, 0x43, 0x21, 0xbe, 0x3f, 0x57, 0x72, 0xed, 0xff, 0x81, 0x1e,
+	0x6c, 0xb7, 0xfa, 0xb7, 0xaf, 0xd6, 0x73, 0x7f, 0xff, 0x6a, 0x3d, 0xf7, 0x8f, 0xaf, 0xd6, 0x73,
+	0xbf, 0xf9, 0x7a, 0xfd, 0x5a, 0x67, 0x5e, 0xb6, 0x27, 0x77, 0xff, 0x13, 0x00, 0x00, 0xff, 0xff,
+	0xa2, 0xc0, 0xf4, 0xeb, 0x2d, 0x20, 0x00, 0x00,
 }
 
-func (m *IstioInstaller) Marshal() (dAtA []byte, err error) {
+func (m *IstioInstall) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalTo(dAtA)
@@ -2629,7 +2736,7 @@ func (m *IstioInstaller) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *IstioInstaller) MarshalTo(dAtA []byte) (int, error) {
+func (m *IstioInstall) MarshalTo(dAtA []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
@@ -2660,7 +2767,7 @@ func (m *IstioInstaller) MarshalTo(dAtA []byte) (int, error) {
 	return i, nil
 }
 
-func (m *InstallerSpec) Marshal() (dAtA []byte, err error) {
+func (m *InstallSpec) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalTo(dAtA)
@@ -2670,7 +2777,7 @@ func (m *InstallerSpec) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *InstallerSpec) MarshalTo(dAtA []byte) (int, error) {
+func (m *InstallSpec) MarshalTo(dAtA []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
@@ -2693,17 +2800,29 @@ func (m *InstallerSpec) MarshalTo(dAtA []byte) (int, error) {
 		}
 		i += n3
 	}
-	if m.PolicyTelemetry != nil {
+	if m.Policy != nil {
 		dAtA[i] = 0xd2
 		i++
 		dAtA[i] = 0x1
 		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.PolicyTelemetry.Size()))
-		n4, err := m.PolicyTelemetry.MarshalTo(dAtA[i:])
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Policy.Size()))
+		n4, err := m.Policy.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
 		i += n4
+	}
+	if m.Telemetry != nil {
+		dAtA[i] = 0xda
+		i++
+		dAtA[i] = 0x1
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Telemetry.Size()))
+		n5, err := m.Telemetry.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n5
 	}
 	if m.Security != nil {
 		dAtA[i] = 0xe2
@@ -2711,11 +2830,11 @@ func (m *InstallerSpec) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x1
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Security.Size()))
-		n5, err := m.Security.MarshalTo(dAtA[i:])
+		n6, err := m.Security.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n5
+		i += n6
 	}
 	if m.ConfigManagement != nil {
 		dAtA[i] = 0xea
@@ -2723,11 +2842,11 @@ func (m *InstallerSpec) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x1
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.ConfigManagement.Size()))
-		n6, err := m.ConfigManagement.MarshalTo(dAtA[i:])
+		n7, err := m.ConfigManagement.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n6
+		i += n7
 	}
 	if len(m.IngressGateway) > 0 {
 		for _, msg := range m.IngressGateway {
@@ -2777,11 +2896,11 @@ func (m *InstallerSpec) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x5
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.K8SDefaults.Size()))
-		n7, err := m.K8SDefaults.MarshalTo(dAtA[i:])
+		n8, err := m.K8SDefaults.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n7
+		i += n8
 	}
 	if len(m.CustomPackagePath) > 0 {
 		dAtA[i] = 0xa2
@@ -2832,11 +2951,11 @@ func (m *TrafficManagementFeatureSpec) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Enabled.Size()))
-		n8, err := m.Enabled.MarshalTo(dAtA[i:])
+		n9, err := m.Enabled.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n8
+		i += n9
 	}
 	if len(m.Namespace) > 0 {
 		dAtA[i] = 0x12
@@ -2850,11 +2969,11 @@ func (m *TrafficManagementFeatureSpec) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x1
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Pilot.Size()))
-		n9, err := m.Pilot.MarshalTo(dAtA[i:])
+		n10, err := m.Pilot.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n9
+		i += n10
 	}
 	if m.Proxy != nil {
 		dAtA[i] = 0xfa
@@ -2862,11 +2981,11 @@ func (m *TrafficManagementFeatureSpec) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x1
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Proxy.Size()))
-		n10, err := m.Proxy.MarshalTo(dAtA[i:])
+		n11, err := m.Proxy.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n10
+		i += n11
 	}
 	if m.SidecarInjector != nil {
 		dAtA[i] = 0x82
@@ -2874,11 +2993,11 @@ func (m *TrafficManagementFeatureSpec) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x2
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.SidecarInjector.Size()))
-		n11, err := m.SidecarInjector.MarshalTo(dAtA[i:])
+		n12, err := m.SidecarInjector.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n11
+		i += n12
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
@@ -2886,7 +3005,7 @@ func (m *TrafficManagementFeatureSpec) MarshalTo(dAtA []byte) (int, error) {
 	return i, nil
 }
 
-func (m *PolicyTelemetryFeatureSpec) Marshal() (dAtA []byte, err error) {
+func (m *PolicyFeatureSpec) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalTo(dAtA)
@@ -2896,20 +3015,36 @@ func (m *PolicyTelemetryFeatureSpec) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *PolicyTelemetryFeatureSpec) MarshalTo(dAtA []byte) (int, error) {
+func (m *PolicyFeatureSpec) MarshalTo(dAtA []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
 	_ = l
+	if m.Enabled != nil {
+		dAtA[i] = 0xa
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Enabled.Size()))
+		n13, err := m.Enabled.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n13
+	}
+	if len(m.Namespace) > 0 {
+		dAtA[i] = 0x12
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(m.Namespace)))
+		i += copy(dAtA[i:], m.Namespace)
+	}
 	if m.PolicyCheckFailOpen != nil {
 		dAtA[i] = 0x52
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.PolicyCheckFailOpen.Size()))
-		n12, err := m.PolicyCheckFailOpen.MarshalTo(dAtA[i:])
+		n14, err := m.PolicyCheckFailOpen.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n12
+		i += n14
 	}
 	if m.OutboundTrafficPolicyMode != 0 {
 		dAtA[i] = 0x58
@@ -2922,11 +3057,48 @@ func (m *PolicyTelemetryFeatureSpec) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x3
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Policy.Size()))
-		n13, err := m.Policy.MarshalTo(dAtA[i:])
+		n15, err := m.Policy.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n13
+		i += n15
+	}
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	return i, nil
+}
+
+func (m *TelemetryFeatureSpec) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *TelemetryFeatureSpec) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if m.Enabled != nil {
+		dAtA[i] = 0xa
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Enabled.Size()))
+		n16, err := m.Enabled.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n16
+	}
+	if len(m.Namespace) > 0 {
+		dAtA[i] = 0x12
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(m.Namespace)))
+		i += copy(dAtA[i:], m.Namespace)
 	}
 	if m.Telemetry != nil {
 		dAtA[i] = 0x9a
@@ -2934,11 +3106,11 @@ func (m *PolicyTelemetryFeatureSpec) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x3
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Telemetry.Size()))
-		n14, err := m.Telemetry.MarshalTo(dAtA[i:])
+		n17, err := m.Telemetry.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n14
+		i += n17
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
@@ -2965,11 +3137,11 @@ func (m *SecurityFeatureSpec) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Enabled.Size()))
-		n15, err := m.Enabled.MarshalTo(dAtA[i:])
+		n18, err := m.Enabled.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n15
+		i += n18
 	}
 	if len(m.Namespace) > 0 {
 		dAtA[i] = 0x12
@@ -2981,21 +3153,21 @@ func (m *SecurityFeatureSpec) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x6a
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.ControlPlaneMtls.Size()))
-		n16, err := m.ControlPlaneMtls.MarshalTo(dAtA[i:])
+		n19, err := m.ControlPlaneMtls.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n16
+		i += n19
 	}
 	if m.DataPlaneMtlsStrict != nil {
 		dAtA[i] = 0x72
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.DataPlaneMtlsStrict.Size()))
-		n17, err := m.DataPlaneMtlsStrict.MarshalTo(dAtA[i:])
+		n20, err := m.DataPlaneMtlsStrict.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n17
+		i += n20
 	}
 	if m.Citadel != nil {
 		dAtA[i] = 0xa2
@@ -3003,11 +3175,11 @@ func (m *SecurityFeatureSpec) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x1
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Citadel.Size()))
-		n18, err := m.Citadel.MarshalTo(dAtA[i:])
+		n21, err := m.Citadel.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n18
+		i += n21
 	}
 	if m.CertManager != nil {
 		dAtA[i] = 0xaa
@@ -3015,11 +3187,11 @@ func (m *SecurityFeatureSpec) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x1
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.CertManager.Size()))
-		n19, err := m.CertManager.MarshalTo(dAtA[i:])
+		n22, err := m.CertManager.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n19
+		i += n22
 	}
 	if m.NodeAgent != nil {
 		dAtA[i] = 0xb2
@@ -3027,11 +3199,11 @@ func (m *SecurityFeatureSpec) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x1
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.NodeAgent.Size()))
-		n20, err := m.NodeAgent.MarshalTo(dAtA[i:])
+		n23, err := m.NodeAgent.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n20
+		i += n23
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
@@ -3054,15 +3226,33 @@ func (m *ConfigManagementFeatureSpec) MarshalTo(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.Galley != nil {
+	if m.Enabled != nil {
 		dAtA[i] = 0xa
 		i++
-		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Galley.Size()))
-		n21, err := m.Galley.MarshalTo(dAtA[i:])
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Enabled.Size()))
+		n24, err := m.Enabled.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n21
+		i += n24
+	}
+	if len(m.Namespace) > 0 {
+		dAtA[i] = 0x12
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(len(m.Namespace)))
+		i += copy(dAtA[i:], m.Namespace)
+	}
+	if m.Galley != nil {
+		dAtA[i] = 0xa2
+		i++
+		dAtA[i] = 0x1
+		i++
+		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Galley.Size()))
+		n25, err := m.Galley.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n25
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
@@ -3089,21 +3279,21 @@ func (m *PilotComponentSpec) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Common.Size()))
-		n22, err := m.Common.MarshalTo(dAtA[i:])
+		n26, err := m.Common.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n22
+		i += n26
 	}
 	if m.Sidecar != nil {
 		dAtA[i] = 0x52
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Sidecar.Size()))
-		n23, err := m.Sidecar.MarshalTo(dAtA[i:])
+		n27, err := m.Sidecar.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n23
+		i += n27
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
@@ -3130,11 +3320,11 @@ func (m *ProxyComponentSpec) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Common.Size()))
-		n24, err := m.Common.MarshalTo(dAtA[i:])
+		n28, err := m.Common.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n24
+		i += n28
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
@@ -3161,21 +3351,21 @@ func (m *SidecarInjectorComponentSpec) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Common.Size()))
-		n25, err := m.Common.MarshalTo(dAtA[i:])
+		n29, err := m.Common.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n25
+		i += n29
 	}
 	if m.EnableNamespacesByDefault != nil {
 		dAtA[i] = 0x52
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.EnableNamespacesByDefault.Size()))
-		n26, err := m.EnableNamespacesByDefault.MarshalTo(dAtA[i:])
+		n30, err := m.EnableNamespacesByDefault.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n26
+		i += n30
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
@@ -3202,11 +3392,11 @@ func (m *PolicyComponentSpec) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Common.Size()))
-		n27, err := m.Common.MarshalTo(dAtA[i:])
+		n31, err := m.Common.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n27
+		i += n31
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
@@ -3233,11 +3423,11 @@ func (m *TelemetryComponentSpec) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Common.Size()))
-		n28, err := m.Common.MarshalTo(dAtA[i:])
+		n32, err := m.Common.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n28
+		i += n32
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
@@ -3264,11 +3454,11 @@ func (m *CitadelComponentSpec) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Common.Size()))
-		n29, err := m.Common.MarshalTo(dAtA[i:])
+		n33, err := m.Common.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n29
+		i += n33
 	}
 	if m.SelfSigned {
 		dAtA[i] = 0x58
@@ -3315,11 +3505,11 @@ func (m *CertManagerComponentSpec) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Common.Size()))
-		n30, err := m.Common.MarshalTo(dAtA[i:])
+		n34, err := m.Common.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n30
+		i += n34
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
@@ -3346,11 +3536,11 @@ func (m *NodeAgentComponentSpec) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Common.Size()))
-		n31, err := m.Common.MarshalTo(dAtA[i:])
+		n35, err := m.Common.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n31
+		i += n35
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
@@ -3377,11 +3567,11 @@ func (m *GalleyComponentSpec) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Common.Size()))
-		n32, err := m.Common.MarshalTo(dAtA[i:])
+		n36, err := m.Common.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n32
+		i += n36
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
@@ -3408,11 +3598,11 @@ func (m *CommonComponentSpec) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Enabled.Size()))
-		n33, err := m.Enabled.MarshalTo(dAtA[i:])
+		n37, err := m.Enabled.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n33
+		i += n37
 	}
 	if len(m.Namespace) > 0 {
 		dAtA[i] = 0x12
@@ -3431,11 +3621,11 @@ func (m *CommonComponentSpec) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x5
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.K8S.Size()))
-		n34, err := m.K8S.MarshalTo(dAtA[i:])
+		n38, err := m.K8S.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n34
+		i += n38
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
@@ -3462,21 +3652,21 @@ func (m *KubernetesResourcesSpec) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Resources.Size()))
-		n35, err := m.Resources.MarshalTo(dAtA[i:])
+		n39, err := m.Resources.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n35
+		i += n39
 	}
 	if m.ReadinessProbe != nil {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.ReadinessProbe.Size()))
-		n36, err := m.ReadinessProbe.MarshalTo(dAtA[i:])
+		n40, err := m.ReadinessProbe.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n36
+		i += n40
 	}
 	if m.ReplicaCount != 0 {
 		dAtA[i] = 0x18
@@ -3487,21 +3677,21 @@ func (m *KubernetesResourcesSpec) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x22
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.HpaSpec.Size()))
-		n37, err := m.HpaSpec.MarshalTo(dAtA[i:])
+		n41, err := m.HpaSpec.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n37
+		i += n41
 	}
 	if m.PodDisruptionBudget != nil {
 		dAtA[i] = 0x2a
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.PodDisruptionBudget.Size()))
-		n38, err := m.PodDisruptionBudget.MarshalTo(dAtA[i:])
+		n42, err := m.PodDisruptionBudget.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n38
+		i += n42
 	}
 	if len(m.PodAnnotations) > 0 {
 		for k, _ := range m.PodAnnotations {
@@ -3541,11 +3731,11 @@ func (m *KubernetesResourcesSpec) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x42
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Affinity.Size()))
-		n39, err := m.Affinity.MarshalTo(dAtA[i:])
+		n43, err := m.Affinity.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n39
+		i += n43
 	}
 	if len(m.ImagePullPolicy) > 0 {
 		dAtA[i] = 0x4a
@@ -3598,11 +3788,11 @@ func (m *IngressGatewaySpec) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x52
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Gateway.Size()))
-		n40, err := m.Gateway.MarshalTo(dAtA[i:])
+		n44, err := m.Gateway.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n40
+		i += n44
 	}
 	if m.IngressType != 0 {
 		dAtA[i] = 0x58
@@ -3613,11 +3803,11 @@ func (m *IngressGatewaySpec) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x6a
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.LoadBalancer.Size()))
-		n41, err := m.LoadBalancer.MarshalTo(dAtA[i:])
+		n45, err := m.LoadBalancer.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n41
+		i += n45
 	}
 	if m.SdsEnabled != nil {
 		dAtA[i] = 0x82
@@ -3625,11 +3815,11 @@ func (m *IngressGatewaySpec) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x1
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.SdsEnabled.Size()))
-		n42, err := m.SdsEnabled.MarshalTo(dAtA[i:])
+		n46, err := m.SdsEnabled.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n42
+		i += n46
 	}
 	if m.ExternalTrafficPolicy != 0 {
 		dAtA[i] = 0x88
@@ -3663,11 +3853,11 @@ func (m *EgressGatewaySpec) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x52
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Gateway.Size()))
-		n43, err := m.Gateway.MarshalTo(dAtA[i:])
+		n47, err := m.Gateway.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n43
+		i += n47
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
@@ -3694,21 +3884,21 @@ func (m *LoadBalancingGatewayConfig) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x52
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Gateway.Size()))
-		n44, err := m.Gateway.MarshalTo(dAtA[i:])
+		n48, err := m.Gateway.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n44
+		i += n48
 	}
 	if m.LoadBalancer != nil {
 		dAtA[i] = 0x5a
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.LoadBalancer.Size()))
-		n45, err := m.LoadBalancer.MarshalTo(dAtA[i:])
+		n49, err := m.LoadBalancer.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n45
+		i += n49
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
@@ -3735,11 +3925,11 @@ func (m *GatewayConfig) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Common.Size()))
-		n46, err := m.Common.MarshalTo(dAtA[i:])
+		n50, err := m.Common.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n46
+		i += n50
 	}
 	if len(m.Type) > 0 {
 		dAtA[i] = 0x52
@@ -3879,11 +4069,11 @@ func (m *OperatorSpec) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x6
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Spec.Size()))
-		n47, err := m.Spec.MarshalTo(dAtA[i:])
+		n51, err := m.Spec.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n47
+		i += n51
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
@@ -3969,7 +4159,7 @@ func (m *K8SObjectOverlay_PathValue) MarshalTo(dAtA []byte) (int, error) {
 	return i, nil
 }
 
-func (m *InstallerStatus) Marshal() (dAtA []byte, err error) {
+func (m *InstallStatus) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalTo(dAtA)
@@ -3979,7 +4169,7 @@ func (m *InstallerStatus) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *InstallerStatus) MarshalTo(dAtA []byte) (int, error) {
+func (m *InstallStatus) MarshalTo(dAtA []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
@@ -3988,41 +4178,41 @@ func (m *InstallerStatus) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.TrafficManagement.Size()))
-		n48, err := m.TrafficManagement.MarshalTo(dAtA[i:])
+		n52, err := m.TrafficManagement.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n48
+		i += n52
 	}
 	if m.PolicyTelemetry != nil {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.PolicyTelemetry.Size()))
-		n49, err := m.PolicyTelemetry.MarshalTo(dAtA[i:])
+		n53, err := m.PolicyTelemetry.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n49
+		i += n53
 	}
 	if m.Security != nil {
 		dAtA[i] = 0x1a
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Security.Size()))
-		n50, err := m.Security.MarshalTo(dAtA[i:])
+		n54, err := m.Security.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n50
+		i += n54
 	}
 	if m.ConfigManagement != nil {
 		dAtA[i] = 0x22
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.ConfigManagement.Size()))
-		n51, err := m.ConfigManagement.MarshalTo(dAtA[i:])
+		n55, err := m.ConfigManagement.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n51
+		i += n55
 	}
 	if len(m.IngressGateway) > 0 {
 		for _, msg := range m.IngressGateway {
@@ -4054,7 +4244,7 @@ func (m *InstallerStatus) MarshalTo(dAtA []byte) (int, error) {
 	return i, nil
 }
 
-func (m *InstallerStatus_VersionStatus) Marshal() (dAtA []byte, err error) {
+func (m *InstallStatus_VersionStatus) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalTo(dAtA)
@@ -4064,7 +4254,7 @@ func (m *InstallerStatus_VersionStatus) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *InstallerStatus_VersionStatus) MarshalTo(dAtA []byte) (int, error) {
+func (m *InstallStatus_VersionStatus) MarshalTo(dAtA []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
@@ -4165,11 +4355,11 @@ func (m *PodDisruptionBudgetSpec) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Selector.Size()))
-		n52, err := m.Selector.MarshalTo(dAtA[i:])
+		n56, err := m.Selector.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n52
+		i += n56
 	}
 	if m.MaxUnavailable != 0 {
 		dAtA[i] = 0x18
@@ -4234,11 +4424,11 @@ func (m *TestKube) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x42
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Affinity.Size()))
-		n53, err := m.Affinity.MarshalTo(dAtA[i:])
+		n57, err := m.Affinity.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n53
+		i += n57
 	}
 	if len(m.Env) > 0 {
 		for k, _ := range m.Env {
@@ -4265,11 +4455,11 @@ func (m *TestKube) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x5
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.Resources.Size()))
-		n54, err := m.Resources.MarshalTo(dAtA[i:])
+		n58, err := m.Resources.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n54
+		i += n58
 	}
 	if m.ReadinessProbe != nil {
 		dAtA[i] = 0x8a
@@ -4277,11 +4467,11 @@ func (m *TestKube) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x5
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.ReadinessProbe.Size()))
-		n55, err := m.ReadinessProbe.MarshalTo(dAtA[i:])
+		n59, err := m.ReadinessProbe.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n55
+		i += n59
 	}
 	if m.HpaSpec != nil {
 		dAtA[i] = 0xb2
@@ -4289,11 +4479,11 @@ func (m *TestKube) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x5
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.HpaSpec.Size()))
-		n56, err := m.HpaSpec.MarshalTo(dAtA[i:])
+		n60, err := m.HpaSpec.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n56
+		i += n60
 	}
 	if m.PodDisruptionBudget != nil {
 		dAtA[i] = 0xba
@@ -4301,11 +4491,11 @@ func (m *TestKube) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x5
 		i++
 		i = encodeVarintIstioinstallerTypes(dAtA, i, uint64(m.PodDisruptionBudget.Size()))
-		n57, err := m.PodDisruptionBudget.MarshalTo(dAtA[i:])
+		n61, err := m.PodDisruptionBudget.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n57
+		i += n61
 	}
 	if len(m.PodAnnotations) > 0 {
 		for k, _ := range m.PodAnnotations {
@@ -4374,7 +4564,7 @@ func encodeVarintIstioinstallerTypes(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return offset + 1
 }
-func (m *IstioInstaller) Size() (n int) {
+func (m *IstioInstall) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -4394,7 +4584,7 @@ func (m *IstioInstaller) Size() (n int) {
 	return n
 }
 
-func (m *InstallerSpec) Size() (n int) {
+func (m *InstallSpec) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -4408,8 +4598,12 @@ func (m *InstallerSpec) Size() (n int) {
 		l = m.TrafficManagement.Size()
 		n += 2 + l + sovIstioinstallerTypes(uint64(l))
 	}
-	if m.PolicyTelemetry != nil {
-		l = m.PolicyTelemetry.Size()
+	if m.Policy != nil {
+		l = m.Policy.Size()
+		n += 2 + l + sovIstioinstallerTypes(uint64(l))
+	}
+	if m.Telemetry != nil {
+		l = m.Telemetry.Size()
 		n += 2 + l + sovIstioinstallerTypes(uint64(l))
 	}
 	if m.Security != nil {
@@ -4492,12 +4686,20 @@ func (m *TrafficManagementFeatureSpec) Size() (n int) {
 	return n
 }
 
-func (m *PolicyTelemetryFeatureSpec) Size() (n int) {
+func (m *PolicyFeatureSpec) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
+	if m.Enabled != nil {
+		l = m.Enabled.Size()
+		n += 1 + l + sovIstioinstallerTypes(uint64(l))
+	}
+	l = len(m.Namespace)
+	if l > 0 {
+		n += 1 + l + sovIstioinstallerTypes(uint64(l))
+	}
 	if m.PolicyCheckFailOpen != nil {
 		l = m.PolicyCheckFailOpen.Size()
 		n += 1 + l + sovIstioinstallerTypes(uint64(l))
@@ -4508,6 +4710,26 @@ func (m *PolicyTelemetryFeatureSpec) Size() (n int) {
 	if m.Policy != nil {
 		l = m.Policy.Size()
 		n += 2 + l + sovIstioinstallerTypes(uint64(l))
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func (m *TelemetryFeatureSpec) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Enabled != nil {
+		l = m.Enabled.Size()
+		n += 1 + l + sovIstioinstallerTypes(uint64(l))
+	}
+	l = len(m.Namespace)
+	if l > 0 {
+		n += 1 + l + sovIstioinstallerTypes(uint64(l))
 	}
 	if m.Telemetry != nil {
 		l = m.Telemetry.Size()
@@ -4565,9 +4787,17 @@ func (m *ConfigManagementFeatureSpec) Size() (n int) {
 	}
 	var l int
 	_ = l
+	if m.Enabled != nil {
+		l = m.Enabled.Size()
+		n += 1 + l + sovIstioinstallerTypes(uint64(l))
+	}
+	l = len(m.Namespace)
+	if l > 0 {
+		n += 1 + l + sovIstioinstallerTypes(uint64(l))
+	}
 	if m.Galley != nil {
 		l = m.Galley.Size()
-		n += 1 + l + sovIstioinstallerTypes(uint64(l))
+		n += 2 + l + sovIstioinstallerTypes(uint64(l))
 	}
 	if m.XXX_unrecognized != nil {
 		n += len(m.XXX_unrecognized)
@@ -5031,7 +5261,7 @@ func (m *K8SObjectOverlay_PathValue) Size() (n int) {
 	return n
 }
 
-func (m *InstallerStatus) Size() (n int) {
+func (m *InstallStatus) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -5071,7 +5301,7 @@ func (m *InstallerStatus) Size() (n int) {
 	return n
 }
 
-func (m *InstallerStatus_VersionStatus) Size() (n int) {
+func (m *InstallStatus_VersionStatus) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -5235,7 +5465,7 @@ func sovIstioinstallerTypes(x uint64) (n int) {
 func sozIstioinstallerTypes(x uint64) (n int) {
 	return sovIstioinstallerTypes(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-func (m *IstioInstaller) Unmarshal(dAtA []byte) error {
+func (m *IstioInstall) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -5258,10 +5488,10 @@ func (m *IstioInstaller) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: IstioInstaller: wiretype end group for non-group")
+			return fmt.Errorf("proto: IstioInstall: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: IstioInstaller: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: IstioInstall: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 3:
@@ -5294,7 +5524,7 @@ func (m *IstioInstaller) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Spec == nil {
-				m.Spec = &InstallerSpec{}
+				m.Spec = &InstallSpec{}
 			}
 			if err := m.Spec.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -5330,7 +5560,7 @@ func (m *IstioInstaller) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Status == nil {
-				m.Status = &InstallerStatus{}
+				m.Status = &InstallStatus{}
 			}
 			if err := m.Status.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -5361,7 +5591,7 @@ func (m *IstioInstaller) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *InstallerSpec) Unmarshal(dAtA []byte) error {
+func (m *InstallSpec) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -5384,10 +5614,10 @@ func (m *InstallerSpec) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: InstallerSpec: wiretype end group for non-group")
+			return fmt.Errorf("proto: InstallSpec: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: InstallerSpec: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: InstallSpec: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 5:
@@ -5460,7 +5690,7 @@ func (m *InstallerSpec) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 26:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field PolicyTelemetry", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Policy", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -5487,10 +5717,46 @@ func (m *InstallerSpec) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.PolicyTelemetry == nil {
-				m.PolicyTelemetry = &PolicyTelemetryFeatureSpec{}
+			if m.Policy == nil {
+				m.Policy = &PolicyFeatureSpec{}
 			}
-			if err := m.PolicyTelemetry.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.Policy.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 27:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Telemetry", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Telemetry == nil {
+				m.Telemetry = &TelemetryFeatureSpec{}
+			}
+			if err := m.Telemetry.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -6055,7 +6321,7 @@ func (m *TrafficManagementFeatureSpec) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *PolicyTelemetryFeatureSpec) Unmarshal(dAtA []byte) error {
+func (m *PolicyFeatureSpec) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -6078,12 +6344,80 @@ func (m *PolicyTelemetryFeatureSpec) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: PolicyTelemetryFeatureSpec: wiretype end group for non-group")
+			return fmt.Errorf("proto: PolicyFeatureSpec: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: PolicyTelemetryFeatureSpec: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: PolicyFeatureSpec: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Enabled", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Enabled == nil {
+				m.Enabled = &protobuf.BoolValue{}
+			}
+			if err := m.Enabled.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Namespace", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Namespace = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
 		case 10:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field PolicyCheckFailOpen", wireType)
@@ -6134,7 +6468,7 @@ func (m *PolicyTelemetryFeatureSpec) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.OutboundTrafficPolicyMode |= PolicyTelemetryFeatureSpec_OutboundPolicy(b&0x7F) << shift
+				m.OutboundTrafficPolicyMode |= PolicyFeatureSpec_OutboundPolicy(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -6174,6 +6508,128 @@ func (m *PolicyTelemetryFeatureSpec) Unmarshal(dAtA []byte) error {
 			if err := m.Policy.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipIstioinstallerTypes(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *TelemetryFeatureSpec) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowIstioinstallerTypes
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: TelemetryFeatureSpec: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: TelemetryFeatureSpec: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Enabled", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Enabled == nil {
+				m.Enabled = &protobuf.BoolValue{}
+			}
+			if err := m.Enabled.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Namespace", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Namespace = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 51:
 			if wireType != 2 {
@@ -6568,6 +7024,74 @@ func (m *ConfigManagementFeatureSpec) Unmarshal(dAtA []byte) error {
 		}
 		switch fieldNum {
 		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Enabled", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Enabled == nil {
+				m.Enabled = &protobuf.BoolValue{}
+			}
+			if err := m.Enabled.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Namespace", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIstioinstallerTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthIstioinstallerTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Namespace = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 20:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Galley", wireType)
 			}
@@ -9606,7 +10130,7 @@ func (m *K8SObjectOverlay_PathValue) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *InstallerStatus) Unmarshal(dAtA []byte) error {
+func (m *InstallStatus) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -9629,10 +10153,10 @@ func (m *InstallerStatus) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: InstallerStatus: wiretype end group for non-group")
+			return fmt.Errorf("proto: InstallStatus: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: InstallerStatus: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: InstallStatus: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -9665,7 +10189,7 @@ func (m *InstallerStatus) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.TrafficManagement == nil {
-				m.TrafficManagement = &InstallerStatus_VersionStatus{}
+				m.TrafficManagement = &InstallStatus_VersionStatus{}
 			}
 			if err := m.TrafficManagement.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -9701,7 +10225,7 @@ func (m *InstallerStatus) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.PolicyTelemetry == nil {
-				m.PolicyTelemetry = &InstallerStatus_VersionStatus{}
+				m.PolicyTelemetry = &InstallStatus_VersionStatus{}
 			}
 			if err := m.PolicyTelemetry.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -9737,7 +10261,7 @@ func (m *InstallerStatus) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Security == nil {
-				m.Security = &InstallerStatus_VersionStatus{}
+				m.Security = &InstallStatus_VersionStatus{}
 			}
 			if err := m.Security.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -9773,7 +10297,7 @@ func (m *InstallerStatus) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.ConfigManagement == nil {
-				m.ConfigManagement = &InstallerStatus_VersionStatus{}
+				m.ConfigManagement = &InstallStatus_VersionStatus{}
 			}
 			if err := m.ConfigManagement.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -9808,7 +10332,7 @@ func (m *InstallerStatus) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.IngressGateway = append(m.IngressGateway, &InstallerStatus_VersionStatus{})
+			m.IngressGateway = append(m.IngressGateway, &InstallStatus_VersionStatus{})
 			if err := m.IngressGateway[len(m.IngressGateway)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -9842,7 +10366,7 @@ func (m *InstallerStatus) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.EgressGateway = append(m.EgressGateway, &InstallerStatus_VersionStatus{})
+			m.EgressGateway = append(m.EgressGateway, &InstallStatus_VersionStatus{})
 			if err := m.EgressGateway[len(m.EgressGateway)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -9872,7 +10396,7 @@ func (m *InstallerStatus) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *InstallerStatus_VersionStatus) Unmarshal(dAtA []byte) error {
+func (m *InstallStatus_VersionStatus) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -9947,7 +10471,7 @@ func (m *InstallerStatus_VersionStatus) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.Status |= InstallerStatus_Status(b&0x7F) << shift
+				m.Status |= InstallStatus_Status(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}

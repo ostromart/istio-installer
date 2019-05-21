@@ -13,7 +13,7 @@ import (
 const (
 	// debounceDelay is the amount of time that must elapse after a file changes without any other file changes before
 	// a signal is sent.
-	debounceDelay = time.Minute
+	debounceDelay = time.Second
 )
 
 // WatchDirRecursively recursively watches the given directory path. If any file under dir changes, a debounced signal
