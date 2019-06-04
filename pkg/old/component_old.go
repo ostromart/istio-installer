@@ -1,38 +1,39 @@
 package component
 
 import (
+	"bytes"
 	"context"
 	"fmt"
-	"github.com/ostromart/istio-installer/pkg/translate"
+	"io/ioutil"
+	"path/filepath"
 	"sync"
 	"time"
-	"path/filepath"
-	"io/ioutil"
-	"bytes"
 
+	"github.com/ostromart/istio-installer/pkg/translate"
+
+	"strings"
+
+	jsonpatch "github.com/evanphx/json-patch"
+	"github.com/ghodss/yaml"
+	"github.com/ostromart/istio-installer/pkg/apis/installer/v1alpha1"
+	"github.com/ostromart/istio-installer/pkg/helm"
+	"github.com/ostromart/istio-installer/pkg/kube"
+	"github.com/ostromart/istio-installer/pkg/kubectlcmd"
+	"github.com/ostromart/istio-installer/pkg/manifest"
+	"github.com/ostromart/istio-installer/pkg/util"
+	"istio.io/istio/pkg/log"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	apiextensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/helm/pkg/chartutil"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"github.com/ostromart/istio-installer/pkg/helm"
-	"github.com/ostromart/istio-installer/pkg/kube"
-	"github.com/ostromart/istio-installer/pkg/kubectlcmd"
-	"github.com/ostromart/istio-installer/pkg/compatibility"
-	"github.com/ostromart/istio-installer/pkg/manifest"
-	"github.com/ostromart/istio-installer/pkg/util"
-	"github.com/ostromart/istio-installer/pkg/apis/installer/v1alpha1"
-	"istio.io/istio/pkg/log"
-	"github.com/ghodss/yaml"
-	"github.com/evanphx/json-patch"
-	"strings"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 // ComponentState is the current state of a component.
@@ -127,7 +128,6 @@ func NewNodeAgentComponent(installSpec *v1alpha1.InstallSpec) *NodeAgentComponen
 	return nil
 }
 
-
 // ComponentDeploymentConfig is a configuration for a deployment component.
 type ComponentDeploymentConfig struct {
 	// ComponentName is the name of the component.
@@ -178,8 +178,8 @@ func NewComponentDeployment(cfg *ComponentDeploymentConfig) *DeploymentComponent
 		client:               cfg.Client,
 		config:               cfg.Config,
 		clientset:            cfg.Clientset,
-		notifyChs: make(map[string]map[chan<- struct{}]bool),
-		kubectl: kubectlcmd.New(),
+		notifyChs:            make(map[string]map[chan<- struct{}]bool),
+		kubectl:              kubectlcmd.New(),
 	}
 }
 
@@ -197,7 +197,7 @@ type DeploymentComponent struct {
 	helmChartBaseDirPath string
 	relativeChartPath    string
 	helmValues           <-chan string
-	helmTemplateRenderer *helm.HelmTemplateRenderer
+	helmTemplateRenderer *helm.TemplateRenderer
 
 	client    client.Client
 	kubectl   *kubectlcmd.Client
@@ -205,8 +205,8 @@ type DeploymentComponent struct {
 	clientset *kubernetes.Clientset
 
 	updateDepsCh chan struct{}
-	notifyChs map[string]map[chan<- struct{}]bool
-	notifyChsMu sync.RWMutex
+	notifyChs    map[string]map[chan<- struct{}]bool
+	notifyChsMu  sync.RWMutex
 }
 
 // Name is the name of the component.
@@ -426,7 +426,6 @@ func patchYAMLManifest(baseYAML string, resourceOverride []*unstructured.Unstruc
 	}
 	return ret.String(), nil
 }
-
 
 func patchValues(baseYAML []byte, is *v1alpha1.InstallSpec) ([]byte, error) {
 	baseValuesJSON, err := yaml.YAMLToJSON([]byte(baseYAML))

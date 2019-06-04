@@ -25,12 +25,29 @@ const (
 	yamlCommentStr       = "# "
 )
 
+type ComponentDirLayout map[string]string
+
+var (
+	V12 = ComponentDirLayout{
+		PilotComponentName:           "istio-control/istio-discovery",
+		GalleyComponentName:          "istio-control/istio-config",
+		SidecarInjectorComponentName: "istio-control/istio-autoinject",
+		PolicyComponentName:          "istio-policy",
+		TelemetryComponentName:       "istio-telemetry",
+		CitadelComponentName:         "security/citadel",
+		NodeAgentComponentName:       "security/nodeagent",
+		CertManagerComponentName:     "security/certmanager",
+		IngressComponentName:         "gateways/istio-ingress",
+		EgressComponentName:          "gateways/istio-egress",
+	}
+)
+
 type ComponentOptions struct {
 	FeatureEnabled   bool
 	FeatureNamespace string
 	HelmChartName    string
 	HelmChartDir     string
-	InstallSpec      *v1alpha1.InstallSpec
+	InstallSpec      *v1alpha1.IstioControlPlaneSpec
 }
 
 type Component interface {
@@ -107,17 +124,6 @@ func NewProxyComponent(opts *ComponentOptions) *ProxyComponent {
 	return nil
 }
 
-type SidecarComponent struct {
-}
-
-func (c *SidecarComponent) RenderManifest() (string, error) {
-	return "", nil
-}
-
-func NewSidecarComponent(opts *ComponentOptions) *SidecarComponent {
-	return nil
-}
-
 type CitadelComponent struct {
 }
 
@@ -150,6 +156,51 @@ func (c *NodeAgentComponent) RenderManifest() (string, error) {
 func NewNodeAgentComponent(opts *ComponentOptions) *NodeAgentComponent {
 	return nil
 }
+
+type PolicyComponent struct {
+}
+
+func (c *PolicyComponent) RenderManifest() (string, error) {
+	return "", nil
+}
+
+func NewPolicyComponent(opts *ComponentOptions) *PolicyComponent {
+	return nil
+}
+
+type TelemetryComponent struct {
+}
+
+func (c *TelemetryComponent) RenderManifest() (string, error) {
+	return "", nil
+}
+
+func NewTelemetryComponent(opts *ComponentOptions) *TelemetryComponent {
+	return nil
+}
+
+type GalleyComponent struct {
+}
+
+func (c *GalleyComponent) RenderManifest() (string, error) {
+	return "", nil
+}
+
+func NewGalleyComponent(opts *ComponentOptions) *GalleyComponent {
+	return nil
+}
+
+type SidecarInjectorComponent struct {
+}
+
+func (c *SidecarInjectorComponent) RenderManifest() (string, error) {
+	return "", nil
+}
+
+func NewSidecarInjectorComponent(opts *ComponentOptions) *SidecarInjectorComponent {
+	return nil
+}
+
 
 func withOverrideBool(base bool, override *protobuf.BoolValue) bool {
 	if override == nil {

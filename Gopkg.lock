@@ -100,7 +100,8 @@
   name = "github.com/gogo/protobuf"
   packages = [
     "proto",
-    "sortkeys"
+    "sortkeys",
+    "types"
   ]
   revision = "4cbf7e384e768b4e01799441fdf2a706a5635ae7"
   version = "v1.2.0"
@@ -634,6 +635,12 @@
   version = "1.0.5"
 
 [[projects]]
+  branch = "master"
+  name = "istio.io/pkg"
+  packages = ["log"]
+  revision = "940899ee7e726f01745e4f275e6f647d13234a4e"
+
+[[projects]]
   name = "k8s.io/api"
   packages = [
     "admission/v1beta1",
@@ -879,6 +886,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "a80b29fbb7fd6af4d3c7447da8b1370d2a9b50956436e67efbe9a6a20a51c445"
+  inputs-digest = "9ff13b554508b5a29f6d798de42b6fbb070fc6f2dc5bb263279719976d3ed5f0"
   solver-name = "gps-cdcl"
   solver-version = 1

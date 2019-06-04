@@ -1,3 +1,17 @@
+// Copyright 2019 Istio Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 syntax = "proto3";
 
 package v1alpha1;
@@ -8,7 +22,7 @@ import "k8s.io/apimachinery/pkg/apis/meta/v1/generated.proto";
 import "github.com/gogo/protobuf/protobuf/google/protobuf/wrappers.proto";
 
 /*
-IstioInstall is a schema for both defining and overlaying Istio control plane installations.
+IstioControlPlane is a schema for both defining and overlaying Istio control plane installations.
 The Istio operator uses a compiled-in InstallSpec as default installation values, along with compiled-in install charts.
 Running the operator with an empty user defined InstallSpec results in an installation with default values, using the
 default charts.
@@ -63,76 +77,84 @@ spec:
 
 spec:
   traffic_management:
-    namespace: istio-traffic-management
+    components:
+      namespace: istio-traffic-management
   policy:
-    namespace: istio-policy
+    components:
+      namespace: istio-policy
   telemetry:
-    namespace: istio-telemetry
+    components:
+      namespace: istio-telemetry
   config_management:
-    namespace: istio-config-management
+    components:
+      namespace: istio-config-management
   security:
-    citadel:
-      namespace: istio-citadel
-    cert_manager:
-      namespace: istio-cert-manager
-    node_agent:
-      namespace: istio-node-agent
+    components:
+      citadel:
+        namespace: istio-citadel
+      cert_manager:
+        namespace: istio-cert-manager
+      node_agent:
+        namespace: istio-node-agent
 
 5. Default install with specialized k8s settings for pilot
 
 spec:
   traffic_management:
-    pilot:
-        k8s:
-          resources:
-            limits:
-              cpu: 444m
-              memory: 333Mi
-            requests:
-              cpu: 222m
-              memory: 111Mi
-          readinessProbe:
-            failureThreshold: 44
-            initialDelaySeconds: 11
-            periodSeconds: 22
-            successThreshold: 33
+    components:
+      pilot:
+          k8s:
+            resources:
+              limits:
+                cpu: 444m
+                memory: 333Mi
+              requests:
+                cpu: 222m
+                memory: 111Mi
+            readinessProbe:
+              failureThreshold: 44
+              initialDelaySeconds: 11
+              periodSeconds: 22
+              successThreshold: 33
 
 6. Default install with values.yaml customizations for proxy
 
 spec:
   traffic_management:
-    proxy:
-      valuesOverrides:
-      - global.proxy.enableCoreDump: true
-      - global.proxy.dnsRefreshRate: 10s
+    components:
+      proxy:
+        valuesOverrides:
+        - global.proxy.enableCoreDump: true
+        - global.proxy.dnsRefreshRate: 10s
 
 7. Default install with modification to container flag in galley
 
 spec:
   configuration_management:
-    galley:
-      k8s:
-        overlays:
-        - apiVersion: extensions/v1beta1
-          kind: Deployment
-          name: istio-galley
-          patches:
-          - path: spec.template.spec.containers.[name:galley].command.[--livenessProbeInterval]
-            value: --livenessProbeInterval=123s
+    components:
+      galley:
+        k8s:
+          overlays:
+          - apiVersion: extensions/v1beta1
+            kind: Deployment
+            name: istio-galley
+            patches:
+            - path: spec.template.spec.containers.[name:galley].command.[--livenessProbeInterval]
+              value: --livenessProbeInterval=123s
 */
 
 
-message IstioInstall {
-    InstallSpec spec = 3;
+message IstioControlPlane {
+    IstioControlPlaneSpec spec = 3;
     InstallStatus status = 4;
 }
 
-// InstallSpec defines the desired state of IstioInstaller.
+// IstioControlPlaneSpec defines the desired state of IstioControlPlane.
 // The spec is a used to define a customization of the default values that are supplied with an Istio charts release.
 // It is grouped at the top level by feature, where behavior of Istio functional areas is specified.
 // Each feature contains components, where k8s resource level defaults can be overridden.
 // Because the spec is a customization API, specifying an empty InstallSpec results in a default Istio installation.
-message InstallSpec {
+message IstioControlPlaneSpec {
     // Prefix added to all namespaces for any installed component.
     string default_namespace_prefix = 5;
 
@@ -145,12 +167,8 @@ message InstallSpec {
     AutoInjectionFeatureSpec auto_injection = 30;
 
     // Ingress/egress gateway installation and configuration.
-    repeated IngressGatewaySpec ingress_gateway = 30;
-    repeated EgressGatewaySpec egress_gateway = 31;
-
-    // List of external operators that will be installed (but not managed)
-    // by the IstioInstaller e.g. prometheus, grafana, kiali.
-    repeated OperatorSpec external_operators = 50;
+    repeated IngressGatewaySpec ingress_gateway = 31;
+    repeated EgressGatewaySpec egress_gateway = 32;
 
     // Global k8s defaults. Can be overridden per component.
     KubernetesResourcesSpec k8s_defaults = 80;
@@ -179,12 +197,17 @@ message TrafficManagementFeatureSpec {
     // Selects whether traffic management is installed.
     // Must be enabled to enable any sub-component.
     google.protobuf.BoolValue enabled = 1;
-    // Namespace that all traffic management components are installed into.
-    string namespace = 2;
 
     // Component specific config.
-    PilotComponentSpec pilot = 30;
-    ProxyComponentSpec proxy = 31;
+    message Components {
+        // Namespace that all traffic management components are installed into.
+        string namespace = 1;
+
+        PilotComponentSpec pilot = 20;
+        ProxyComponentSpec proxy = 21;
+    }
+
+    Components components = 50;
 }
 
 // Configuration options for the policy feature.
@@ -192,8 +215,6 @@ message PolicyFeatureSpec {
     // Selects whether policy is installed.
     // Must be enabled to enable any sub-component.
     google.protobuf.BoolValue enabled = 1;
-    // Namespace that all policy components are installed into.
-    string namespace = 2;
 
     // Default behavior of the sidecar for handling outbound traffic from the application.
     enum OutboundPolicy {
@@ -210,7 +231,15 @@ message PolicyFeatureSpec {
     // Selects the outbound traffic policy mode.
     OutboundPolicy outbound_traffic_policy_mode = 11;
 
-    PolicyComponentSpec policy = 50;
+    // Component specific config.
+    message Components {
+        // Namespace that all policy components are installed into.
+        string namespace = 1;
+
+        PolicyComponentSpec policy = 20;
+    }
+
+    Components components = 50;
 }
 
 // Configuration options for the telemetry feature.
@@ -218,19 +247,22 @@ message TelemetryFeatureSpec {
     // Selects whether telemetry is installed.
     // Must be enabled to enable any sub-component.
     google.protobuf.BoolValue enabled = 1;
-    // Namespace that all telemetry components are installed into.
-    string namespace = 2;
 
-    TelemetryComponentSpec telemetry = 51;
+    // Component specific config.
+    message Components {
+        // Namespace that all telemetry components are installed into.
+        string namespace = 1;
+
+        TelemetryComponentSpec telemetry = 20;
+    }
+
+    Components components = 50;
 }
 
 // Configuration options for security feature.
 message SecurityFeatureSpec {
     // Selects whether security feature is installed. Must be set for any sub-component to be installed.
     google.protobuf.BoolValue enabled = 1;
-
-    // Namespace that security components are installed into.
-    string namespace = 2;
 
     // Enables MTLS for control plane.
     // Will result in delays starting the pods while secrets are propagated, not recommended for tests.
@@ -239,9 +271,16 @@ message SecurityFeatureSpec {
     // Enables strict MTLS for service to service traffic, or permissive mode MTLS if unset.
     google.protobuf.BoolValue data_plane_mtls_strict = 14;
 
-    CitadelComponentSpec citadel = 20;
-    CertManagerComponentSpec cert_manager = 21;
-    NodeAgentComponentSpec node_agent = 22;
+    message Components {
+        // Namespace that security components are installed into.
+        string namespace = 1;
+
+        CitadelComponentSpec citadel = 20;
+        CertManagerComponentSpec cert_manager = 21;
+        NodeAgentComponentSpec node_agent = 22;
+    }
+
+    Components components = 50;
 }
 
 // Configuration options for configuration management feature.
@@ -249,10 +288,14 @@ message ConfigManagementFeatureSpec {
     // Selects whether config management feature is installed. Must be set for any sub-component to be installed.
     google.protobuf.BoolValue enabled = 1;
 
-    // Namespace that security components are installed into.
-    string namespace = 2;
+    message Components {
+        // Namespace that security components are installed into.
+        string namespace = 1;
 
-    GalleyComponentSpec galley = 20;
+        GalleyComponentSpec galley = 20;
+    }
+
+    Components components = 50;
 }
 
 // Configuration options for auto injection feature.
@@ -260,10 +303,14 @@ message AutoInjectionFeatureSpec {
     // Selects whether auto injection feature is installed. Must be set for any sub-component to be installed.
     google.protobuf.BoolValue enabled = 1;
 
-    // Namespace that auto injections components are installed into.
-    string namespace = 2;
+    message Components {
+        // Namespace that auto injections components are installed into.
+        string namespace = 1;
 
-    SidecarInjectorComponentSpec injector = 20;
+        SidecarInjectorComponentSpec injector = 20;
+    }
+
+    Components components = 50;
 }
 
 // Configuration options for the pilot component.
@@ -282,8 +329,6 @@ message ProxyComponentSpec {
 // Configuration options for the sidecar injector component.
 message SidecarInjectorComponentSpec {
     CommonComponentSpec common = 1;
-    // Selects whether auto-injection is enabled in namespaces by default.
-    google.protobuf.BoolValue enable_namespaces_by_default = 10;
 }
 
 // Configuration options for the policy enforcement component.
@@ -341,6 +386,9 @@ message CommonComponentSpec {
 
     // Kustomize style overrides for default values.yaml.
     // ValuesOverrides map[string]interface{} `protobuf:"bytes,6,opt,name=data" json:"valuesOverrides,omitempty"`
+    // Kustomize style overrides for default values.yaml, without validation i.e. items here do not have to conform to
+    // built-in values schema. Used for cases where forked templates are used with added parameters.
+    // UnvalidatedValuesOverrides map[string]interface{} `protobuf:"bytes,6,opt,name=data" json:"unvalidatedValuesOverrides,omitempty"`
 }
 
 // KubernetesResourcesConfig is a common set of k8s resource configs for components.
@@ -496,20 +544,6 @@ message LoadBalancerConfig {
     string externalTrafficPolicy = 11;
 }
 
-// ExternalOperatorSpec defines a config used to install an external operator. It is used for installation only, after
-// the component installed by the external operator is present, it should be managed directly using the external
-// operator. Istio operator does not react to chanages in ExternalOperatorSpec after it is installed.
-message ExternalOperatorSpec {
-    // manifest_path is the URL for the operator install manifest.
-    string manifest_path = 1;
-
-    // namespace is the namespace the operator manifest and CR are installed into.
-    string namespace = 2;
-
-    // spec is the initial CR for the operator.
-    // Spec map[string]interface{} `protobuf:"bytes,6,opt,name=data" json:"spec,omitempty"`
-}
-
 // Patch for an existing k8s resource.
 message k8sObjectOverlay {
     message PathValue {
@@ -537,7 +571,7 @@ message k8sObjectOverlay {
     repeated PathValue patches = 4;
 }
 
-// Observed state of IstioInstall.
+// Observed state of IstioControlPlane.
 message InstallStatus {
     enum Status {
         NONE = 0;

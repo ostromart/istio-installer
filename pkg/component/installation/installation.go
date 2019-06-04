@@ -16,17 +16,18 @@ type InstallationImpl struct {
 	features []feature.Feature
 }
 
-func NewInstallation(install *installerv1alpha1.InstallSpec, helmChartDir string) Installation {
-	fo := &feature.FeatureOptions{
+func NewInstallation(install *installerv1alpha1.IstioControlPlane, helmChartDir string) Installation {
+	opts := &feature.FeatureOptions{
 
 	}
 	return &InstallationImpl{
 		features: []feature.Feature{
-			feature.NewTrafficManagementFeature(fo),
-			feature.NewSecurityFeature(install),
-			feature.NewPolicyFeature(install),
-			feature.NewTelemetryFeature(install),
-			feature.NewConfigManagementFeature(install),
+			feature.NewTrafficManagementFeature(opts),
+			feature.NewSecurityFeature(opts),
+			feature.NewPolicyFeature(opts),
+			feature.NewTelemetryFeature(opts),
+			feature.NewConfigManagementFeature(opts),
+			feature.NewAutoInjectionFeature(opts),
 		},
 	}
 }

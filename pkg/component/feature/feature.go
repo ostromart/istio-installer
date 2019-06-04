@@ -11,30 +11,14 @@ import (
 	"github.com/ostromart/istio-installer/pkg/util"
 )
 
-type ComponentDirLayout map[string]string
-
-var (
-	V12 = ComponentDirLayout{
-		component.PilotComponentName:           "istio-control/istio-discovery",
-		component.GalleyComponentName:          "istio-control/istio-config",
-		component.SidecarInjectorComponentName: "istio-control/istio-autoinject",
-		component.PolicyComponentName:          "istio-policy",
-		component.TelemetryComponentName:       "istio-telemetry",
-		component.CitadelComponentName:         "security/citadel",
-		component.NodeAgentComponentName:       "security/nodeagent",
-		component.CertManagerComponentName:     "security/certmanager",
-		component.IngressComponentName:         "gateways/istio-ingress",
-		component.EgressComponentName:          "gateways/istio-egress",
-	}
-)
 
 type Feature interface {
 	RenderManifest() (string, util.Errors)
 }
 
 type FeatureOptions struct {
-	InstallSpec   *v1alpha1.InstallSpec
-	Dirs          ComponentDirLayout
+	InstallSpec   *v1alpha1.IstioControlPlaneSpec
+	Dirs          component.ComponentDirLayout
 	HelmChartName string
 	HelmChartDir  string
 }
@@ -64,7 +48,7 @@ func NewTrafficManagementFeature(opts *FeatureOptions) *TrafficManagementFeature
 	cff := &CommonFeatureFields{
 		FeatureOptions: *opts,
 		enabled:        withOverrideBool(false, opts.InstallSpec.TrafficManagement.Enabled),
-		namespace:      withOverrideString(opts.InstallSpec.DefaultNamespacePrefix, opts.InstallSpec.TrafficManagement.Namespace),
+		namespace:      withOverrideString(opts.InstallSpec.DefaultNamespacePrefix, opts.InstallSpec.TrafficManagement.Components.Namespace),
 	}
 	cff.components = []component.Component{
 		component.NewPilotComponent(newComponentOptions(cff, component.PilotComponentName)),
@@ -84,17 +68,19 @@ type SecurityFeature struct {
 	CommonFeatureFields
 }
 
-func NewSecurityFeature(install *v1alpha1.InstallSpec) *SecurityFeature {
+func NewSecurityFeature(opts *FeatureOptions) *SecurityFeature {
+	cff := &CommonFeatureFields{
+		FeatureOptions: *opts,
+		enabled:        withOverrideBool(false, opts.InstallSpec.Security.Enabled),
+		namespace:      withOverrideString(opts.InstallSpec.DefaultNamespacePrefix, opts.InstallSpec.Security.Components.Namespace),
+	}
+	cff.components = []component.Component{
+		component.NewCitadelComponent(newComponentOptions(cff, component.CitadelComponentName)),
+		component.NewCertManagerComponent(newComponentOptions(cff, component.CertManagerComponentName)),
+		component.NewNodeAgentComponent(newComponentOptions(cff, component.NodeAgentComponentName)),
+	}
 	return &SecurityFeature{
-		CommonFeatureFields: CommonFeatureFields{
-			enabled:   install.Security.Enabled.Value,
-			namespace: install.Security.Namespace,
-			components: []component.Component{
-				component.NewCitadelComponent(install),
-				component.NewCertManagerComponent(install),
-				component.NewNodeAgentComponent(install),
-			},
-		},
+		CommonFeatureFields: *cff,
 	}
 }
 
@@ -106,12 +92,17 @@ type PolicyFeature struct {
 	CommonFeatureFields
 }
 
-func NewPolicyFeature(install *v1alpha1.InstallSpec) *PolicyFeature {
+func NewPolicyFeature(opts *FeatureOptions) *PolicyFeature {
+	cff := &CommonFeatureFields{
+		FeatureOptions: *opts,
+		enabled:        withOverrideBool(false, opts.InstallSpec.Policy.Enabled),
+		namespace:      withOverrideString(opts.InstallSpec.DefaultNamespacePrefix, opts.InstallSpec.Policy.Components.Namespace),
+	}
+	cff.components = []component.Component{
+		component.NewPolicyComponent(newComponentOptions(cff, component.PolicyComponentName)),
+	}
 	return &PolicyFeature{
-		CommonFeatureFields: CommonFeatureFields{
-			enabled:   install.Policy.Enabled.Value,
-			namespace: install.Policy.Namespace,
-		},
+		CommonFeatureFields: *cff,
 	}
 }
 
@@ -123,12 +114,17 @@ type TelemetryFeature struct {
 	CommonFeatureFields
 }
 
-func NewTelemetryFeature(install *v1alpha1.InstallSpec) *TelemetryFeature {
+func NewTelemetryFeature(opts *FeatureOptions) *TelemetryFeature {
+	cff := &CommonFeatureFields{
+		FeatureOptions: *opts,
+		enabled:        withOverrideBool(false, opts.InstallSpec.Telemetry.Enabled),
+		namespace:      withOverrideString(opts.InstallSpec.DefaultNamespacePrefix, opts.InstallSpec.Telemetry.Components.Namespace),
+	}
+	cff.components = []component.Component{
+		component.NewTelemetryComponent(newComponentOptions(cff, component.TelemetryComponentName)),
+	}
 	return &TelemetryFeature{
-		CommonFeatureFields: CommonFeatureFields{
-			enabled:   install.Policy.Enabled.Value,
-			namespace: install.Policy.Namespace,
-		},
+		CommonFeatureFields: *cff,
 	}
 }
 
@@ -140,16 +136,43 @@ type ConfigManagementFeature struct {
 	CommonFeatureFields
 }
 
-func NewConfigManagementFeature(install *v1alpha1.InstallSpec) *ConfigManagementFeature {
+func NewConfigManagementFeature(opts *FeatureOptions) *ConfigManagementFeature {
+	cff := &CommonFeatureFields{
+		FeatureOptions: *opts,
+		enabled:        withOverrideBool(false, opts.InstallSpec.Telemetry.Enabled),
+		namespace:      withOverrideString(opts.InstallSpec.DefaultNamespacePrefix, opts.InstallSpec.Telemetry.Components.Namespace),
+	}
+	cff.components = []component.Component{
+		component.NewGalleyComponent(newComponentOptions(cff, component.GalleyComponentName)),
+	}
 	return &ConfigManagementFeature{
-		CommonFeatureFields: CommonFeatureFields{
-			enabled:   install.ConfigManagement.Enabled.Value,
-			namespace: install.ConfigManagement.Namespace,
-		},
+		CommonFeatureFields: *cff,
 	}
 }
 
 func (f *ConfigManagementFeature) RenderManifest() (string, util.Errors) {
+	return renderComponents(f.components)
+}
+
+type AutoInjectionFeature struct {
+	CommonFeatureFields
+}
+
+func NewAutoInjectionFeature(opts *FeatureOptions) *AutoInjectionFeature {
+	cff := &CommonFeatureFields{
+		FeatureOptions: *opts,
+		enabled:        withOverrideBool(false, opts.InstallSpec.Telemetry.Enabled),
+		namespace:      withOverrideString(opts.InstallSpec.DefaultNamespacePrefix, opts.InstallSpec.Telemetry.Components.Namespace),
+	}
+	cff.components = []component.Component{
+		component.NewSidecarInjectorComponent(newComponentOptions(cff, component.SidecarInjectorComponentName)),
+	}
+	return &AutoInjectionFeature{
+		CommonFeatureFields: *cff,
+	}
+}
+
+func (f *AutoInjectionFeature) RenderManifest() (string, util.Errors) {
 	return renderComponents(f.components)
 }
 
