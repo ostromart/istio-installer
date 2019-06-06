@@ -1,7 +1,12 @@
 package helm
 
 import (
+	"fmt"
+	"io/ioutil"
 	"strings"
+
+	jsonpatch "github.com/evanphx/json-patch"
+	"github.com/ghodss/yaml"
 
 	"github.com/ostromart/istio-installer/pkg/util/fswatch"
 	"k8s.io/helm/pkg/chartutil"
@@ -13,7 +18,7 @@ import (
 )
 
 const (
-	yamlSeparator = "\n---"
+	YAMLSeparator = "\n---"
 )
 
 // TemplateRenderer defines a helm template renderer interface.
@@ -26,21 +31,25 @@ type TemplateRenderer interface {
 
 // FileTemplateRenderer is a helm template renderer.
 type FileTemplateRenderer struct {
-	namespace        string
-	componentName    string
-	helmChartDirPath string
-	watcher          chan struct{}
-	chart            *chart.Chart
-	values           string
+	namespace            string
+	componentName        string
+	globalValuesFilePath string
+	helmChartDirPath     string
+	watcher              chan struct{}
+	chart                *chart.Chart
+	values               string
+	started              bool
+	globalValues         string
 }
 
 // NewFileTemplateRenderer creates a TemplateRenderer with the given path to helm charts, k8s client config and
 // ConfigSet and returns a pointer to it.
-func NewFileTemplateRenderer(helmChartDirPath, componentName, namespace string) *FileTemplateRenderer {
+func NewFileTemplateRenderer(globalValuesFilePath, helmChartDirPath, componentName, namespace string) *FileTemplateRenderer {
 	return &FileTemplateRenderer{
-		namespace:        namespace,
-		componentName:    componentName,
-		helmChartDirPath: helmChartDirPath,
+		namespace:            namespace,
+		componentName:        componentName,
+		globalValuesFilePath: globalValuesFilePath,
+		helmChartDirPath:     helmChartDirPath,
 	}
 }
 
@@ -67,23 +76,39 @@ func (h *FileTemplateRenderer) Run() error {
 		}
 	}()
 
+	h.started = true
 	return nil
 }
 
 func (h *FileTemplateRenderer) loadChart() error {
 	var err error
-	h.chart, err = chartutil.Load(h.helmChartDirPath)
-	return err
+	if h.chart, err = chartutil.Load(h.helmChartDirPath); err != nil {
+		return err
+	}
+	b, err := ioutil.ReadFile(h.globalValuesFilePath)
+	if err != nil {
+		return err
+	}
+	h.globalValues = string(b)
+	return nil
 }
 
 // Render renders the current helm templates with the current values and returns the resulting YAML manifest string.
 func (h *FileTemplateRenderer) Render(values string) (string, error) {
-	return Render(h.namespace, values, h.chart)
+	if !h.started {
+		return "", fmt.Errorf("FileTemplateRenderer for %s not started in Render", h.componentName)
+	}
+	return Render(h.namespace, h.globalValues, values, h.chart)
 }
 
 // Render renders the given chart with the given values and returns the resulting YAML manifest string.
-func Render(namespace, values string, chrt *chart.Chart) (string, error) {
-	config := &chart.Config{Raw: values, Values: map[string]*chart.Value{}}
+func Render(namespace, baseValues, overlayValues string, chrt *chart.Chart) (string, error) {
+	mergedValues, err := overlayYAML(baseValues, overlayValues)
+	if err != nil {
+		return "", err
+	}
+
+	config := &chart.Config{Raw: mergedValues, Values: map[string]*chart.Value{}}
 	options := chartutil.ReleaseOptions{
 		Name:      "istio",
 		Time:      timeconv.Now(),
@@ -110,3 +135,43 @@ func Render(namespace, values string, chrt *chart.Chart) (string, error) {
 
 	return sb.String(), nil
 }
+
+func overlayYAML(base, overlay string) (string, error) {
+	bj, err := yaml.YAMLToJSON([]byte(base))
+	if err != nil {
+		return "", fmt.Errorf("YAMLToJSON error in base: %s\n%s\n", err, bj)
+	}
+	oj, err := yaml.YAMLToJSON([]byte(overlay))
+	if err != nil {
+		return "", fmt.Errorf("YAMLToJSON error in overlay: %s\n%s\n", err, oj)
+	}
+
+	merged, err := jsonpatch.MergePatch(bj, oj)
+	if err != nil {
+		return "", fmt.Errorf("JSON merge error (%s) for base object: \n%s\n override object: \n%s", err, bj, oj)
+	}
+	my, err := yaml.JSONToYAML(merged)
+	if err != nil {
+		return "", fmt.Errorf("JSONToYAML error (%s) for merged object: \n%s", err, merged)
+	}
+
+	return string(my), nil
+}
+
+/*
+func MergeValuesOverlay(base map[string]interface{}, overlay string) (map[string]interface{}, error) {
+	bstr, err := yaml.Marshal(base)
+	if err != nil {
+		return nil, err
+	}
+	my, err := OverlayYAML(string(bstr), overlay)
+	if err != nil {
+		return nil, err
+	}
+	out := make(map[string]interface{})
+	if err := yaml.Unmarshal([]byte(my), &out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+*/
