@@ -6,7 +6,7 @@ import (
 
 var (
 	// defaultValidations maps a data path to a validation function.
-	defaultValuesValidations = map[string]ValidateFunc{
+	defaultValuesValidations = map[string]ValidatorFunc{
 		"global.proxy.includeIpRanges":     validateStringList(validateCIDR),
 		"global.proxy.excludeIpRanges":     validateStringList(validateCIDR),
 		"global.proxy.includeInboundPorts": validateStringList(validatePortNumberString),
@@ -14,16 +14,15 @@ var (
 	}
 
 	// requiredValues lists all the values that must be non-empty.
-	requiredSetValues = map[string]bool{
-	}
+	requiredSetValues = map[string]bool{}
 )
 
-// ValidateValues validates the values in the given tree, which follows the Istio values.yaml schema.
-func ValidateValues(root util.Tree) util.Errors {
+// CheckValues validates the values in the given tree, which follows the Istio values.yaml schema.
+func CheckValues(root util.Tree) util.Errors {
 	return validateValues(defaultValuesValidations, root, nil)
 }
 
-func validateValues(validations map[string]ValidateFunc, node interface{}, path util.Path) (errs util.Errors) {
+func validateValues(validations map[string]ValidatorFunc, node interface{}, path util.Path) (errs util.Errors) {
 	pstr := path.String()
 	dbgPrint("validateValues %s", pstr)
 	vf := defaultValuesValidations[pstr]

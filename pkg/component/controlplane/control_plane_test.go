@@ -2,20 +2,19 @@ package controlplane
 
 import (
 	"bytes"
-	"context"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/ostromart/istio-installer/pkg/apis/istio/v1alpha2"
 	"github.com/ostromart/istio-installer/pkg/manifest"
 
 	"github.com/ghodss/yaml"
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/kylelemons/godebug/diff"
-	"github.com/ostromart/istio-installer/pkg/apis/installer/v1alpha1"
 	"github.com/ostromart/istio-installer/pkg/component/component"
 )
 
@@ -120,7 +119,7 @@ trafficManagement:
 	}
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			var is v1alpha1.IstioControlPlaneSpec
+			var is v1alpha2.IstioControlPlaneSpec
 			spec := `customPackagePath: "file://` + helmChartTestDir + `"` + "\n" + tt.installSpec
 			err := unmarshalWithJSONPB(spec, &is)
 			if err != nil {
@@ -194,11 +193,11 @@ func YAMLDiff(a, b string) string {
 }
 
 func ManifestDiff(a, b string) (string, error) {
-	ao, err := manifest.ParseObjectsFromYAMLManifest(context.TODO(), a)
+	ao, err := manifest.ParseObjectsFromYAMLManifest(a)
 	if err != nil {
 		return "", err
 	}
-	bo, err := manifest.ParseObjectsFromYAMLManifest(context.TODO(), b)
+	bo, err := manifest.ParseObjectsFromYAMLManifest(b)
 	if err != nil {
 		return "", err
 	}
@@ -236,7 +235,7 @@ func ManifestDiff(a, b string) (string, error) {
 }
 
 func ObjectsInManifest(mstr string) string {
-	ao, err := manifest.ParseObjectsFromYAMLManifest(context.TODO(), mstr)
+	ao, err := manifest.ParseObjectsFromYAMLManifest(mstr)
 	if err != nil {
 		return err.Error()
 	}

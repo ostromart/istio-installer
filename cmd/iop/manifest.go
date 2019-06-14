@@ -18,7 +18,9 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/ostromart/istio-installer/pkg/apis/installer/v1alpha1"
+	"github.com/ostromart/istio-installer/pkg/apis/installer/v1alpha2"
+	"github.com/ostromart/istio-installer/pkg/validate"
+
 	"github.com/ostromart/istio-installer/pkg/component/component"
 	"github.com/ostromart/istio-installer/pkg/component/controlplane"
 	"github.com/ostromart/istio-installer/pkg/util"
@@ -44,25 +46,24 @@ func genManifest(args *rootArgs, printf, fatalf FormatFn) {
 	b, err := ioutil.ReadFile(args.crPath)
 	if err != nil {
 		fatalf(err.Error())
-		return
 	}
-	icp := &v1alpha1.IstioControlPlaneSpec{}
+	icp := &v1alpha2.IstioControlPlaneSpec{}
 	if err := util.UnmarshalWithJSONPB(string(b), icp); err != nil {
 		fatalf(err.Error())
-		return
+	}
+	if errs := validate.CheckIstioControlPlaneSpec(icp); len(errs) != 0 {
+		fatalf(errs.ToError().Error())
 	}
 
 	cp := controlplane.NewIstioControlPlane(icp, component.V12DirLayout)
 	if err := cp.Run(); err != nil {
 		fatalf(err.Error())
-		return
 	}
 
 	y, errs := cp.RenderManifest()
 	err = errs.ToError()
 	if err != nil {
 		fatalf(err.Error())
-		return
 	}
 	fmt.Println(y)
 }

@@ -2,15 +2,16 @@ package validate
 
 import (
 	"bytes"
-	"github.com/kylelemons/godebug/diff"
-	"github.com/ostromart/istio-installer/pkg/util"
 	"strings"
 	"testing"
+
+	"github.com/ostromart/istio-installer/pkg/apis/istio/v1alpha2"
 
 	"github.com/ghodss/yaml"
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/protobuf/jsonpb"
-	"github.com/ostromart/istio-installer/pkg/apis/installer/v1alpha1"
+	"github.com/kylelemons/godebug/diff"
+	"github.com/ostromart/istio-installer/pkg/util"
 )
 
 func TestUnmarshalKubernetes(t *testing.T) {
@@ -110,7 +111,7 @@ overlays:
 	}
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			tk := &v1alpha1.TestKube{}
+			tk := &v1alpha2.TestKube{}
 			err := unmarshalWithJSONPB(tt.yamlStr, tk)
 			if err != nil {
 				t.Fatalf("unmarshalWithJSONPB(%s): got error %s", tt.desc, err)
@@ -144,23 +145,28 @@ func TestValidate(t *testing.T) {
 			yamlStr: `
 trafficManagement:
   enabled: true
-  namespace: istio-system-traffic
+  components:
+    namespace: istio-system-traffic
 `,
 		},
 		{
 			desc: "PilotConfig",
 			yamlStr: `
 trafficManagement:
-  pilot:
-    sidecar: true
+  components:
+    pilot:
+      sidecar: true
 `,
 		},
 		{
 			desc: "SidecarInjectorConfig",
 			yamlStr: `
-trafficManagement:
-  sidecarInjector:
-    enableNamespacesByDefault: true
+autoInjection:
+  components:
+    namespace: istio-control
+    injector:
+      common:
+        enabled: true
 `,
 		},
 		{
@@ -169,34 +175,35 @@ trafficManagement:
 hub: docker.io/istio
 tag: v1.2.3
 trafficManagement:
-  proxy:
-    common:
-      enabled: true
-      namespace: istio-control-system
-      debug: INFO
-      k8s:
-        resources:
-          requests:
-            memory: "64Mi"
-            cpu: "250m"
-          limits:
-            memory: "128Mi"
-            cpu: "500m"
-        readinessProbe:
-          initialDelaySeconds: 11
-          periodSeconds: 22
-          successThreshold: 33
-          failureThreshold: 44
-        hpaSpec:
-          scaleTargetRef:
-            apiVersion: apps/v1
-            kind: Deployment
-            name: php-apache
-          minReplicas: 1
-          maxReplicas: 10
-          targetCPUUtilizationPercentage: 80
-        nodeSelector:
-          disktype: ssd
+  components:
+    proxy:
+      common:
+        enabled: true
+        namespace: istio-control-system
+        debug: INFO
+        k8s:
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "250m"
+            limits:
+              memory: "128Mi"
+              cpu: "500m"
+          readinessProbe:
+            initialDelaySeconds: 11
+            periodSeconds: 22
+            successThreshold: 33
+            failureThreshold: 44
+          hpaSpec:
+            scaleTargetRef:
+              apiVersion: apps/v1
+              kind: Deployment
+              name: php-apache
+            minReplicas: 1
+            maxReplicas: 10
+            targetCPUUtilizationPercentage: 80
+          nodeSelector:
+            disktype: ssd
 `,
 		},
 		{
@@ -216,7 +223,7 @@ hub: docker.io:tag/istio
 		{
 			desc: "GoodURL",
 			yamlStr: `
-customPackagePath: file://local/file/path
+customPackagePath: file:///local/file/path
 `,
 		},
 		{
@@ -230,12 +237,12 @@ customPackagePath: bad_schema://local/file/path
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			ispec := &v1alpha1.InstallerSpec{}
+			ispec := &v1alpha2.IstioControlPlaneSpec{}
 			err := unmarshalWithJSONPB(tt.yamlStr, ispec)
 			if err != nil {
 				t.Fatalf("unmarshalWithJSONPB(%s): got error %s", tt.desc, err)
 			}
-			errs := ValidateInstallerSpec(ispec)
+			errs := CheckIstioControlPlaneSpec(ispec)
 			if gotErrs, wantErrs := errs, tt.wantErrs; !util.EqualErrors(gotErrs, wantErrs) {
 				t.Errorf("ProtoToValues(%s)(%v): gotErrs:%s, wantErrs:%s", tt.desc, tt.yamlStr, gotErrs, wantErrs)
 			}
@@ -257,7 +264,7 @@ func unmarshalWithJSONPB(y string, out proto.Message) error {
 	return nil
 }
 
-func marshalWithJSONPB(in *v1alpha1.TestKube) (string, error) {
+func marshalWithJSONPB(in *v1alpha2.TestKube) (string, error) {
 	m := jsonpb.Marshaler{}
 	js, err := m.MarshalToString(in)
 	if err != nil {

@@ -4,14 +4,17 @@ import (
 	"fmt"
 	"net/url"
 	"reflect"
+	"strings"
 
-	"github.com/ostromart/istio-installer/pkg/apis/installer/v1alpha1"
+	"github.com/ostromart/istio-installer/pkg/apis/istio/v1alpha2"
+	"github.com/ostromart/istio-installer/pkg/component/component"
+
 	"github.com/ostromart/istio-installer/pkg/util"
 )
 
 var (
 	// defaultValidations maps a data path to a validation function.
-	defaultValidations = map[string]ValidateFunc{
+	defaultValidations = map[string]ValidatorFunc{
 		"Hub":                    validateHub,
 		"Tag":                    validateTag,
 		"CustomPackagePath":      validateInstallPackagePath,
@@ -19,13 +22,13 @@ var (
 	}
 )
 
-// ValidateInstallerSpec validates the values in the given Installer spec, using the field map defaultValidations to
+// CheckIstioControlPlaneSpec validates the values in the given Installer spec, using the field map defaultValidations to
 // call the appropriate validation function.
-func ValidateInstallerSpec(is *v1alpha1.InstallerSpec) util.Errors {
+func CheckIstioControlPlaneSpec(is *v1alpha2.IstioControlPlaneSpec) util.Errors {
 	return validate(defaultValidations, is, nil)
 }
 
-func validate(validations map[string]ValidateFunc, structPtr interface{}, path util.Path) (errs util.Errors) {
+func validate(validations map[string]ValidatorFunc, structPtr interface{}, path util.Path) (errs util.Errors) {
 	dbgPrint("validate with path %s, %v (%T)", path, structPtr, structPtr)
 	if structPtr == nil {
 		return nil
@@ -83,14 +86,9 @@ func validate(validations map[string]ValidateFunc, structPtr interface{}, path u
 	return errs
 }
 
-func validateLeaf(validations map[string]ValidateFunc, path util.Path, val interface{}) util.Errors {
+func validateLeaf(validations map[string]ValidatorFunc, path util.Path, val interface{}) util.Errors {
 	pstr := path.String()
 	dbgPrintC("validate %s:%v(%T) ", pstr, val, val)
-	if !requiredValues[pstr] && (util.IsValueNil(val) || util.IsEmptyString(val)) {
-		// TODO(mostrowski): handle required fields.
-		dbgPrint("validate %s: OK (empty value)", pstr)
-		return nil
-	}
 
 	vf, ok := validations[pstr]
 	if !ok {
@@ -114,13 +112,34 @@ func validateDefaultNamespacePrefix(path util.Path, val interface{}) util.Errors
 }
 
 func validateInstallPackagePath(path util.Path, val interface{}) util.Errors {
-	if !isString(val) {
+	valStr, ok := val.(string)
+	if !ok {
 		return util.NewErrs(fmt.Errorf("validateDefaultNamespacePrefix(%s) bad type %T, want string", path, val))
 	}
 
-	if _, err := url.ParseRequestURI(val.(string)); err != nil {
-		return util.NewErrs(fmt.Errorf("invalid value %s:%s", path, val))
+	if valStr == "" {
+		// compiled-in charts
+		return nil
 	}
 
-	return nil
+	if _, err := url.ParseRequestURI(val.(string)); err != nil {
+		return util.NewErrs(fmt.Errorf("invalid value %s:%s", path, valStr))
+	}
+
+	validPrefixes := []string{component.LocalFilePrefix}
+	validPrefixDesc := map[string]string{
+		component.LocalFilePrefix: "RFC 8089 absolute path to file e.g. file:///var/istio/config.yaml",
+	}
+
+	for _, vp := range validPrefixes {
+		if strings.HasPrefix(valStr, vp) {
+			return nil
+		}
+	}
+
+	errStr := "Invalid path prefix in " + valStr + ". \nMust be one of the following:\n"
+	for _, vp := range validPrefixes {
+		errStr += fmt.Sprintf("%-15s %s", vp, validPrefixDesc[vp])
+	}
+	return util.NewErrs(fmt.Errorf(errStr))
 }

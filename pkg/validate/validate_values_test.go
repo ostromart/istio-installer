@@ -2,10 +2,10 @@ package validate
 
 import (
 	"fmt"
-	"github.com/ostromart/istio-installer/pkg/util"
 	"testing"
 
 	"github.com/ghodss/yaml"
+	"github.com/ostromart/istio-installer/pkg/util"
 )
 
 func TestValidateValues(t *testing.T) {
@@ -89,9 +89,9 @@ global:
 			if err != nil {
 				t.Fatalf("yaml.Unmarshal(%s): got error %s", tt.desc, err)
 			}
-			errs := ValidateValues(root)
+			errs := CheckValues(root)
 			if gotErr, wantErr := errs, tt.wantErrs; !util.EqualErrors(gotErr, wantErr) {
-				t.Errorf("ValidateValues(%s)(%v): gotErr:%s, wantErr:%s", tt.desc, tt.yamlStr, gotErr, wantErr)
+				t.Errorf("CheckValues(%s)(%v): gotErr:%s, wantErr:%s", tt.desc, tt.yamlStr, gotErr, wantErr)
 			}
 		})
 	}

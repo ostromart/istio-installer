@@ -8,7 +8,7 @@ import (
 
 	"github.com/ghodss/yaml"
 	protobuf "github.com/gogo/protobuf/types"
-	"github.com/ostromart/istio-installer/pkg/apis/installer/v1alpha1"
+	"github.com/ostromart/istio-installer/pkg/apis/istio/v1alpha2"
 	"github.com/ostromart/istio-installer/pkg/helm"
 	"github.com/ostromart/istio-installer/pkg/patch"
 	"github.com/ostromart/istio-installer/pkg/util"
@@ -38,8 +38,8 @@ const (
 	componentDisabledStr = " component is disabled."
 	yamlCommentStr       = "# "
 
-	// localFilePrefix is a prefix for local files.
-	localFilePrefix = "file://"
+	// LocalFilePrefix is a prefix for local files.
+	LocalFilePrefix = "file:///"
 )
 
 // ComponentDirLayout is a mapping between a component name and a subdir path to its chart from the helm charts root.
@@ -72,8 +72,6 @@ var (
 		IngressComponentName:         "gateways.istio-ingressgateway",
 		EgressComponentName:          "gateways.istio-ingressgateway",
 	}
-
-	validPaths = []string{localFilePrefix}
 )
 
 var (
@@ -85,7 +83,7 @@ var (
 // ComponentOptions defines options for a component.
 type ComponentOptions struct {
 	FeatureName string
-	InstallSpec *v1alpha1.IstioControlPlaneSpec
+	InstallSpec *v1alpha2.IstioControlPlaneSpec
 	Dirs        ComponentDirLayout
 }
 
@@ -182,7 +180,7 @@ func renderManifest(c *CommonComponentFields) (string, error) {
 	}
 	my += helm.YAMLSeparator + "\n"
 
-	var overlays []*v1alpha1.K8SObjectOverlay
+	var overlays []*v1alpha2.K8SObjectOverlay
 	found, err := SetFromPath(c.InstallSpec, "TrafficManagement.Components."+string(c.name)+".Common.K8S.Overlays", &overlays)
 	if err != nil {
 		return "", err
@@ -203,7 +201,7 @@ func renderManifest(c *CommonComponentFields) (string, error) {
 // 4. if the component disabled, it is reported disabled, else
 // 5. the component is enabled.
 // This follows the logic description in IstioControlPlane proto.
-func isComponentEnabled(featureName string, componentName ComponentName, installSpec *v1alpha1.IstioControlPlaneSpec) bool {
+func isComponentEnabled(featureName string, componentName ComponentName, installSpec *v1alpha2.IstioControlPlaneSpec) bool {
 	featureNodeI, found, err := GetFromStructPath(installSpec, featureName+".Enabled")
 	if err != nil {
 		log.Error(err.Error())
@@ -217,7 +215,7 @@ func isComponentEnabled(featureName string, componentName ComponentName, install
 	}
 	featureNode, ok := featureNodeI.(*protobuf.BoolValue)
 	if !ok {
-		log.Errorf("feature %s enabled has bad type %T, expect *protobuf.BoolValue", featureNodeI)
+		log.Errorf("feature %s enabled has bad type %T, expect *protobuf.BoolValue", featureName, featureNodeI)
 	}
 	if featureNode == nil {
 		return false
@@ -239,7 +237,7 @@ func isComponentEnabled(featureName string, componentName ComponentName, install
 	}
 	componentNode, ok := componentNodeI.(*protobuf.BoolValue)
 	if !ok {
-		log.Errorf("component %s enabled has bad type %T, expect *protobuf.BoolValue", componentNodeI)
+		log.Errorf("component %s enabled has bad type %T, expect *protobuf.BoolValue", componentName, componentNodeI)
 		return featureNode.Value
 	}
 	if componentNode == nil {
@@ -308,16 +306,17 @@ func createHelmRenderer(c *CommonComponentFields) (helm.TemplateRenderer, error)
 
 // isFilePath reports whether the given URL is a local file path.
 func isFilePath(path string) bool {
-	return strings.HasPrefix(path, localFilePrefix)
+	return strings.HasPrefix(path, LocalFilePrefix)
 }
 
 // getLocalFilePath returns the local file path string of the form /a/b/c, given a file URL of the form file:///a/b/c
 func getLocalFilePath(path string) string {
-	return strings.TrimPrefix(path, localFilePrefix)
+	// LocalFilePrefix always starts with file:/// but this includes the absolute path leading slash, preserve that.
+	return "/" + strings.TrimPrefix(path, LocalFilePrefix)
 }
 
 // getValuesFilename returns the global values filename, given an IstioControlPlaneSpec.
-func getValuesFilename(i *v1alpha1.IstioControlPlaneSpec) string {
+func getValuesFilename(i *v1alpha2.IstioControlPlaneSpec) string {
 	if i.BaseSpecPath == "" {
 		return helm.DefaultGlobalValuesFilename
 	}

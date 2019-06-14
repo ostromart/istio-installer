@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/ghodss/yaml"
-	"github.com/ostromart/istio-installer/pkg/apis/installer/v1alpha1"
+	"github.com/ostromart/istio-installer/pkg/apis/istio/v1alpha2"
 	"github.com/ostromart/istio-installer/pkg/component/component"
 	"github.com/ostromart/istio-installer/pkg/util"
 )
@@ -28,7 +28,7 @@ pilot:
       cpu: 111m
       memory: 222Mi
 `,
-			inStruct: &v1alpha1.Values{},
+			inStruct: &v1alpha2.Values{},
 			want:     ``,
 		},
 	}

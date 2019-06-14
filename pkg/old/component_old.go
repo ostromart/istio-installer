@@ -15,7 +15,6 @@ import (
 
 	jsonpatch "github.com/evanphx/json-patch"
 	"github.com/ghodss/yaml"
-	"github.com/ostromart/istio-installer/pkg/apis/installer/v1alpha1"
 	"github.com/ostromart/istio-installer/pkg/helm"
 	"github.com/ostromart/istio-installer/pkg/kube"
 	"github.com/ostromart/istio-installer/pkg/kubectlcmd"
@@ -69,7 +68,7 @@ func (c *PilotComponent) RenderManifest() (string, error) {
 	return "", nil
 }
 
-func NewPilotComponent(installSpec *v1alpha1.InstallSpec) *PilotComponent {
+func NewPilotComponent(installSpec *v1alpha2.InstallSpec) *PilotComponent {
 	return nil
 }
 
@@ -80,7 +79,7 @@ func (c *ProxyComponent) RenderManifest() (string, error) {
 	return "", nil
 }
 
-func NewProxyComponent(installSpec *v1alpha1.InstallSpec) *ProxyComponent {
+func NewProxyComponent(installSpec *v1alpha2.InstallSpec) *ProxyComponent {
 	return nil
 }
 
@@ -91,7 +90,7 @@ func (c *SidecarComponent) RenderManifest() (string, error) {
 	return "", nil
 }
 
-func NewSidecarComponent(installSpec *v1alpha1.InstallSpec) *SidecarComponent {
+func NewSidecarComponent(installSpec *v1alpha2.InstallSpec) *SidecarComponent {
 	return nil
 }
 
@@ -102,7 +101,7 @@ func (c *CitadelComponent) RenderManifest() (string, error) {
 	return "", nil
 }
 
-func NewCitadelComponent(installSpec *v1alpha1.InstallSpec) *CitadelComponent {
+func NewCitadelComponent(installSpec *v1alpha2.InstallSpec) *CitadelComponent {
 	return nil
 }
 
@@ -113,7 +112,7 @@ func (c *CertManagerComponent) RenderManifest() (string, error) {
 	return "", nil
 }
 
-func NewCertManagerComponent(installSpec *v1alpha1.InstallSpec) *CertManagerComponent {
+func NewCertManagerComponent(installSpec *v1alpha2.InstallSpec) *CertManagerComponent {
 	return nil
 }
 
@@ -124,7 +123,7 @@ func (c *NodeAgentComponent) RenderManifest() (string, error) {
 	return "", nil
 }
 
-func NewNodeAgentComponent(installSpec *v1alpha1.InstallSpec) *NodeAgentComponent {
+func NewNodeAgentComponent(installSpec *v1alpha2.InstallSpec) *NodeAgentComponent {
 	return nil
 }
 
@@ -324,7 +323,7 @@ func (d *DeploymentComponent) RunApplyLoop(ctx context.Context) error {
 }
 
 // ApplyOnce renders and applies the manifest and returns.
-func (d *DeploymentComponent) ApplyOnce(ctx context.Context, is *v1alpha1.InstallSpec) error {
+func (d *DeploymentComponent) ApplyOnce(ctx context.Context, is *v1alpha2.InstallSpec) error {
 	mstr, err := d.Render(is)
 	if err != nil {
 		return err
@@ -333,7 +332,7 @@ func (d *DeploymentComponent) ApplyOnce(ctx context.Context, is *v1alpha1.Instal
 }
 
 // RenderToDir returns the rendered manifest.
-func (d *DeploymentComponent) Render(is *v1alpha1.InstallSpec) (string, error) {
+func (d *DeploymentComponent) Render(is *v1alpha2.InstallSpec) (string, error) {
 	d.waitDeps()
 	globalValues, err := getHelmValues(d.helmChartBaseDirPath)
 	if err != nil {
@@ -427,7 +426,7 @@ func patchYAMLManifest(baseYAML string, resourceOverride []*unstructured.Unstruc
 	return ret.String(), nil
 }
 
-func patchValues(baseYAML []byte, is *v1alpha1.InstallSpec) ([]byte, error) {
+func patchValues(baseYAML []byte, is *v1alpha2.InstallSpec) ([]byte, error) {
 	baseValuesJSON, err := yaml.YAMLToJSON([]byte(baseYAML))
 	if err != nil {
 		return nil, fmt.Errorf("cannot unmarshal baseYAML to JSON: %s", err)

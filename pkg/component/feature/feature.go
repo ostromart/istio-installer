@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/ostromart/istio-installer/pkg/apis/installer/v1alpha1"
+	"github.com/ostromart/istio-installer/pkg/apis/istio/v1alpha2"
 	"github.com/ostromart/istio-installer/pkg/component/component"
 	"github.com/ostromart/istio-installer/pkg/util"
 )
@@ -33,7 +33,7 @@ type IstioFeature interface {
 // FeatureOptions are options for IstioFeature.
 type FeatureOptions struct {
 	// InstallSpec is the installation spec for the control plane.
-	InstallSpec *v1alpha1.IstioControlPlaneSpec
+	InstallSpec *v1alpha2.IstioControlPlaneSpec
 	// Dirs is a directory layout that maps component names to chart subdirectories.
 	Dirs component.ComponentDirLayout
 }

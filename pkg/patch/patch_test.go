@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/ostromart/istio-installer/pkg/apis/istio/v1alpha2"
 	"github.com/ostromart/istio-installer/pkg/util"
 
 	"github.com/ghodss/yaml"
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/protobuf/jsonpb"
-	"github.com/ostromart/istio-installer/pkg/apis/installer/v1alpha1"
 )
 
 func TestPatchYAMLManifestSuccess(t *testing.T) {
@@ -158,7 +158,7 @@ a:
 		}}
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			rc := &v1alpha1.KubernetesResourcesSpec{}
+			rc := &v1alpha2.KubernetesResourcesSpec{}
 			err := unmarshalWithJSONPB(makeOverlayHeader(tt.path, tt.value), rc)
 			if err != nil {
 				t.Fatalf("unmarshalWithJSONPB(%s): got error %s", tt.desc, err)
@@ -407,7 +407,7 @@ spec:
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			rc := &v1alpha1.KubernetesResourcesSpec{}
+			rc := &v1alpha2.KubernetesResourcesSpec{}
 			err := unmarshalWithJSONPB(makeOverlayHeader(tt.path, tt.value), rc)
 			if err != nil {
 				t.Fatalf("unmarshalWithJSONPB(%s): got error %s", tt.desc, err)

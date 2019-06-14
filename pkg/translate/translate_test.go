@@ -11,7 +11,6 @@ import (
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/kr/pretty"
 	"github.com/kylelemons/godebug/diff"
-	"github.com/ostromart/istio-installer/pkg/apis/installer/v1alpha1"
 	"github.com/ostromart/istio-installer/pkg/util"
 )
 
@@ -161,7 +160,7 @@ sidecarInjectorWebhook:
 			if mappings == nil {
 				mappings = defaultMappings
 			}
-			ispec := &v1alpha1.InstallerSpec{}
+			ispec := &v1alpha2.InstallerSpec{}
 			err := unmarshalWithJSONPB(tt.yamlStr, ispec)
 			if err != nil {
 				t.Fatalf("unmarshalWithJSONPB(%s): got error %s", tt.desc, err)

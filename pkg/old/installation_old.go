@@ -12,7 +12,7 @@ import (
 
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 
-	installerv1alpha1 "github.com/ostromart/istio-installer/pkg/apis/installer/v1alpha1"
+	installerv1alpha1 "github.com/ostromart/istio-installer/pkg/apis/istio/v1alpha2"
 	"github.com/ostromart/istio-installer/pkg/component/component"
 	"istio.io/istio/pkg/log"
 	"k8s.io/client-go/kubernetes"

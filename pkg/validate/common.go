@@ -2,17 +2,18 @@ package validate
 
 import (
 	"fmt"
-	"github.com/ostromart/istio-installer/pkg/util"
 	"net"
 	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/ostromart/istio-installer/pkg/util"
 )
 
 var (
 	// debugPackage controls verbose debugging in this package. Used for offline debugging.
-	debugPackage = false
+	debugPackage = true
 
 	// alphaNumericRegexp defines the alpha numeric atom, typically a
 	// component of names. This only allows lower case characters and digits.
@@ -92,7 +93,6 @@ var (
 
 	// ObjectNameRegexp is a legal name for a k8s object.
 	ObjectNameRegexp = match(`[a-z0-9.-]{1,254}`)
-
 )
 
 func validateWithRegex(path util.Path, val interface{}, r *regexp.Regexp) (errs util.Errors) {
@@ -109,7 +109,7 @@ func validateWithRegex(path util.Path, val interface{}, r *regexp.Regexp) (errs 
 	return errs
 }
 
-func validateStringList(vf ValidateFunc) ValidateFunc {
+func validateStringList(vf ValidatorFunc) ValidatorFunc {
 	return func(path util.Path, val interface{}) util.Errors {
 		dbgPrintC("validateStringList(")
 		if reflect.TypeOf(val).Kind() != reflect.String {
@@ -279,5 +279,5 @@ func anchored(res ...*regexp.Regexp) *regexp.Regexp {
 	return match(`^` + expression(res...).String() + `$`)
 }
 
-// ValidateFunc validates a value.
-type ValidateFunc func(path util.Path, i interface{}) util.Errors
+// ValidatorFunc validates a value.
+type ValidatorFunc func(path util.Path, i interface{}) util.Errors
