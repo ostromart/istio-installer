@@ -60,6 +60,10 @@ proto:
 # Note: must add // +k8s:deepcopy-gen=package to doc.go in ./vendor/github.com/gogo/protobuf/types/ for types package
 proto_gogo:
 	go run ~/go/src/k8s.io/code-generator/cmd/deepcopy-gen/main.go -v 5 -O zz_generated.deepcopy -i ./vendor/github.com/gogo/protobuf/types/...
+	patch vendor/github.com/gogo/protobuf/types/zz_generated.deepcopy.go < vendor/github.com/gogo/protobuf/types/fixup_go_structs.patch
 
 gen_patch:
 	diff -u pkg/apis/istio/v1alpha2/istiocontrolplane_types.pb.go.orig pkg/apis/istio/v1alpha2/istiocontrolplane_types.pb.go > pkg/apis/istio/v1alpha2/fixup_go_structs.patch || true
+
+gen_gogo_patch:
+	diff -u vendor/github.com/gogo/protobuf/types/zz_generated.deepcopy.orig.go vendor/github.com/gogo/protobuf/types/zz_generated.deepcopy.go > vendor/github.com/gogo/protobuf/types/fixup_go_structs.patch || true
