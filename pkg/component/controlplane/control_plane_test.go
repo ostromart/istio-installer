@@ -1,4 +1,4 @@
-package installation
+package controlplane
 
 import (
 	"bytes"
@@ -44,7 +44,6 @@ func TestRenderInstallationSuccess(t *testing.T) {
 		{
 			desc: "all_off",
 			installSpec: `
-customPackagePath: file://foo
 trafficManagement:
   enabled: false
 policy:
@@ -62,7 +61,6 @@ autoInjection:
 		{
 			desc: "pilot_default",
 			installSpec: `
-customPackagePath: file://foo
 trafficManagement:
   enabled: true
   components:
@@ -71,16 +69,65 @@ trafficManagement:
         enabled: false
 `,
 		},
+		{
+			desc: "pilot_override_values",
+			installSpec: `
+trafficManagement:
+  enabled: true
+  components:
+    proxy:
+      common:
+        enabled: false
+    pilot:
+      common:
+        valuesOverrides:
+          replicaCount: 5
+          resources:
+            requests:
+              cpu: 111m
+              memory: 222Mi
+        unvalidatedValuesOverrides:
+          myCustomKey: someValue
+`,
+		},
+		{
+			desc: "pilot_override_kubernetes",
+			installSpec: `
+trafficManagement:
+  enabled: true
+  components:
+    proxy:
+      common:
+        enabled: false
+    pilot:
+      common:
+        k8s:
+          overlays:
+          - kind: Deployment
+            name: istio-pilot
+            patches:
+            - path: spec.template.spec.containers.[name:discovery].args.[30m]
+              value: "60m" # OVERRIDDEN
+            - path: spec.template.spec.containers.[name:discovery].ports.[containerPort:8080].containerPort
+              value: 1234 # OVERRIDDEN
+          - kind: Service
+            name: istio-pilot
+            patches:
+            - path: spec.ports.[name:grpc-xds].port
+              value: 11111 # OVERRIDDEN
+`,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			var is v1alpha1.IstioControlPlaneSpec
-			err := unmarshalWithJSONPB(tt.installSpec, &is)
+			spec := `customPackagePath: "file://` + helmChartTestDir + `"` + "\n" + tt.installSpec
+			err := unmarshalWithJSONPB(spec, &is)
 			if err != nil {
 				t.Fatalf("yaml.Unmarshal(%s): got error %s", tt.desc, err)
 			}
 
-			ins := NewInstallation(&is, "istio", helmChartTestDir, globalValuesFile, component.V12DirLayout)
+			ins := NewIstioControlPlane(&is, component.V12DirLayout)
 			if err = ins.Run(); err != nil {
 				t.Fatal(err)
 			}
@@ -93,13 +140,11 @@ trafficManagement:
 			if err != nil {
 				t.Fatal(err)
 			}
-			//fmt.Println(got)
 			diff, err := ManifestDiff(got, want)
 			if err != nil {
 				t.Fatal(err)
 			}
 			if diff != "" {
-
 				//t.Errorf("got objects:\n%s\nwant objects:\n%s\n", ObjectsInManifest(got), ObjectsInManifest(want))
 				t.Errorf("%s: got:\n%s\nwant:\n%s\n(-got, +want)\n%s\n", tt.desc, "", "", diff)
 			}
@@ -125,27 +170,6 @@ func unmarshalWithJSONPB(y string, out proto.Message) error {
 func readFile(path string) (string, error) {
 	b, err := ioutil.ReadFile(filepath.Join(testDataDir, path))
 	return string(b), err
-}
-
-func stripNL(s string) string {
-	return strings.Trim(s, "\n")
-}
-
-// TODO: move to util
-func IsYAMLEqual(a, b string) bool {
-	if strings.TrimSpace(a) == "" && strings.TrimSpace(b) == "" {
-		return true
-	}
-	ajb, err := yaml.YAMLToJSON([]byte(a))
-	if err != nil {
-		return false
-	}
-	bjb, err := yaml.YAMLToJSON([]byte(b))
-	if err != nil {
-		return false
-	}
-
-	return string(ajb) == string(bjb)
 }
 
 func YAMLDiff(a, b string) string {

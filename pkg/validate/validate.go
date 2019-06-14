@@ -2,10 +2,11 @@ package validate
 
 import (
 	"fmt"
-	"github.com/ostromart/istio-installer/pkg/apis/installer/v1alpha1"
-	"github.com/ostromart/istio-installer/pkg/util"
 	"net/url"
 	"reflect"
+
+	"github.com/ostromart/istio-installer/pkg/apis/installer/v1alpha1"
+	"github.com/ostromart/istio-installer/pkg/util"
 )
 
 var (
@@ -15,10 +16,6 @@ var (
 		"Tag":                    validateTag,
 		"CustomPackagePath":      validateInstallPackagePath,
 		"DefaultNamespacePrefix": validateDefaultNamespacePrefix,
-	}
-
-	// requiredValues lists all the values that must be non-empty.
-	requiredValues = map[string]bool{
 	}
 )
 

@@ -5,13 +5,14 @@ package v1alpha1
 
 import (
 	fmt "fmt"
+	io "io"
+	math "math"
+
 	protobuf "github.com/gogo/protobuf/types"
 	proto "github.com/golang/protobuf/proto"
-	io "io"
 	v11 "k8s.io/api/autoscaling/v1"
 	v1 "k8s.io/api/core/v1"
 	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	math "math"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -1619,12 +1620,12 @@ type CommonComponentSpec struct {
 	Namespace string                       `protobuf:"bytes,2,opt,name=namespace,proto3" json:"namespace,omitempty"`
 	Debug     CommonComponentSpec_LogLevel `protobuf:"varint,3,opt,name=debug,proto3,enum=v1alpha1.CommonComponentSpec_LogLevel" json:"debug,omitempty"`
 	// Kubernetes resource spec.
-	K8S                  *KubernetesResourcesSpec `protobuf:"bytes,80,opt,name=k8s,proto3" json:"k8s,omitempty"`
-	ValuesOverrides      map[string]interface{}   `protobuf:"bytes,6,opt,name=data" json:"valuesOverrides,omitempty"`
-	UnvalidatedValuesOverrides map[string]interface{} `protobuf:"bytes,6,opt,name=data" json:"unvalidatedValuesOverrides,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}                 `json:"-"`
-	XXX_unrecognized     []byte                   `json:"-"`
-	XXX_sizecache        int32                    `json:"-"`
+	K8S                        *KubernetesResourcesSpec `protobuf:"bytes,80,opt,name=k8s,proto3" json:"k8s,omitempty"`
+	ValuesOverrides            map[string]interface{}   `protobuf:"bytes,6,opt,name=valuesOverrides" json:"valuesOverrides,omitempty"`
+	UnvalidatedValuesOverrides map[string]interface{}   `protobuf:"bytes,6,opt,name=unvalidatedValuesOverrides" json:"unvalidatedValuesOverrides,omitempty"`
+	XXX_NoUnkeyedLiteral       struct{}                 `json:"-"`
+	XXX_unrecognized           []byte                   `json:"-"`
+	XXX_sizecache              int32                    `json:"-"`
 }
 
 func (m *CommonComponentSpec) Reset()         { *m = CommonComponentSpec{} }
@@ -2323,11 +2324,11 @@ type K8SObjectOverlay_PathValue struct {
 	// Path of the form a.b:c.e.:f
 	// Where b:c is a list element selector of the form key:value and :f is a list selector of the form :value.
 	// All path intermediate nodes must exist.
-	Path                 string   `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
+	Path                 string      `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
 	Value                interface{} `protobuf:"bytes,4,opt,name=value,proto3" json:"value,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	XXX_NoUnkeyedLiteral struct{}    `json:"-"`
+	XXX_unrecognized     []byte      `json:"-"`
+	XXX_sizecache        int32       `json:"-"`
 }
 
 func (m *K8SObjectOverlay_PathValue) Reset()         { *m = K8SObjectOverlay_PathValue{} }

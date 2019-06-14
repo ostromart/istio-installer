@@ -1,8 +1,11 @@
+/*
+Package manifest provides functions for going between in-memory k8s objects (unstructured.Unstructured) and their JSON
+or YAML representations.
+*/
 package manifest
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"sort"
 	"strings"
@@ -12,26 +15,55 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	k8syaml "k8s.io/apimachinery/pkg/util/yaml"
 
-	"istio.io/istio/pkg/log"
+	"istio.io/pkg/log"
 )
 
-// Objects holds a collection of objects, so that we can filter / sequence them
-type Objects struct {
-	Items []*Object
-}
-
+// Object is an in-memory representation of a k8s object, used for moving between different representations
+// (Unstructured, JSON, YAML) with cached rendering.
 type Object struct {
 	object *unstructured.Unstructured
 
-	Group string
-	Kind  string
-	Name  string
+	Group     string
+	Kind      string
+	Name      string
 	Namespace string
 
 	json []byte
 	yaml []byte
 }
 
+// NewObject
+func NewObject(u *unstructured.Unstructured, json, yaml []byte) *Object {
+	o := &Object{
+		object: u,
+		json:   json,
+		yaml:   yaml,
+	}
+
+	gvk := u.GetObjectKind().GroupVersionKind()
+	o.Group = gvk.Group
+	o.Kind = gvk.Kind
+	o.Name = u.GetName()
+	o.Namespace = u.GetNamespace()
+
+	return o
+}
+
+// Hash returns a unique, insecure hash based on kind, namespace and name.
+func Hash(kind, namespace, name string) string {
+	return strings.Join([]string{kind, namespace, name}, "/")
+}
+
+// ObjectsFromUnstructuredSlice returns an Objects ptr type from a slice of Unstructured.
+func ObjectsFromUnstructuredSlice(objs []*unstructured.Unstructured) (*Objects, error) {
+	ret := &Objects{}
+	for _, o := range objs {
+		ret.Items = append(ret.Items, NewObject(o, nil, nil))
+	}
+	return ret, nil
+}
+
+// ParseJSONToObject parses JSON to an Object.
 func ParseJSONToObject(json []byte) (*Object, error) {
 	o, gvk, err := unstructured.UnstructuredJSONScheme.Decode(json, nil, nil)
 	if err != nil {
@@ -52,41 +84,27 @@ func ParseJSONToObject(json []byte) (*Object, error) {
 	}, nil
 }
 
-func (o *Object) AddLabels(labels map[string]string) {
-	merged := make(map[string]string)
-	for k, v := range o.object.GetLabels() {
-		merged[k] = v
-	}
-
-	for k, v := range labels {
-		merged[k] = v
-	}
-
-	o.object.SetLabels(merged)
-	// Invalidate cached json
-	o.json = nil
-	o.yaml = nil
+// UnstructuredContent exposes the raw object, primarily for testing
+func (o *Object) UnstructuredObject() *unstructured.Unstructured {
+	return o.object
 }
 
-func (o *Object) NestedStringMap(fields ...string) (map[string]string, bool, error) {
-	if o.object.Object == nil {
-		o.object.Object = make(map[string]interface{})
-	}
-	return unstructured.NestedStringMap(o.object.Object, fields...)
+// GroupKind returns the GroupKind for o.
+func (o *Object) GroupKind() schema.GroupKind {
+	return o.object.GroupVersionKind().GroupKind()
 }
 
-func (o *Object) SetNestedField(value interface{}, fields ...string) error {
-	if o.object.Object == nil {
-		o.object.Object = make(map[string]interface{})
-	}
-	err := unstructured.SetNestedField(o.object.Object, value, fields...)
-	// Invalidate cached json
-	o.json = nil
-	o.yaml = nil
-
-	return err
+// GroupVersionKind returns the GroupVersionKind for o.
+func (o *Object) GroupVersionKind() schema.GroupVersionKind {
+	return o.object.GroupVersionKind()
 }
 
+// Hash returns a unique hash for o.
+func (o *Object) Hash() string {
+	return Hash(o.Kind, o.Namespace, o.Name)
+}
+
+// JSON returns a JSON representation of o, using an internal cache.
 func (o *Object) JSON() ([]byte, error) {
 	if o.json != nil {
 		return o.json, nil
@@ -100,6 +118,7 @@ func (o *Object) JSON() ([]byte, error) {
 	return b, nil
 }
 
+// YAML returns a YAML representation of o, using an internal cache.
 func (o *Object) YAML() ([]byte, error) {
 	if o.yaml != nil {
 		return o.yaml, nil
@@ -118,6 +137,7 @@ func (o *Object) YAML() ([]byte, error) {
 	return y, nil
 }
 
+// YAML returns a YAML representation of o, or an error string if the object cannot be rendered to YAML.
 func (o *Object) YAMLDebugString() string {
 	y, err := o.YAML()
 	if err != nil {
@@ -126,70 +146,30 @@ func (o *Object) YAMLDebugString() string {
 	return string(y)
 }
 
-// UnstructuredContent exposes the raw object, primarily for testing
-func (o *Object) UnstructuredObject() *unstructured.Unstructured {
-	return o.object
-}
-
-func (o *Object) GroupKind() schema.GroupKind {
-	return o.object.GroupVersionKind().GroupKind()
-}
-
-func (o *Object) GroupVersionKind() schema.GroupVersionKind {
-	return o.object.GroupVersionKind()
-}
-
-func (o *Object) Hash() string {
-	return Hash(o.Kind, o.Namespace, o.Name)
-}
-
-func (o *Objects) JSONManifest() (string, error) {
-	var b bytes.Buffer
-
-	for i, item := range o.Items {
-		if i != 0 {
-			b.WriteString("\n\n")
-		}
-		// We build a JSON manifest because conversion to yaml is harder
-		// (and we've lost line numbers anyway if we applied any transforms)
-		json, err := item.JSON()
-		if err != nil {
-			return "", fmt.Errorf("error building json: %v", err)
-		}
-		b.Write(json)
+// AddLabels adds labels to o.
+func (o *Object) AddLabels(labels map[string]string) {
+	merged := make(map[string]string)
+	for k, v := range o.object.GetLabels() {
+		merged[k] = v
 	}
 
-	return b.String(), nil
-}
-
-// Sort will order the items in Objects in order of score, group, kind, name.  The intent is to
-// have a deterministic ordering in which Objects are applied.
-func (o *Objects) Sort(score func(o *Object) int) {
-	sort.Slice(o.Items, func(i, j int) bool {
-		iScore := score(o.Items[i])
-		jScore := score(o.Items[j])
-		return iScore < jScore ||
-			(iScore == jScore &&
-				o.Items[i].Group < o.Items[j].Group) ||
-			(iScore == jScore &&
-				o.Items[i].Group == o.Items[j].Group &&
-				o.Items[i].Kind < o.Items[j].Kind) ||
-			(iScore == jScore &&
-				o.Items[i].Group == o.Items[j].Group &&
-				o.Items[i].Kind == o.Items[j].Kind &&
-				o.Items[i].Name < o.Items[j].Name)
-	})
-}
-
-func (o *Objects) ToMap() map[string]*Object {
-	ret := make(map[string]*Object)
-	for _, oo := range o.Items {
-		ret[oo.Hash()] = oo
+	for k, v := range labels {
+		merged[k] = v
 	}
-	return ret
+
+	o.object.SetLabels(merged)
+	// Invalidate cached json
+	o.json = nil
+	o.yaml = nil
 }
 
-func ParseObjectsFromYAMLManifest(ctx context.Context, manifest string) (*Objects, error) {
+// Objects holds a collection of objects, so that we can filter / sequence them
+type Objects struct {
+	Items []*Object
+}
+
+// ParseObjectsFromYAMLManifest returns an Objects represetation of manifest.
+func ParseObjectsFromYAMLManifest(manifest string) (*Objects, error) {
 	var b bytes.Buffer
 
 	var yamls []string
@@ -243,30 +223,50 @@ func ParseObjectsFromYAMLManifest(ctx context.Context, manifest string) (*Object
 	return objects, nil
 }
 
-func ObjectsFromUnstructuredSlice(objs []*unstructured.Unstructured) (*Objects, error) {
-	ret := &Objects{}
-	for _, o := range objs {
-		ret.Items = append(ret.Items, NewObject(o, nil, nil))
+// JSONManifest returns a JSON representation of Objects os.
+func (os *Objects) JSONManifest() (string, error) {
+	var b bytes.Buffer
+
+	for i, item := range os.Items {
+		if i != 0 {
+			b.WriteString("\n\n")
+		}
+		// We build a JSON manifest because conversion to yaml is harder
+		// (and we've lost line numbers anyway if we applied any transforms)
+		json, err := item.JSON()
+		if err != nil {
+			return "", fmt.Errorf("error building json: %v", err)
+		}
+		b.Write(json)
 	}
-	return ret, nil
+
+	return b.String(), nil
 }
 
-func NewObject(u *unstructured.Unstructured, json, yaml []byte) *Object {
-	o := &Object{
-		object: u,
-		json:   json,
-		yaml: yaml,
-	}
-
-	gvk := u.GetObjectKind().GroupVersionKind()
-	o.Group = gvk.Group
-	o.Kind = gvk.Kind
-	o.Name = u.GetName()
-	o.Namespace = u.GetNamespace()
-
-	return o
+// Sort will order the items in Objects in order of score, group, kind, name.  The intent is to
+// have a deterministic ordering in which Objects are applied.
+func (os *Objects) Sort(score func(o *Object) int) {
+	sort.Slice(os.Items, func(i, j int) bool {
+		iScore := score(os.Items[i])
+		jScore := score(os.Items[j])
+		return iScore < jScore ||
+			(iScore == jScore &&
+				os.Items[i].Group < os.Items[j].Group) ||
+			(iScore == jScore &&
+				os.Items[i].Group == os.Items[j].Group &&
+				os.Items[i].Kind < os.Items[j].Kind) ||
+			(iScore == jScore &&
+				os.Items[i].Group == os.Items[j].Group &&
+				os.Items[i].Kind == os.Items[j].Kind &&
+				os.Items[i].Name < os.Items[j].Name)
+	})
 }
 
-func Hash(kind, namespace, name string) string {
-	return strings.Join([]string{kind, namespace, name}, "/")
+// ToMap returns a map of Object hash to Object.
+func (os *Objects) ToMap() map[string]*Object {
+	ret := make(map[string]*Object)
+	for _, oo := range os.Items {
+		ret[oo.Hash()] = oo
+	}
+	return ret
 }

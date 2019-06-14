@@ -4,14 +4,17 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/ghodss/yaml"
-	"github.com/kr/pretty"
-	"github.com/kylelemons/godebug/diff"
 	"math/rand"
 	"reflect"
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/ghodss/yaml"
+	"github.com/gogo/protobuf/proto"
+	"github.com/golang/protobuf/jsonpb"
+	"github.com/kr/pretty"
+	"github.com/kylelemons/godebug/diff"
 )
 
 func init() {
@@ -19,7 +22,7 @@ func init() {
 }
 
 var (
-	letters       = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+	letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 	//
 	ValidKeyRegex = regexp.MustCompile("^[a-zA-Z0-9_-]*$")
 
@@ -97,9 +100,21 @@ func IsPtr(value interface{}) bool {
 	return reflect.TypeOf(value).Kind() == reflect.Ptr
 }
 
+// IsInterfacePtr reports whether v is a slice ptr type.
+func IsInterfacePtr(v interface{}) bool {
+	t := reflect.TypeOf(v)
+	return t.Kind() == reflect.Ptr && t.Elem().Kind() == reflect.Interface
+}
+
 // IsMap reports whether value is a map type.
 func IsMap(value interface{}) bool {
 	return reflect.TypeOf(value).Kind() == reflect.Map
+}
+
+// IsMapPtr reports whether v is a map ptr type.
+func IsMapPtr(v interface{}) bool {
+	t := reflect.TypeOf(v)
+	return t.Kind() == reflect.Ptr && t.Elem().Kind() == reflect.Map
 }
 
 // IsNilOrInvalidValue reports whether v is nil or reflect.Zero.
@@ -221,6 +236,21 @@ func YAMLDiff(a, b string) string {
 	}
 
 	return diff.Diff(string(ay), string(by))
+}
+
+// UnmarshalWithJSONPB unmarshals y into out using jsonpb (required for many proto defined structs).
+func UnmarshalWithJSONPB(y string, out proto.Message) error {
+	jb, err := yaml.YAMLToJSON([]byte(y))
+	if err != nil {
+		return err
+	}
+
+	u := jsonpb.Unmarshaler{}
+	err = u.Unmarshal(bytes.NewReader(jb), out)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // dbgPrint prints v if the package global variable debugPackage is set.

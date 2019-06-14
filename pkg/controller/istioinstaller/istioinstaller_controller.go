@@ -31,14 +31,14 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
-	"github.com/ostromart/istio-installer/pkg/component/installation"
 	"fmt"
 )
 
-type IstioInstallationInitializerType func()*installation.IstioInstallation
+type IstioInstallationInitializerType func() *controlplane.IstioInstallation
+
 var (
-	istioInstallations = make(map[string]*installation.IstioInstallation)
-	istioInstallationsMu sync.Mutex
+	istioInstallations           = make(map[string]*controlplane.IstioInstallation)
+	istioInstallationsMu         sync.Mutex
 	istioInstallationInitializer IstioInstallationInitializerType
 )
 

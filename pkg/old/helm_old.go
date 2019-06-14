@@ -3,15 +3,15 @@ package helm
 import (
 	"strings"
 
+	"github.com/ostromart/istio-installer/pkg/kube"
+	"github.com/ostromart/istio-installer/pkg/util/fswatch"
+	"istio.io/istio/pkg/log"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/helm/pkg/chartutil"
 	"k8s.io/helm/pkg/engine"
 	"k8s.io/helm/pkg/proto/hapi/chart"
 	"k8s.io/helm/pkg/timeconv"
-	"github.com/ostromart/istio-installer/pkg/util/fswatch"
-	"github.com/ostromart/istio-installer/pkg/kube"
-	"istio.io/istio/pkg/log"
 )
 
 const (
@@ -92,12 +92,12 @@ func (h *HelmTemplateRenderer) Run() error {
 	return nil
 }
 
-// Render renders the current helm templates with the current values and returns the resulting YAML manifest string.
+// RenderManifest renders the current helm templates with the current values and returns the resulting YAML manifest string.
 func (h *HelmTemplateRenderer) Render() (string, error) {
 	return Render(h.namespace, h.curValuesYAML, h.chart)
 }
 
-// Render renders the given chart with the given values and returns the resulting YAML manifest string.
+// RenderManifest renders the given chart with the given values and returns the resulting YAML manifest string.
 func Render(namespace, values string, chrt *chart.Chart) (string, error) {
 	config := &chart.Config{Raw: values, Values: map[string]*chart.Value{}}
 	options := chartutil.ReleaseOptions{

@@ -3,12 +3,13 @@ package translate
 
 import (
 	"fmt"
-	"github.com/ostromart/istio-installer/pkg/apis/installer/v1alpha1"
-	"github.com/ostromart/istio-installer/pkg/util"
-	"gopkg.in/yaml.v2"
 	"path/filepath"
 	"reflect"
 	"strings"
+
+	"github.com/ostromart/istio-installer/pkg/apis/installer/v1alpha1"
+	"github.com/ostromart/istio-installer/pkg/util"
+	"gopkg.in/yaml.v2"
 )
 
 // TranslationFunc maps a yamlStr API path into a YAML values tree.
@@ -70,7 +71,7 @@ func defaultTranslationFunc(m *Translation, root util.Tree, valuesPath string, v
 
 // ProtoToValues traverses the supplied InstallerSpec and returns a values.yaml translation from it. Mappings defines
 // a mapping set of translations.
-func ProtoToValues(mappings map[string]*Translation, ii *v1alpha1.InstallerSpec) (string, error) {
+func ProtoToValues(mappings map[string]*Translation, ii *v1alpha1.IstioControlPlaneSpec) (string, error) {
 	root := make(util.Tree)
 
 	errs := protoToValues(mappings, ii, root, nil)

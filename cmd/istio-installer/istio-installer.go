@@ -17,30 +17,29 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
-	"os"
-	"context"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 
 	"github.com/ghodss/yaml"
-	"k8s.io/client-go/rest"
+	installerv1alpha1 "github.com/ostromart/istio-installer/pkg/apis/installer/v1alpha1"
+	"github.com/ostromart/istio-installer/pkg/controller"
+	"github.com/ostromart/istio-installer/pkg/controller/istioinstaller"
+	"github.com/ostromart/istio-installer/pkg/webhook"
+	"github.com/ostromart/operator.old/pkg/apis"
+	"istio.io/istio/pkg/log"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"istio.io/istio/pkg/log"
-	"github.com/ostromart/istio-installer/pkg/component/installation"
-	"github.com/ostromart/istio-installer/pkg/apis"
-	"github.com/ostromart/istio-installer/pkg/controller"
-	"github.com/ostromart/istio-installer/pkg/webhook"
-	installerv1alpha1 "github.com/ostromart/istio-installer/pkg/apis/installer/v1alpha1"
-	"github.com/ostromart/istio-installer/pkg/controller/istioinstaller"
 )
 
 const (
@@ -111,11 +110,11 @@ func main() {
 		}
 	}
 
-	dcMgr := installation.NewIstioInstallation(helmChartPath, kubeclient, kubeconfig, clientset, baseValues)
+	dcMgr := controlplane.NewIstioInstallation(helmChartPath, kubeclient, kubeconfig, clientset, baseValues)
 
 	switch {
 	case reconcile:
-		istioinstaller.SetIstioInstallationInitializer(func() *installation.IstioInstallation {
+		istioinstaller.SetIstioInstallationInitializer(func() *controlplane.IstioInstallation {
 			return dcMgr
 		})
 		dcMgr.RunApplyLoop(context.Background())

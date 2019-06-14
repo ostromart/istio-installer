@@ -50,12 +50,12 @@ type Installation interface{} {
 RenderManifest() (string, error)
 }
 type InstallationImpl struct {
-	features []feature.Feature
+	features []feature.IstioFeature
 }
 
 func NewInstallation(install *installerv1alpha1.InstallSpec) Installation {
 	return &InstallationImpl{
-		features: []feature.Feature{
+		features: []feature.IstioFeature{
 			feature.NewTrafficManagementFeature(install),
 			feature.NewSecurityFeature(install),
 			feature.NewPolicyFeature(install),

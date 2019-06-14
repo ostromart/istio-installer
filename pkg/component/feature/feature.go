@@ -2,7 +2,6 @@ package feature
 
 import (
 	"fmt"
-	"path/filepath"
 	"strings"
 
 	"github.com/ostromart/istio-installer/pkg/apis/installer/v1alpha1"
@@ -10,54 +9,57 @@ import (
 	"github.com/ostromart/istio-installer/pkg/util"
 )
 
+type FeatureName string
+
 const (
-	TrafficManagementFeatureName = "TrafficManagement"
-	PolicyFeatureName            = "Policy"
-	TelemetryFeatureName         = "Telemetry"
-	SecurityFeatureName          = "Security"
-	ConfigManagementFeatureName  = "ConfigManagement"
-	AutoInjectionFeatureName     = "AutoInjection"
+	// IstioFeature names, must be the same as feature names defined in the IstioControlPlane proto, since these are
+	// used to reference structure paths.
+	TrafficManagementFeatureName FeatureName = "TrafficManagement"
+	PolicyFeatureName            FeatureName = "Policy"
+	TelemetryFeatureName         FeatureName = "Telemetry"
+	SecurityFeatureName          FeatureName = "Security"
+	ConfigManagementFeatureName  FeatureName = "ConfigManagement"
+	AutoInjectionFeatureName     FeatureName = "AutoInjection"
 )
 
-type Feature interface {
+// IstioFeature is a feature corresponding to Istio features defined in the IstioControlPlane proto.
+type IstioFeature interface {
+	// Run starts the Istio feature operation. Must be called before feature can be used.
 	Run() error
+	// RenderManifest returns a manifest string rendered against the IstioControlPlane parameters.
 	RenderManifest() (string, util.Errors)
 }
 
+// FeatureOptions are options for IstioFeature.
 type FeatureOptions struct {
-	InstallSpec      *v1alpha1.IstioControlPlaneSpec
-	Dirs             component.ComponentDirLayout
-	GlobalValuesFile string
-	HelmChartName    string
-	HelmChartDir     string
+	// InstallSpec is the installation spec for the control plane.
+	InstallSpec *v1alpha1.IstioControlPlaneSpec
+	// Dirs is a directory layout that maps component names to chart subdirectories.
+	Dirs component.ComponentDirLayout
 }
 
+// CommonFeatureFields
 type CommonFeatureFields struct {
+	// FeatureOptions is an embedded struct.
 	FeatureOptions
-	components []component.Component
+	// components is a slice of components that are part of the feature.
+	components []component.IstioComponent
 }
 
+// TrafficManagementFeature is the traffic management feature.
 type TrafficManagementFeature struct {
+	// CommonFeatureFields is the struct shared among all features.
 	CommonFeatureFields
 }
 
-func newComponentOptions(cff *CommonFeatureFields, featureName, componentName string) *component.ComponentOptions {
-	return &component.ComponentOptions{
-		InstallSpec:      cff.InstallSpec,
-		FeatureName:      featureName,
-		GlobalValuesFile: cff.GlobalValuesFile,
-		HelmChartName:    cff.HelmChartName,
-		HelmChartDir:     filepath.Join(cff.HelmChartDir, cff.Dirs[componentName]),
-	}
-}
-
+// NewTrafficManagementFeature creates a new TrafficManagementFeature and returns a pointer to it.
 func NewTrafficManagementFeature(opts *FeatureOptions) *TrafficManagementFeature {
 	cff := &CommonFeatureFields{
 		FeatureOptions: *opts,
 	}
-	cff.components = []component.Component{
-		component.NewPilotComponent(newComponentOptions(cff, TrafficManagementFeatureName, component.PilotComponentName)),
-		component.NewSidecarInjectorComponent(newComponentOptions(cff, TrafficManagementFeatureName, component.SidecarInjectorComponentName)),
+	cff.components = []component.IstioComponent{
+		component.NewPilotComponent(newComponentOptions(cff, TrafficManagementFeatureName)),
+		component.NewSidecarInjectorComponent(newComponentOptions(cff, TrafficManagementFeatureName)),
 	}
 
 	return &TrafficManagementFeature{
@@ -65,138 +67,170 @@ func NewTrafficManagementFeature(opts *FeatureOptions) *TrafficManagementFeature
 	}
 }
 
+// Run implements the IstioFeature interface.
 func (f *TrafficManagementFeature) Run() error {
 	return runComponents(f.components)
 }
 
+// RenderManifest implements the IstioFeature interface.
 func (f *TrafficManagementFeature) RenderManifest() (string, util.Errors) {
-	fmt.Printf("Render TrafficManagementFeature\n")
+	fmt.Printf("RenderManifest TrafficManagementFeature\n")
 	return renderComponents(f.components)
 }
 
+// SecurityFeature is the security feature.
 type SecurityFeature struct {
 	CommonFeatureFields
 }
 
-func (f *SecurityFeature) Run() error {
-	return runComponents(f.components)
-}
-
+// NewSecurityFeature creates a new SecurityFeature and returns a pointer to it.
 func NewSecurityFeature(opts *FeatureOptions) *SecurityFeature {
 	cff := &CommonFeatureFields{
 		FeatureOptions: *opts,
 	}
-	cff.components = []component.Component{
-		component.NewCitadelComponent(newComponentOptions(cff, SecurityFeatureName, component.CitadelComponentName)),
-		component.NewCertManagerComponent(newComponentOptions(cff, SecurityFeatureName, component.CertManagerComponentName)),
-		component.NewNodeAgentComponent(newComponentOptions(cff, SecurityFeatureName, component.NodeAgentComponentName)),
+	cff.components = []component.IstioComponent{
+		component.NewCitadelComponent(newComponentOptions(cff, SecurityFeatureName)),
+		component.NewCertManagerComponent(newComponentOptions(cff, SecurityFeatureName)),
+		component.NewNodeAgentComponent(newComponentOptions(cff, SecurityFeatureName)),
 	}
 	return &SecurityFeature{
 		CommonFeatureFields: *cff,
 	}
 }
 
+// Run implements the IstioFeature interface.
+func (f *SecurityFeature) Run() error {
+	return runComponents(f.components)
+}
+
+// RenderManifest implements the IstioFeature interface.
 func (f *SecurityFeature) RenderManifest() (string, util.Errors) {
 	return renderComponents(f.components)
 }
 
+// PolicyFeature is the policy feature.
 type PolicyFeature struct {
 	CommonFeatureFields
 }
 
-func (f *PolicyFeature) Run() error {
-	return runComponents(f.components)
-}
-
+// NewPolicyFeature creates a new PolicyFeature and returns a pointer to it.
 func NewPolicyFeature(opts *FeatureOptions) *PolicyFeature {
 	cff := &CommonFeatureFields{
 		FeatureOptions: *opts,
 	}
-	cff.components = []component.Component{
-		component.NewPolicyComponent(newComponentOptions(cff, PolicyFeatureName, component.PolicyComponentName)),
+	cff.components = []component.IstioComponent{
+		component.NewPolicyComponent(newComponentOptions(cff, PolicyFeatureName)),
 	}
 	return &PolicyFeature{
 		CommonFeatureFields: *cff,
 	}
 }
 
+// Run implements the IstioFeature interface.
+func (f *PolicyFeature) Run() error {
+	return runComponents(f.components)
+}
+
+// RenderManifest implements the IstioFeature interface.
 func (f *PolicyFeature) RenderManifest() (string, util.Errors) {
 	return renderComponents(f.components)
 }
 
+// TelemetryFeature is the telemetry feature.
 type TelemetryFeature struct {
 	CommonFeatureFields
 }
 
+// Run implements the IstioFeature interface.
 func (f *TelemetryFeature) Run() error {
 	return runComponents(f.components)
 }
 
+// NewTelemetryFeature creates a new TelemetryFeature and returns a pointer to it.
 func NewTelemetryFeature(opts *FeatureOptions) *TelemetryFeature {
 	cff := &CommonFeatureFields{
 		FeatureOptions: *opts,
 	}
-	cff.components = []component.Component{
-		component.NewTelemetryComponent(newComponentOptions(cff, TelemetryFeatureName, component.TelemetryComponentName)),
+	cff.components = []component.IstioComponent{
+		component.NewTelemetryComponent(newComponentOptions(cff, TelemetryFeatureName)),
 	}
 	return &TelemetryFeature{
 		CommonFeatureFields: *cff,
 	}
 }
 
+// RenderManifest implements the IstioFeature interface.
 func (f *TelemetryFeature) RenderManifest() (string, util.Errors) {
 	return renderComponents(f.components)
 }
 
+// ConfigManagementFeature is the config management feature.
 type ConfigManagementFeature struct {
 	CommonFeatureFields
 }
 
-func (f *ConfigManagementFeature) Run() error {
-	return runComponents(f.components)
-}
-
+// NewConfigManagementFeature creates a new ConfigManagementFeature and returns a pointer to it.
 func NewConfigManagementFeature(opts *FeatureOptions) *ConfigManagementFeature {
 	cff := &CommonFeatureFields{
 		FeatureOptions: *opts,
 	}
-	cff.components = []component.Component{
-		component.NewGalleyComponent(newComponentOptions(cff, ConfigManagementFeatureName, component.GalleyComponentName)),
+	cff.components = []component.IstioComponent{
+		component.NewGalleyComponent(newComponentOptions(cff, ConfigManagementFeatureName)),
 	}
 	return &ConfigManagementFeature{
 		CommonFeatureFields: *cff,
 	}
 }
 
+// Run implements the IstioFeature interface.
+func (f *ConfigManagementFeature) Run() error {
+	return runComponents(f.components)
+}
+
+// RenderManifest implements the IstioFeature interface.
 func (f *ConfigManagementFeature) RenderManifest() (string, util.Errors) {
 	return renderComponents(f.components)
 }
 
+// AutoInjectionFeature is the auto injection feature.
 type AutoInjectionFeature struct {
 	CommonFeatureFields
 }
 
-func (f *AutoInjectionFeature) Run() error {
-	return runComponents(f.components)
-}
-
+// NewAutoInjectionFeature creates a new AutoInjectionFeature and returns a pointer to it.
 func NewAutoInjectionFeature(opts *FeatureOptions) *AutoInjectionFeature {
 	cff := &CommonFeatureFields{
 		FeatureOptions: *opts,
 	}
-	cff.components = []component.Component{
-		component.NewSidecarInjectorComponent(newComponentOptions(cff, AutoInjectionFeatureName, component.SidecarInjectorComponentName)),
+	cff.components = []component.IstioComponent{
+		component.NewSidecarInjectorComponent(newComponentOptions(cff, AutoInjectionFeatureName)),
 	}
 	return &AutoInjectionFeature{
 		CommonFeatureFields: *cff,
 	}
 }
 
+// Run implements the IstioFeature interface.
+func (f *AutoInjectionFeature) Run() error {
+	return runComponents(f.components)
+}
+
+// RenderManifest implements the IstioFeature interface.
 func (f *AutoInjectionFeature) RenderManifest() (string, util.Errors) {
 	return renderComponents(f.components)
 }
 
-func runComponents(cs []component.Component) error {
+// newComponentOptions creates a component.ComponentOptions ptr from the given parameters.
+func newComponentOptions(cff *CommonFeatureFields, featureName FeatureName) *component.ComponentOptions {
+	return &component.ComponentOptions{
+		InstallSpec: cff.InstallSpec,
+		FeatureName: string(featureName),
+		Dirs:        cff.Dirs,
+	}
+}
+
+// runComponents calls Run on all components in a feature.
+func runComponents(cs []component.IstioComponent) error {
 	for _, c := range cs {
 		if err := c.Run(); err != nil {
 			return err
@@ -205,7 +239,8 @@ func runComponents(cs []component.Component) error {
 	return nil
 }
 
-func renderComponents(cs []component.Component) (manifest string, errsOut util.Errors) {
+// renderComponents calls render manifest for all components in a feature and concatenates the outputs.
+func renderComponents(cs []component.IstioComponent) (manifest string, errsOut util.Errors) {
 	var sb strings.Builder
 	for _, c := range cs {
 		s, err := c.RenderManifest()
@@ -217,20 +252,4 @@ func renderComponents(cs []component.Component) (manifest string, errsOut util.E
 		return "", errsOut
 	}
 	return sb.String(), nil
-}
-
-func checkOptions(fo *FeatureOptions) error {
-	if fo.InstallSpec == nil {
-		return fmt.Errorf("InstallSpec must be set")
-	}
-	if fo.HelmChartName == "" {
-		return fmt.Errorf("HelmChartName must be set")
-	}
-	if fo.HelmChartDir == "" {
-		return fmt.Errorf("HelmChartDir must be set")
-	}
-	if fo.Dirs == nil {
-		return fmt.Errorf("Dirs must be set")
-	}
-	return nil
 }

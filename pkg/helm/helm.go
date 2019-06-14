@@ -18,15 +18,22 @@ import (
 )
 
 const (
+	// YAMLSeparator is a separator for multi-document YAML files.
 	YAMLSeparator = "\n---"
+
+	// DefaultGlobalValuesFilename is the default name for a global values file if none is specified.
+	DefaultGlobalValuesFilename = "global.yaml"
 )
 
 // TemplateRenderer defines a helm template renderer interface.
 type TemplateRenderer interface {
 	// Run starts the renderer and should be called before using it.
 	Run() error
-	// Render renders the associated helm charts with the given values YAML string and returns the resulting string.
-	Render(values string) (string, error)
+	// RenderManifest renders the associated helm charts with the given values YAML string and returns the resulting
+	// string.
+	RenderManifest(values string) (string, error)
+	// LoadChart loads the chart from the associated chart source.
+	LoadChart() error
 }
 
 // FileTemplateRenderer is a helm template renderer.
@@ -45,6 +52,7 @@ type FileTemplateRenderer struct {
 // NewFileTemplateRenderer creates a TemplateRenderer with the given path to helm charts, k8s client config and
 // ConfigSet and returns a pointer to it.
 func NewFileTemplateRenderer(globalValuesFilePath, helmChartDirPath, componentName, namespace string) *FileTemplateRenderer {
+	fmt.Printf("NewFileTemplateRenderer with helmChart=%s, globalVals=%s\n", helmChartDirPath, globalValuesFilePath)
 	return &FileTemplateRenderer{
 		namespace:            namespace,
 		componentName:        componentName,
@@ -56,7 +64,7 @@ func NewFileTemplateRenderer(globalValuesFilePath, helmChartDirPath, componentNa
 // Run implements the TemplateRenderer interface.
 func (h *FileTemplateRenderer) Run() error {
 	var err error
-	if err := h.loadChart(); err != nil {
+	if err := h.LoadChart(); err != nil {
 		return err
 	}
 
@@ -69,7 +77,7 @@ func (h *FileTemplateRenderer) Run() error {
 		for {
 			select {
 			case <-chartChanged:
-				if err := h.loadChart(); err != nil {
+				if err := h.LoadChart(); err != nil {
 					log.Error(err.Error())
 				}
 			}
@@ -80,7 +88,8 @@ func (h *FileTemplateRenderer) Run() error {
 	return nil
 }
 
-func (h *FileTemplateRenderer) loadChart() error {
+// LoadChart implements the TemplateRenderer interface.
+func (h *FileTemplateRenderer) LoadChart() error {
 	var err error
 	if h.chart, err = chartutil.Load(h.helmChartDirPath); err != nil {
 		return err
@@ -93,17 +102,17 @@ func (h *FileTemplateRenderer) loadChart() error {
 	return nil
 }
 
-// Render renders the current helm templates with the current values and returns the resulting YAML manifest string.
-func (h *FileTemplateRenderer) Render(values string) (string, error) {
+// RenderManifest renders the current helm templates with the current values and returns the resulting YAML manifest string.
+func (h *FileTemplateRenderer) RenderManifest(values string) (string, error) {
 	if !h.started {
-		return "", fmt.Errorf("FileTemplateRenderer for %s not started in Render", h.componentName)
+		return "", fmt.Errorf("FileTemplateRenderer for %s not started in renderChart", h.componentName)
 	}
-	return Render(h.namespace, h.globalValues, values, h.chart)
+	return renderChart(h.namespace, h.globalValues, values, h.chart)
 }
 
-// Render renders the given chart with the given values and returns the resulting YAML manifest string.
-func Render(namespace, baseValues, overlayValues string, chrt *chart.Chart) (string, error) {
-	mergedValues, err := overlayYAML(baseValues, overlayValues)
+// renderChart renders the given chart with the given values and returns the resulting YAML manifest string.
+func renderChart(namespace, baseValues, overlayValues string, chrt *chart.Chart) (string, error) {
+	mergedValues, err := OverlayYAML(baseValues, overlayValues)
 	if err != nil {
 		return "", err
 	}
@@ -136,7 +145,9 @@ func Render(namespace, baseValues, overlayValues string, chrt *chart.Chart) (str
 	return sb.String(), nil
 }
 
-func overlayYAML(base, overlay string) (string, error) {
+// OverlayYAML patches the overlay tree over the base tree and returns the result. All trees are expressed as YAML
+// strings.
+func OverlayYAML(base, overlay string) (string, error) {
 	bj, err := yaml.YAMLToJSON([]byte(base))
 	if err != nil {
 		return "", fmt.Errorf("YAMLToJSON error in base: %s\n%s\n", err, bj)
@@ -157,21 +168,3 @@ func overlayYAML(base, overlay string) (string, error) {
 
 	return string(my), nil
 }
-
-/*
-func MergeValuesOverlay(base map[string]interface{}, overlay string) (map[string]interface{}, error) {
-	bstr, err := yaml.Marshal(base)
-	if err != nil {
-		return nil, err
-	}
-	my, err := OverlayYAML(string(bstr), overlay)
-	if err != nil {
-		return nil, err
-	}
-	out := make(map[string]interface{})
-	if err := yaml.Unmarshal([]byte(my), &out); err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-*/

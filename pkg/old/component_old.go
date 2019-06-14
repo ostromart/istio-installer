@@ -358,7 +358,7 @@ func (d *DeploymentComponent) Render(is *v1alpha1.InstallSpec) (string, error) {
 	//	log.Infof("values: \n%s\n", values)
 
 	log.Infof("Rendering %s", subchartDirPath)
-	baseYAML, err := helm.Render(d.namespace, string(values), chart)
+	baseYAML, err := helm.renderChart(d.namespace, string(values), chart)
 	if err != nil {
 		return "", err
 	}
@@ -410,7 +410,7 @@ func patchYAMLManifest(baseYAML string, resourceOverride []*unstructured.Unstruc
 		ret.Write(my)
 		ret.WriteString("\n---\n")
 	}
-	// Render the remaining objects with no overlays.
+	// renderChart the remaining objects with no overlays.
 	for k, oo := range bom {
 		if oom[k] != nil {
 			// Skip objects that have overlays.

@@ -1,6 +1,7 @@
-package installation
+package controlplane
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/ostromart/istio-installer/pkg/component/component"
@@ -11,24 +12,20 @@ import (
 	installerv1alpha1 "github.com/ostromart/istio-installer/pkg/apis/installer/v1alpha1"
 )
 
-type Installation interface {
-	Run() error
-	RenderManifest() (string, util.Errors)
-}
-type InstallationImpl struct {
-	features []feature.Feature
+// IstioControlPlane is an installation of an Istio control plane.
+type IstioControlPlane struct {
+	features []feature.IstioFeature
+	started  bool
 }
 
-func NewInstallation(installSpec *installerv1alpha1.IstioControlPlaneSpec, helmChartName, helmChartDir, globalValuesFilePath string, dirs component.ComponentDirLayout) Installation {
+// NewIstioControlPlane creates a new IstioControlPlane and returns a pointer to it.
+func NewIstioControlPlane(installSpec *installerv1alpha1.IstioControlPlaneSpec, dirs component.ComponentDirLayout) *IstioControlPlane {
 	opts := &feature.FeatureOptions{
-		InstallSpec:      installSpec,
-		HelmChartName:    helmChartName,
-		HelmChartDir:     helmChartDir,
-		GlobalValuesFile: globalValuesFilePath,
-		Dirs:             dirs,
+		InstallSpec: installSpec,
+		Dirs:        dirs,
 	}
-	return &InstallationImpl{
-		features: []feature.Feature{
+	return &IstioControlPlane{
+		features: []feature.IstioFeature{
 			feature.NewTrafficManagementFeature(opts),
 			feature.NewSecurityFeature(opts),
 			feature.NewPolicyFeature(opts),
@@ -39,16 +36,22 @@ func NewInstallation(installSpec *installerv1alpha1.IstioControlPlaneSpec, helmC
 	}
 }
 
-func (i InstallationImpl) Run() error {
+// Run starts the Istio control plane.
+func (i *IstioControlPlane) Run() error {
 	for _, f := range i.features {
 		if err := f.Run(); err != nil {
 			return err
 		}
 	}
+	i.started = true
 	return nil
 }
 
-func (i InstallationImpl) RenderManifest() (manifest string, errsOut util.Errors) {
+// RenderManifest returns a manifest rendered against
+func (i *IstioControlPlane) RenderManifest() (manifest string, errsOut util.Errors) {
+	if !i.started {
+		return "", util.NewErrs(fmt.Errorf("IstioControlPlane must be Run before calling RenderManifest"))
+	}
 	var sb strings.Builder
 	for _, f := range i.features {
 		s, errs := f.RenderManifest()
