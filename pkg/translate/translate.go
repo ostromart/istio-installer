@@ -3,7 +3,6 @@ package translate
 
 import (
 	"fmt"
-	"path/filepath"
 	"reflect"
 	"strings"
 
@@ -35,6 +34,8 @@ var (
 	V12Mappings = map[string]*Translation{
 		"Hub": {"global.hub", "", nil},
 		"Tag": {"global.tag", "", nil},
+
+		"TrafficManagement.Components.Proxy.Common.Values": {"global.proxy", "", nil},
 
 		"PolicyTelemetry.PolicyCheckFailOpen":       {"global.policyCheckFailOpen", "", nil},
 		"PolicyTelemetry.OutboundTrafficPolicyMode": {"global.outboundTrafficPolicy.mode", "", nil},
@@ -229,7 +230,7 @@ func insertLeaf(mappings map[string]*Translation, root util.Tree, newPath util.P
 
 // getValuesPathMapping tries to map path against the passed in mappings with a longest prefix match. If a matching prefix
 // is found, it returns the translated YAML path and the corresponding translation.
-// e.g. for mapping "a/b"  -> "1/2", the input path "a/b/c/d" would yield "1/2/c/d".
+// e.g. for mapping "a.b"  -> "1.2", the input path "a.b.c.d" would yield "1.2.c.d".
 func getValuesPathMapping(mappings map[string]*Translation, path util.Path) (string, *Translation) {
 	p := path
 	var m *Translation
@@ -248,7 +249,7 @@ func getValuesPathMapping(mappings map[string]*Translation, path util.Path) (str
 	}
 
 	d := len(path) - len(p)
-	out := filepath.Join(m.yAMLPath, path[len(path)-d:].String())
+	out := m.yAMLPath + "." + path[len(path)-d:].String()
 	dbgPrint("translating %s to %s", path, out)
 	return out, m
 }

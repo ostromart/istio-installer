@@ -17,6 +17,7 @@ package iop
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 
 	"github.com/ostromart/istio-installer/pkg/apis/istio/v1alpha2"
 	"github.com/ostromart/istio-installer/pkg/component/component"
@@ -50,26 +51,38 @@ func genManifest(args *rootArgs, printf, fatalf FormatFn) {
 	overlayYAML := string(b)
 
 	// Start with unmarshaling and validating the user CR (which is an overlay on the base profile).
-	overlaycps := &v1alpha2.IstioControlPlaneSpec{}
-	if err := util.UnmarshalWithJSONPB(overlayYAML, overlaycps); err != nil {
+	overlayICPS := &v1alpha2.IstioControlPlaneSpec{}
+	if err := util.UnmarshalWithJSONPB(overlayYAML, overlayICPS); err != nil {
 		fatalf(err.Error())
 	}
-	if errs := validate.CheckIstioControlPlaneSpec(overlaycps); len(errs) != 0 {
+	if errs := validate.CheckIstioControlPlaneSpec(overlayICPS); len(errs) != 0 {
 		fatalf(errs.ToError().Error())
 	}
 
 	// Now read the base profile specified in the user spec.
-	b, err = ioutil.ReadFile(util.GetLocalFilePath(overlaycps.BaseProfilePath))
+	b, err = ioutil.ReadFile(util.GetLocalFilePath(overlayICPS.BaseProfilePath))
 	if err != nil {
 		fmt.Printf("1")
 		fatalf(err.Error())
 	}
+	// Unmarshal and validate the base CR.
 	baseYAML := string(b)
+	baseICPS := &v1alpha2.IstioControlPlaneSpec{}
+	if err := util.UnmarshalWithJSONPB(baseYAML, baseICPS); err != nil {
+		fatalf(err.Error())
+	}
+	if errs := validate.CheckIstioControlPlaneSpec(baseICPS); len(errs) != 0 {
+		fatalf(errs.ToError().Error())
+	}
 
 	mergedYAML, err := helm.OverlayYAML(baseYAML, overlayYAML)
 	if err != nil {
 		fatalf(err.Error())
 	}
+
+	log.Printf("Base YAML:\n%s", baseYAML)
+	log.Printf("Overlay YAML:\n%s", overlayYAML)
+	log.Printf("Merged YAML:\n%s", mergedYAML)
 
 	// Now unmarshal and validate the combined base profile and user CR overlay.
 	mergedcps := &v1alpha2.IstioControlPlaneSpec{}
@@ -78,6 +91,10 @@ func genManifest(args *rootArgs, printf, fatalf FormatFn) {
 	}
 	if errs := validate.CheckIstioControlPlaneSpec(mergedcps); len(errs) != 0 {
 		fatalf(errs.ToError().Error())
+	}
+
+	if yd := util.YAMLDiff(mergedYAML, util.ToYAMLWithJSONPB(mergedcps)); yd != "" {
+		fatalf("Validated YAML differs from input: \n%s", yd)
 	}
 
 	cp := controlplane.NewIstioControlPlane(mergedcps, component.V12DirLayout)

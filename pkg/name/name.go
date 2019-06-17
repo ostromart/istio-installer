@@ -218,13 +218,16 @@ func SetFromPath(node interface{}, path string, out interface{}) (bool, error) {
 		return false, err
 	}
 	if !found {
+		fmt.Printf("path %s not found\n", path)
 		return false, nil
 	}
 	if util.IsValueNil(val) {
 		return true, nil
 	}
 
-	return true, Set(val, out)
+	err = Set(val, out)
+	fmt.Printf("SetFromPath in:\n%s\nout:\n%s\n", val, out)
+	return true, err
 }
 
 // Set sets out with the value at path from node. out is not set if the path doesn't exist or the value is nil.
@@ -232,6 +235,7 @@ func Set(val, out interface{}) error {
 	// Special case: map out type must be set through map ptr.
 	if util.IsMap(val) && util.IsMapPtr(out) {
 		reflect.ValueOf(out).Elem().Set(reflect.ValueOf(val))
+		fmt.Printf("setting map %s\n", out)
 		return nil
 	}
 	if util.IsSlice(val) && util.IsSlicePtr(out) {

@@ -3,6 +3,10 @@ customPackagePath: file:///usr/local/google/home/mostrowski/go/src/github.com/os
 trafficManagement:
   enabled: true
   components:
+    pilot:
+      common:
+        values:
+          image: my-custom-pilot
     proxy:
       common:
         enabled: false

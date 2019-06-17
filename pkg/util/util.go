@@ -238,6 +238,29 @@ func YAMLDiff(a, b string) string {
 	return diff.Diff(string(ay), string(by))
 }
 
+// ToYAML returns a YAML string representation of val, or the error string if an error occurs.
+func ToYAML(val interface{}) string {
+	y, err := yaml.Marshal(val)
+	if err != nil {
+		return err.Error()
+	}
+	return string(y)
+}
+
+// ToYAMLWithJSONPB returns a YAML string representation of val (using jsonpb), or the error string if an error occurs.
+func ToYAMLWithJSONPB(val proto.Message) string {
+	m := jsonpb.Marshaler{}
+	js, err := m.MarshalToString(val)
+	if err != nil {
+		return err.Error()
+	}
+	yb, err := yaml.JSONToYAML([]byte(js))
+	if err != nil {
+		return err.Error()
+	}
+	return string(yb)
+}
+
 // UnmarshalWithJSONPB unmarshals y into out using jsonpb (required for many proto defined structs).
 func UnmarshalWithJSONPB(y string, out proto.Message) error {
 	jb, err := yaml.YAMLToJSON([]byte(y))
@@ -245,7 +268,7 @@ func UnmarshalWithJSONPB(y string, out proto.Message) error {
 		return err
 	}
 
-	u := jsonpb.Unmarshaler{}
+	u := jsonpb.Unmarshaler{AllowUnknownFields: false}
 	err = u.Unmarshal(bytes.NewReader(jb), out)
 	if err != nil {
 		return err

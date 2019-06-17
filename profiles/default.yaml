@@ -1,15 +1,52 @@
 hub: docker.io/istio
 tag: 1.1.4
+
+# Traffic management feature
 trafficManagement:
   enabled: true
   components:
     namespace: istio-control
+
+    pilot:
+      common:
+        values:
+          autoscaleEnabled: true
+          autoscaleMin: 1
+          autoscaleMax: 5
+          replicaCount: 1
+          image: pilot
+          traceSampling: 1.0
+          resources:
+            requests:
+              cpu: 500m
+              memory: 2048Mi
+          configNamespace: istio-config
+          appNamespaces: []
+          env:
+            GODEBUG: gctrace=1
+          cpu:
+            targetAverageUtilization: 80
+          nodeSelector: {}
+          tolerations: []
+          podAntiAffinityLabelSelector: []
+          podAntiAffinityTermLabelSelector: []
+          keepaliveMaxServerConnectionAge: 30m
+          configMap: true
+          ingress:
+            ingressService: istio-ingressgateway
+            ingressControllerMode: "OFF"
+            ingressClass: istio
+          telemetry:
+            enabled: true
+          policy:
+            enabled: false
+          useMCP: true
+
     proxy:
       common:
         values:
           image: proxyv2
           clusterDomain: "cluster.local"
-          # Resources for the sidecar.
           resources:
             requests:
               cpu: 100m
@@ -32,31 +69,37 @@ trafficManagement:
           autoInject: enabled
           tracer: "zipkin"
 
+# Policy feature
 policy:
   enabled: true
   components:
     namespace: istio-policy
 
+# Telemetry feature
 telemetry:
   enabled: true
   components:
     namespace: istio-telemetry
 
+# Security feature
 security:
   enabled: true
   components:
     namespace: istio-security
 
+# Config management feature
 configManagement:
   enabled: true
   components:
     namespace: istio-control
 
+# Auto injection feature
 autoInjection:
   enabled: true
   components:
     namespace: istio-control
 
+# Global values passed through to helm global.yaml.
 values:
   logging:
     level: "default:info"
@@ -87,3 +130,9 @@ values:
   useMCP: true
   outboundTrafficPolicy:
     mode: ALLOW_ANY
+# TODO: remove requirement to set these to nil values. This is an issue with helm charts.
+  sds:
+    enabled: false
+    udsPath: ""
+    useTrustworthyJwt: false
+    useNormalJwt: false
