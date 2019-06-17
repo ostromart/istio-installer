@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"html/template"
 
-	"github.com/ostromart/istio-installer/pkg/component/component"
+	"github.com/ostromart/istio-installer/pkg/name"
 )
 
 var (
 	templateMap = map[string]*template.Template{
-		component.PilotComponentName: template.Must(template.New("name").Parse(`
+		string(name.PilotComponentName): template.Must(template.New("name").Parse(`
 global:
   {{.Pilot}}
 `)),

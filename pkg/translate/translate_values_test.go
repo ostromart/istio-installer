@@ -5,7 +5,7 @@ import (
 
 	"github.com/ghodss/yaml"
 	"github.com/ostromart/istio-installer/pkg/apis/istio/v1alpha2"
-	"github.com/ostromart/istio-installer/pkg/component/component"
+	"github.com/ostromart/istio-installer/pkg/name"
 	"github.com/ostromart/istio-installer/pkg/util"
 )
 
@@ -38,7 +38,7 @@ pilot:
 			if err := yaml.Unmarshal([]byte(tt.inYaml), tt.inStruct); err != nil {
 				t.Fatalf("Unmarshal: %s", err)
 			}
-			got, err := ValuesOverlayToValues(component.PilotComponentName, tt.inStruct)
+			got, err := ValuesOverlayToValues(string(name.PilotComponentName), tt.inStruct)
 			if gotErr, wantErr := errToString(err), tt.wantErr; gotErr != wantErr {
 				t.Fatalf("ValuesOverlayToValues(%s): gotErr:%s, wantErr:%s", tt.desc, gotErr, wantErr)
 			}

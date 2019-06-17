@@ -3,80 +3,40 @@ package component
 import (
 	"fmt"
 	"path/filepath"
-	"reflect"
 	"strings"
 
 	"github.com/ghodss/yaml"
-	protobuf "github.com/gogo/protobuf/types"
 	"github.com/ostromart/istio-installer/pkg/apis/istio/v1alpha2"
 	"github.com/ostromart/istio-installer/pkg/helm"
+	"github.com/ostromart/istio-installer/pkg/name"
 	"github.com/ostromart/istio-installer/pkg/patch"
+	"github.com/ostromart/istio-installer/pkg/translate"
 	"github.com/ostromart/istio-installer/pkg/util"
-
 	"istio.io/pkg/log"
 )
 
-// ComponentName is a component name string, typed to constrain allowed values.
-type ComponentName string
+// ComponentDirLayout is a mapping between a component name and a subdir path to its chart from the helm charts root.
+type ComponentDirLayout map[name.ComponentName]string
 
 const (
-	// IstioComponent names corresponding to the IstioControlPlane proto component names. Must be the same, since these
-	// are used for struct traversal.
-	IstioBaseComponentName       ComponentName = "crds"
-	PilotComponentName           ComponentName = "Pilot"
-	GalleyComponentName          ComponentName = "Galley"
-	SidecarInjectorComponentName ComponentName = "SidecarInjector"
-	PolicyComponentName          ComponentName = "Policy"
-	TelemetryComponentName       ComponentName = "Telemetry"
-	CitadelComponentName         ComponentName = "Citadel"
-	CertManagerComponentName     ComponentName = "CertManager"
-	NodeAgentComponentName       ComponentName = "NodeAgent"
-	IngressComponentName         ComponentName = "Ingress"
-	EgressComponentName          ComponentName = "Egress"
-
 	// String to emit for any component which is disabled.
 	componentDisabledStr = " component is disabled."
 	yamlCommentStr       = "# "
-
-	// LocalFilePrefix is a prefix for local files.
-	LocalFilePrefix = "file:///"
 )
-
-// ComponentDirLayout is a mapping between a component name and a subdir path to its chart from the helm charts root.
-type ComponentDirLayout map[ComponentName]string
 
 var (
 	// V12DirLayout is a ComponentDirLayout for Istio v1.2.
 	V12DirLayout = ComponentDirLayout{
-		PilotComponentName:           "istio-control/istio-discovery",
-		GalleyComponentName:          "istio-control/istio-config",
-		SidecarInjectorComponentName: "istio-control/istio-autoinject",
-		PolicyComponentName:          "istio-policy",
-		TelemetryComponentName:       "istio-telemetry",
-		CitadelComponentName:         "security/citadel",
-		NodeAgentComponentName:       "security/nodeagent",
-		CertManagerComponentName:     "security/certmanager",
-		IngressComponentName:         "gateways/istio-ingress",
-		EgressComponentName:          "gateways/istio-egress",
-	}
-	// componentToHelmValuesName is the root component name used in values YAML files in component charts.
-	componentToHelmValuesName = map[ComponentName]string{
-		PilotComponentName:           "pilot",
-		GalleyComponentName:          "galley",
-		SidecarInjectorComponentName: "sidecarInjectorWebhook",
-		PolicyComponentName:          "mixer.policy",
-		TelemetryComponentName:       "mixer.telemetry",
-		CitadelComponentName:         "citadel",
-		NodeAgentComponentName:       "nodeAgent",
-		CertManagerComponentName:     "certManager",
-		IngressComponentName:         "gateways.istio-ingressgateway",
-		EgressComponentName:          "gateways.istio-ingressgateway",
-	}
-)
-
-var (
-	validPathMessage = map[string]string{
-		"file://": ``,
+		name.PilotComponentName:           "istio-control/istio-discovery",
+		name.GalleyComponentName:          "istio-control/istio-config",
+		name.SidecarInjectorComponentName: "istio-control/istio-autoinject",
+		name.PolicyComponentName:          "istio-policy",
+		name.TelemetryComponentName:       "istio-telemetry",
+		name.CitadelComponentName:         "security/citadel",
+		name.NodeAgentComponentName:       "security/nodeagent",
+		name.CertManagerComponentName:     "security/certmanager",
+		name.IngressComponentName:         "gateways/istio-ingress",
+		name.EgressComponentName:          "gateways/istio-egress",
 	}
 )
 
@@ -100,7 +60,7 @@ type CommonComponentFields struct {
 	*ComponentOptions
 	enabled   bool
 	namespace string
-	name      ComponentName
+	name      name.ComponentName
 	renderer  helm.TemplateRenderer
 	started   bool
 }
@@ -115,7 +75,7 @@ func NewPilotComponent(opts *ComponentOptions) *PilotComponent {
 	ret := &PilotComponent{
 		&CommonComponentFields{
 			ComponentOptions: opts,
-			name:             PilotComponentName,
+			name:             name.PilotComponentName,
 		},
 	}
 	return ret
@@ -150,29 +110,42 @@ func runComponent(c *CommonComponentFields) error {
 
 // renderManifest renders the manifest for the component defined by c and returns the resulting string.
 func renderManifest(c *CommonComponentFields) (string, error) {
-	if !isComponentEnabled(c.FeatureName, c.name, c.InstallSpec) {
+	if !name.IsComponentEnabled(c.FeatureName, c.name, c.InstallSpec) {
 		return disabledYAMLStr(c.name), nil
 	}
 
-	vals, valsUnvalidated := make(map[string]interface{}), make(map[string]interface{})
-	validatedExist, err := SetFromPath(c.ComponentOptions.InstallSpec, "TrafficManagement.Components."+string(c.name)+".Common.ValuesOverrides", &vals)
-	if err != nil {
-		return "", err
-	}
-	unvalidatedExist, err := SetFromPath(c.ComponentOptions.InstallSpec, "TrafficManagement.Components."+string(c.name)+".Common.UnvalidatedValuesOverrides", &valsUnvalidated)
+	// First, translate the IstioControlPlane API to helm Values.
+	apiVals, err := translate.ProtoToValues(translate.V12Mappings, c.InstallSpec)
 	if err != nil {
 		return "", err
 	}
 
-	vals = valuesOverlaysToHelmValues(vals, c.name)
-	valsUnvalidated = valuesOverlaysToHelmValues(valsUnvalidated, c.name)
-	valsYAML, err := patchTree(vals, valsUnvalidated)
+	// Second, add any overlays coming from IstioControlPlane.Value and IstioControlPlane.Feature.Component values and
+	// unvalidatedValues.
+	globalVals, vals, valsUnvalidated := make(map[string]interface{}), make(map[string]interface{}), make(map[string]interface{})
+	_, err = name.SetFromPath(c.ComponentOptions.InstallSpec, "Values", &globalVals)
 	if err != nil {
 		return "", err
 	}
-	if validatedExist || unvalidatedExist {
-		log.Infof("patched values:\n%s\n", valsYAML)
+	_, err = name.SetFromPath(c.ComponentOptions.InstallSpec, "TrafficManagement.Components."+string(c.name)+".Common.ValuesOverrides", &vals)
+	if err != nil {
+		return "", err
 	}
+	_, err = name.SetFromPath(c.ComponentOptions.InstallSpec, "TrafficManagement.Components."+string(c.name)+".Common.UnvalidatedValuesOverrides", &valsUnvalidated)
+	if err != nil {
+		return "", err
+	}
+
+	globalVals = valuesOverlaysToHelmValues(vals, name.IstioBaseComponentName)
+	vals = valuesOverlaysToHelmValues(vals, c.name)
+	valsUnvalidated = valuesOverlaysToHelmValues(valsUnvalidated, c.name)
+	valsYAML, err := mergeTrees(apiVals, globalVals, vals, valsUnvalidated)
+	if err != nil {
+		return "", err
+	}
+
+	log.Infof("values from IstioControlPlane:\n%s\noverlay values:\n%s\nunvalidate overlay:\n%s\nmerged values:\n%s\n",
+		apiVals, vals, valsUnvalidated, valsYAML)
 
 	my, err := c.renderer.RenderManifest(valsYAML)
 	if err != nil {
@@ -181,7 +154,7 @@ func renderManifest(c *CommonComponentFields) (string, error) {
 	my += helm.YAMLSeparator + "\n"
 
 	var overlays []*v1alpha2.K8SObjectOverlay
-	found, err := SetFromPath(c.InstallSpec, "TrafficManagement.Components."+string(c.name)+".Common.K8S.Overlays", &overlays)
+	found, err := name.SetFromPath(c.InstallSpec, "TrafficManagement.Components."+string(c.name)+".Common.K8S.Overlays", &overlays)
 	if err != nil {
 		return "", err
 	}
@@ -193,82 +166,46 @@ func renderManifest(c *CommonComponentFields) (string, error) {
 	return patch.PatchYAMLManifest(my, c.namespace, overlays)
 }
 
-// isComponentEnabled reports whether the given feature and component are enabled in the given spec. The logic is, in
-// order of evaluation:
-// 1. if the feature is not defined, the component is disabled, else
-// 2. if the feature is disabled, the component is disabled, else
-// 3. if the component is not defined, it is reported disabled, else
-// 4. if the component disabled, it is reported disabled, else
-// 5. the component is enabled.
-// This follows the logic description in IstioControlPlane proto.
-func isComponentEnabled(featureName string, componentName ComponentName, installSpec *v1alpha2.IstioControlPlaneSpec) bool {
-	featureNodeI, found, err := GetFromStructPath(installSpec, featureName+".Enabled")
-	if err != nil {
-		log.Error(err.Error())
-		return false
-	}
-	if !found {
-		return false
-	}
-	if featureNodeI == nil {
-		return false
-	}
-	featureNode, ok := featureNodeI.(*protobuf.BoolValue)
-	if !ok {
-		log.Errorf("feature %s enabled has bad type %T, expect *protobuf.BoolValue", featureName, featureNodeI)
-	}
-	if featureNode == nil {
-		return false
-	}
-	if featureNode.Value == false {
-		return false
-	}
-
-	componentNodeI, found, err := GetFromStructPath(installSpec, featureName+".Components."+string(componentName)+".Common.Enabled")
-	if err != nil {
-		log.Error(err.Error())
-		return featureNode.Value
-	}
-	if !found {
-		return featureNode.Value
-	}
-	if componentNodeI == nil {
-		return featureNode.Value
-	}
-	componentNode, ok := componentNodeI.(*protobuf.BoolValue)
-	if !ok {
-		log.Errorf("component %s enabled has bad type %T, expect *protobuf.BoolValue", componentName, componentNodeI)
-		return featureNode.Value
-	}
-	if componentNode == nil {
-		return featureNode.Value
-	}
-	return componentNode.Value
-}
-
 // disabledYAMLStr returns the YAML comment string that the given component is disabled.
-func disabledYAMLStr(componentName ComponentName) string {
+func disabledYAMLStr(componentName name.ComponentName) string {
 	return yamlCommentStr + string(componentName) + componentDisabledStr
 }
 
-// patchTree patches the tree represented by patch over the tree represented by base and returns a YAML string of the
-// result.
-func patchTree(base, patch map[string]interface{}) (string, error) {
-	by, err := yaml.Marshal(base)
+// mergeTrees overlays global values, component values and unvalidatedValues (in that order) over the YAML tree in
+// apiValues and returns the result.
+// The merge operation looks something like this (later items are merged on top of earlier ones):
+// - values derived from translating IstioControlPlane to values
+// - values in top level IstioControlPlane
+// - values from component
+// - unvalidateValues from component
+func mergeTrees(apiValues string, globalVals, values, unvalidatedValues map[string]interface{}) (string, error) {
+	gy, err := yaml.Marshal(globalVals)
 	if err != nil {
 		return "", err
 	}
-	py, err := yaml.Marshal(patch)
+	by, err := yaml.Marshal(values)
 	if err != nil {
 		return "", err
 	}
-	//fmt.Printf("base:\n%s\n\npatch:\n%s\n", string(by), string(py))
-	return helm.OverlayYAML(string(by), string(py))
+	py, err := yaml.Marshal(unvalidatedValues)
+	if err != nil {
+		return "", err
+	}
+	//fmt.Printf("values:\n%s\n\npatch:\n%s\n", string(by), string(py))
+	yo, err := helm.OverlayYAML(apiValues, string(gy))
+	if err != nil {
+		return "", err
+	}
+	yyo, err := helm.OverlayYAML(yo, string(by))
+	if err != nil {
+		return "", err
+	}
+	return helm.OverlayYAML(yyo, string(py))
 }
 
-func valuesOverlaysToHelmValues(in map[string]interface{}, cname ComponentName) map[string]interface{} {
+func valuesOverlaysToHelmValues(in map[string]interface{}, cname name.ComponentName) map[string]interface{} {
 	out := make(map[string]interface{})
-	toPath, ok := componentToHelmValuesName[cname]
+	toPath, ok := translate.ComponentToHelmValuesName[cname]
 	if !ok {
 		log.Errorf("missing translation path for %s in valuesOverlaysToHelmValues", cname)
 		return nil
@@ -287,132 +224,36 @@ func valuesOverlaysToHelmValues(in map[string]interface{}, cname ComponentName) 
 // createHelmRenderer creates a helm renderer for the component defined by c and returns a ptr to it.
 func createHelmRenderer(c *CommonComponentFields) (helm.TemplateRenderer, error) {
 	cp := c.InstallSpec.CustomPackagePath
-
+	chartSubdir := ""
 	switch {
 	case cp == "":
 		return nil, fmt.Errorf("compiled in CustomPackagePath not yet supported")
-	case isFilePath(cp):
-		chartRoot := filepath.Join(getLocalFilePath(cp))
-		chartSubdir := filepath.Join(chartRoot, c.Dirs[c.name])
-		valuesPath := getValuesFilename(c.InstallSpec)
-		if !isFilePath(valuesPath) {
-			valuesPath = filepath.Join(chartRoot, valuesPath)
-		}
-		return helm.NewFileTemplateRenderer(valuesPath, chartSubdir, string(c.name), c.namespace), nil
+	case util.IsFilePath(cp):
+		chartRoot := filepath.Join(util.GetLocalFilePath(cp))
+		chartSubdir = filepath.Join(chartRoot, c.Dirs[c.name])
 	default:
+		return nil, fmt.Errorf("unsupported CustomPackagePath type: %s", cp)
 	}
-	return nil, fmt.Errorf("unsupported CustomPackagePath type: %s", cp)
-}
+	vp := c.InstallSpec.BaseProfilePath
+	valuesPath := ""
+	switch {
+	case vp == "":
+		return nil, fmt.Errorf("compiled in CustomPackagePath not yet supported")
+	case util.IsFilePath(vp):
+		valuesPath = util.GetLocalFilePath(vp)
+	default:
+		return nil, fmt.Errorf("unsupported BaseProfilePath type: %s", cp)
+	}
+	return helm.NewFileTemplateRenderer(valuesPath, chartSubdir, string(c.name), c.namespace), nil
 
-// isFilePath reports whether the given URL is a local file path.
-func isFilePath(path string) bool {
-	return strings.HasPrefix(path, LocalFilePrefix)
-}
-
-// getLocalFilePath returns the local file path string of the form /a/b/c, given a file URL of the form file:///a/b/c
-func getLocalFilePath(path string) string {
-	// LocalFilePrefix always starts with file:/// but this includes the absolute path leading slash, preserve that.
-	return "/" + strings.TrimPrefix(path, LocalFilePrefix)
 }
 
 // getValuesFilename returns the global values filename, given an IstioControlPlaneSpec.
 func getValuesFilename(i *v1alpha2.IstioControlPlaneSpec) string {
-	if i.BaseSpecPath == "" {
+	if i.BaseProfilePath == "" {
 		return helm.DefaultGlobalValuesFilename
 	}
-	return i.BaseSpecPath
-}
-
-// TODO: move these out to a separate package.
-// SetFromPath sets out with the value at path from node. out is not set if the path doesn't exist or the value is nil.
-// All intermediate along path must be type struct ptr. Out must be either a struct ptr or map ptr.
-func SetFromPath(node interface{}, path string, out interface{}) (bool, error) {
-	val, found, err := GetFromStructPath(node, path)
-	if err != nil {
-		return false, err
-	}
-	if !found {
-		return false, nil
-	}
-	if util.IsValueNil(val) {
-		return true, nil
-	}
-
-	return true, Set(val, out)
-}
-
-// Set sets out with the value at path from node. out is not set if the path doesn't exist or the value is nil.
-func Set(val, out interface{}) error {
-	// Special case: map out type must be set through map ptr.
-	if util.IsMap(val) && util.IsMapPtr(out) {
-		reflect.ValueOf(out).Elem().Set(reflect.ValueOf(val))
-		return nil
-	}
-	if util.IsSlice(val) && util.IsSlicePtr(out) {
-		reflect.ValueOf(out).Elem().Set(reflect.ValueOf(val))
-		return nil
-	}
-
-	if reflect.TypeOf(val) != reflect.TypeOf(out) {
-		return fmt.Errorf("SetFromPath from type %T != to type %T, %v", val, out, util.IsSlicePtr(out))
-	}
-
-	if !reflect.ValueOf(out).CanSet() {
-		return fmt.Errorf("can't set %v(%T) to out type %T", val, val, out)
-	}
-	reflect.ValueOf(out).Set(reflect.ValueOf(val))
-	return nil
-}
-
-// GetFromStructPath returns the value at path from the given node, or false if the path does not exist.
-// Node and all intermediate along path must be type struct ptr.
-func GetFromStructPath(node interface{}, path string) (interface{}, bool, error) {
-	return getFromStructPath(node, util.PathFromString(path))
-}
-
-// getFromStructPath is the internal implementation of GetFromStructPath which recurses through a tree of Go structs
-// given a path. It terminates when the end of the path is reached or a path element does not exist.
-func getFromStructPath(node interface{}, path util.Path) (interface{}, bool, error) {
-	kind := reflect.TypeOf(node).Kind()
-	var structElems reflect.Value
-	switch kind {
-	case reflect.Map, reflect.Slice:
-		if len(path) != 0 {
-			return nil, false, fmt.Errorf("GetFromStructPath path %s, unsupported leaf type %T", path, node)
-		}
-	case reflect.Ptr:
-		structElems = reflect.ValueOf(node).Elem()
-		if reflect.TypeOf(structElems).Kind() != reflect.Struct {
-			return nil, false, fmt.Errorf("GetFromStructPath path %s, expected struct ptr, got %T", path, node)
-		}
-	default:
-		return nil, false, fmt.Errorf("GetFromStructPath path %s, unsupported type %T", path, node)
-	}
-	if len(path) == 0 {
-		return node, true, nil
-	}
-
-	if util.IsNilOrInvalidValue(structElems) {
-		return nil, false, nil
-	}
-
-	for i := 0; i < structElems.NumField(); i++ {
-		fieldName := structElems.Type().Field(i).Name
-
-		if fieldName != path[0] {
-			continue
-		}
-
-		fv := structElems.Field(i)
-		kind = structElems.Type().Field(i).Type.Kind()
-		if kind != reflect.Ptr && kind != reflect.Map && kind != reflect.Slice {
-			return nil, false, fmt.Errorf("struct field %s is %T, expect struct ptr, map or slice", fieldName, fv.Interface())
-		}
-
-		return getFromStructPath(fv.Interface(), path[1:])
-	}
-
-	return nil, false, nil
+	return i.BaseProfilePath
 }
 
 // TODO: implement below components once Pilot looks good.

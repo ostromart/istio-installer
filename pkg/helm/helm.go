@@ -7,14 +7,12 @@ import (
 
 	jsonpatch "github.com/evanphx/json-patch"
 	"github.com/ghodss/yaml"
-
 	"github.com/ostromart/istio-installer/pkg/util/fswatch"
+	"istio.io/pkg/log"
 	"k8s.io/helm/pkg/chartutil"
 	"k8s.io/helm/pkg/engine"
 	"k8s.io/helm/pkg/proto/hapi/chart"
 	"k8s.io/helm/pkg/timeconv"
-
-	"istio.io/pkg/log"
 )
 
 const (
@@ -64,6 +62,7 @@ func NewFileTemplateRenderer(globalValuesFilePath, helmChartDirPath, componentNa
 // Run implements the TemplateRenderer interface.
 func (h *FileTemplateRenderer) Run() error {
 	var err error
+	fmt.Printf("Run with %s, %s\n", h.globalValuesFilePath, h.helmChartDirPath)
 	if err := h.LoadChart(); err != nil {
 		return err
 	}

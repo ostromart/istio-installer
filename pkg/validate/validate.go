@@ -7,8 +7,6 @@ import (
 	"strings"
 
 	"github.com/ostromart/istio-installer/pkg/apis/istio/v1alpha2"
-	"github.com/ostromart/istio-installer/pkg/component/component"
-
 	"github.com/ostromart/istio-installer/pkg/util"
 )
 
@@ -17,6 +15,7 @@ var (
 	defaultValidations = map[string]ValidatorFunc{
 		"Hub":                    validateHub,
 		"Tag":                    validateTag,
+		"BaseSpecPath":           validateInstallPackagePath,
 		"CustomPackagePath":      validateInstallPackagePath,
 		"DefaultNamespacePrefix": validateDefaultNamespacePrefix,
 	}
@@ -114,7 +113,7 @@ func validateDefaultNamespacePrefix(path util.Path, val interface{}) util.Errors
 func validateInstallPackagePath(path util.Path, val interface{}) util.Errors {
 	valStr, ok := val.(string)
 	if !ok {
-		return util.NewErrs(fmt.Errorf("validateDefaultNamespacePrefix(%s) bad type %T, want string", path, val))
+		return util.NewErrs(fmt.Errorf("validateInstallPackagePath(%s) bad type %T, want string", path, val))
 	}
 
 	if valStr == "" {
@@ -126,9 +125,9 @@ func validateInstallPackagePath(path util.Path, val interface{}) util.Errors {
 		return util.NewErrs(fmt.Errorf("invalid value %s:%s", path, valStr))
 	}
 
-	validPrefixes := []string{component.LocalFilePrefix}
+	validPrefixes := []string{util.LocalFilePrefix}
 	validPrefixDesc := map[string]string{
-		component.LocalFilePrefix: "RFC 8089 absolute path to file e.g. file:///var/istio/config.yaml",
+		util.LocalFilePrefix: "RFC 8089 absolute path to file e.g. file:///var/istio/config.yaml",
 	}
 
 	for _, vp := range validPrefixes {
@@ -137,7 +136,7 @@ func validateInstallPackagePath(path util.Path, val interface{}) util.Errors {
 		}
 	}
 
-	errStr := "Invalid path prefix in " + valStr + ". \nMust be one of the following:\n"
+	errStr := fmt.Sprintf("Invalid path prefix for %s: %s. \nMust be one of the following:\n", path, valStr)
 	for _, vp := range validPrefixes {
 		errStr += fmt.Sprintf("%-15s %s", vp, validPrefixDesc[vp])
 	}

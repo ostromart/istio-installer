@@ -18,12 +18,12 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/ostromart/istio-installer/pkg/apis/installer/v1alpha2"
-	"github.com/ostromart/istio-installer/pkg/validate"
-
+	"github.com/ostromart/istio-installer/pkg/apis/istio/v1alpha2"
 	"github.com/ostromart/istio-installer/pkg/component/component"
 	"github.com/ostromart/istio-installer/pkg/component/controlplane"
+	"github.com/ostromart/istio-installer/pkg/helm"
 	"github.com/ostromart/istio-installer/pkg/util"
+	"github.com/ostromart/istio-installer/pkg/validate"
 	"github.com/spf13/cobra"
 )
 
@@ -47,15 +47,40 @@ func genManifest(args *rootArgs, printf, fatalf FormatFn) {
 	if err != nil {
 		fatalf(err.Error())
 	}
-	icp := &v1alpha2.IstioControlPlaneSpec{}
-	if err := util.UnmarshalWithJSONPB(string(b), icp); err != nil {
+	overlayYAML := string(b)
+
+	// Start with unmarshaling and validating the user CR (which is an overlay on the base profile).
+	overlaycps := &v1alpha2.IstioControlPlaneSpec{}
+	if err := util.UnmarshalWithJSONPB(overlayYAML, overlaycps); err != nil {
 		fatalf(err.Error())
 	}
-	if errs := validate.CheckIstioControlPlaneSpec(icp); len(errs) != 0 {
+	if errs := validate.CheckIstioControlPlaneSpec(overlaycps); len(errs) != 0 {
 		fatalf(errs.ToError().Error())
 	}
 
-	cp := controlplane.NewIstioControlPlane(icp, component.V12DirLayout)
+	// Now read the base profile specified in the user spec.
+	b, err = ioutil.ReadFile(util.GetLocalFilePath(overlaycps.BaseProfilePath))
+	if err != nil {
+		fmt.Printf("1")
+		fatalf(err.Error())
+	}
+	baseYAML := string(b)
+
+	mergedYAML, err := helm.OverlayYAML(baseYAML, overlayYAML)
+	if err != nil {
+		fatalf(err.Error())
+	}
+
+	// Now unmarshal and validate the combined base profile and user CR overlay.
+	mergedcps := &v1alpha2.IstioControlPlaneSpec{}
+	if err := util.UnmarshalWithJSONPB(mergedYAML, mergedcps); err != nil {
+		fatalf(err.Error())
+	}
+	if errs := validate.CheckIstioControlPlaneSpec(mergedcps); len(errs) != 0 {
+		fatalf(errs.ToError().Error())
+	}
+
+	cp := controlplane.NewIstioControlPlane(mergedcps, component.V12DirLayout)
 	if err := cp.Run(); err != nil {
 		fatalf(err.Error())
 	}

@@ -13,7 +13,7 @@ import (
 
 var (
 	// debugPackage controls verbose debugging in this package. Used for offline debugging.
-	debugPackage = true
+	debugPackage = false
 
 	// alphaNumericRegexp defines the alpha numeric atom, typically a
 	// component of names. This only allows lower case characters and digits.

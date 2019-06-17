@@ -172,7 +172,6 @@ message IstioControlPlaneSpec {
 
     // Kustomize style overrides for default global values.yaml.
     // Values map[string]interface{} `protobuf:"bytes,6,opt,name=data" json:"values,omitempty"`
-
     // Global k8s defaults. Can be overridden per component.
     KubernetesResourcesSpec k8s_defaults = 80;
 
@@ -180,7 +179,7 @@ message IstioControlPlaneSpec {
     //   istio-minimal.yaml (looks in default dir)
     //   file://var/istio/install/values/custom/custom-install.yaml
     // Uses compiled in default install spec by default.
-    string base_spec_path = 100;
+    string base_profile_path = 100;
     // URL for the install package. e.g.
     //   http://github.com/istio/istio/releases/install/1.1.2
     //   http://github.com/istio/istio/releases/install/lts
@@ -389,7 +388,7 @@ message CommonComponentSpec {
     KubernetesResourcesSpec k8s = 80;
 
     // Kustomize style overrides for default values.yaml.
-    // Values map[string]interface{} `protobuf:"bytes,6,opt,name=data" json:"values,omitempty"`
+    // Values map[string]interface{} `protobuf:"bytes,6,opt,name=values" json:"values,omitempty"`
     // Kustomize style overrides for default values.yaml, without validation i.e. items here do not have to conform to
     // built-in values schema. Used for cases where forked templates are used with added parameters.
     // UnvalidatedValues map[string]interface{} `protobuf:"bytes,6,opt,name=data" json:"unvalidatedValues,omitempty"`
