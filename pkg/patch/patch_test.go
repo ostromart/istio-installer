@@ -1,3 +1,17 @@
+// Copyright 2019 Istio Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package patch
 
 import (
@@ -163,12 +177,12 @@ a:
 			if err != nil {
 				t.Fatalf("unmarshalWithJSONPB(%s): got error %s", tt.desc, err)
 			}
-			got, err := PatchYAMLManifest(base, "istio-system", rc.Overlays)
+			got, err := YAMLManifestPatch(base, "istio-system", rc.Overlays)
 			if gotErr, wantErr := errToString(err), tt.wantErr; gotErr != wantErr {
-				t.Fatalf("PatchYAMLManifest(%s): gotErr:%s, wantErr:%s", tt.desc, gotErr, wantErr)
+				t.Fatalf("YAMLManifestPatch(%s): gotErr:%s, wantErr:%s", tt.desc, gotErr, wantErr)
 			}
 			if want := tt.want; !util.IsYAMLEqual(got, want) {
-				t.Errorf("PatchYAMLManifest(%s): got:\n%s\n\nwant:\n%s\nDiff:\n%s\n", tt.desc, got, want, util.YAMLDiff(got, want))
+				t.Errorf("YAMLManifestPatch(%s): got:\n%s\n\nwant:\n%s\nDiff:\n%s\n", tt.desc, got, want, util.YAMLDiff(got, want))
 			}
 		})
 	}
@@ -412,12 +426,12 @@ spec:
 			if err != nil {
 				t.Fatalf("unmarshalWithJSONPB(%s): got error %s", tt.desc, err)
 			}
-			got, err := PatchYAMLManifest(base, "istio-system", rc.Overlays)
+			got, err := YAMLManifestPatch(base, "istio-system", rc.Overlays)
 			if gotErr, wantErr := errToString(err), tt.wantErr; gotErr != wantErr {
-				t.Fatalf("PatchYAMLManifest(%s): gotErr:%s, wantErr:%s", tt.desc, gotErr, wantErr)
+				t.Fatalf("YAMLManifestPatch(%s): gotErr:%s, wantErr:%s", tt.desc, gotErr, wantErr)
 			}
 			if want := tt.want; !util.IsYAMLEqual(got, want) {
-				t.Errorf("PatchYAMLManifest(%s): got:\n%s\n\nwant:\n%s\nDiff:\n%s\n", tt.desc, got, want, util.YAMLDiff(got, want))
+				t.Errorf("YAMLManifestPatch(%s): got:\n%s\n\nwant:\n%s\nDiff:\n%s\n", tt.desc, got, want, util.YAMLDiff(got, want))
 			}
 		})
 	}

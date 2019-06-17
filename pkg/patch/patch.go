@@ -1,3 +1,17 @@
+// Copyright 2019 Istio Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 /*
 Package patch implements a simple patching mechanism for k8s resources.
 Paths are specified in the form a.b.c.[key:value].d.[list_entry_value], where:
@@ -67,7 +81,6 @@ ADD
 that way in the object being patched.
 - [key:value] treats ':' as a special separator character. Any ':' in the key or value string must be escaped as \:.
 */
-
 package patch
 
 import (
@@ -86,7 +99,7 @@ import (
 
 var (
 	// debugPackage controls verbose debugging in this package. Used for offline debugging.
-	debugPackage = true
+	debugPackage = false
 )
 
 // pathContext provides a means for traversing a tree towards the root.
@@ -116,11 +129,11 @@ func makeNodeContext(obj interface{}) *pathContext {
 	}
 }
 
-// PatchYAMLManifest patches a base YAML in the given namespace with a list of overlays.
+// YAMLManifestPatch patches a base YAML in the given namespace with a list of overlays.
 // Each overlay has the format described in the K8SObjectOverlay definition.
 // It returns the patched manifest YAML.
-func PatchYAMLManifest(baseYAML string, namespace string, overlays []*v1alpha2.K8SObjectOverlay) (string, error) {
-	baseObjs, err := manifest.ParseObjectsFromYAMLManifest(baseYAML)
+func YAMLManifestPatch(baseYAML string, namespace string, overlays []*v1alpha2.K8SObjectOverlay) (string, error) {
+	baseObjs, err := manifest.ParseObjectsFromYAMLManifest(context.TODO(), baseYAML)
 	if err != nil {
 		return "", err
 	}
@@ -144,8 +157,13 @@ func PatchYAMLManifest(baseYAML string, namespace string, overlays []*v1alpha2.K
 			log.Errorf("patch error: %s", err)
 			continue
 		}
-		ret.Write(patched)
-		ret.WriteString("\n---\n")
+		if _, err := ret.Write(patched); err != nil {
+			log.Errorf("write: %s", err)
+		}
+		if _, err := ret.WriteString("\n---\n"); err != nil {
+			log.Errorf("patch WriteString error: %s", err)
+			continue
+		}
 	}
 	// Render the remaining objects with no overlays.
 	for k, oo := range bom {
@@ -158,8 +176,12 @@ func PatchYAMLManifest(baseYAML string, namespace string, overlays []*v1alpha2.K
 			log.Errorf("Object to YAML error (%s) for base object: \n%v", err, oo)
 			continue
 		}
-		ret.Write(oy)
-		ret.WriteString("\n---\n")
+		if _, err := ret.Write(oy); err != nil {
+			log.Errorf("write: %s", err)
+		}
+		if _, err := ret.WriteString("\n---\n"); err != nil {
+			log.Errorf("writeString: %s", err)
+		}
 	}
 	return ret.String(), nil
 }

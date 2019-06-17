@@ -5,13 +5,13 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ostromart/istio-installer/pkg/apis/istio/v1alpha2"
-
 	"github.com/ghodss/yaml"
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/kylelemons/godebug/diff"
 	"github.com/ostromart/istio-installer/pkg/util"
+	"github.com/ostromart/istio-installer/pkg/apis/istio/v1alpha2"
+
 )
 
 func TestUnmarshalKubernetes(t *testing.T) {

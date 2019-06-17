@@ -32,7 +32,7 @@ type Object struct {
 	yaml []byte
 }
 
-// NewObject
+// NewObject creates a new Object and returns a ptr to it.
 func NewObject(u *unstructured.Unstructured, json, yaml []byte) *Object {
 	o := &Object{
 		object: u,
@@ -84,7 +84,7 @@ func ParseJSONToObject(json []byte) (*Object, error) {
 	}, nil
 }
 
-// UnstructuredContent exposes the raw object, primarily for testing
+// UnstructuredObject exposes the raw object, primarily for testing
 func (o *Object) UnstructuredObject() *unstructured.Unstructured {
 	return o.object
 }
@@ -179,8 +179,12 @@ func ParseObjectsFromYAMLManifest(manifest string) (*Objects, error) {
 			yamls = append(yamls, b.String())
 			b.Reset()
 		} else {
-			b.WriteString(line)
-			b.WriteString("\n")
+			if _, err := b.WriteString(line); err != nil {
+				return nil, err
+			}
+			if _, err := b.WriteString("\n"); err != nil {
+				return nil, err
+			}
 		}
 	}
 	yamls = append(yamls, b.String())
@@ -229,7 +233,9 @@ func (os *Objects) JSONManifest() (string, error) {
 
 	for i, item := range os.Items {
 		if i != 0 {
-			b.WriteString("\n\n")
+			if _, err := b.WriteString("\n\n"); err != nil {
+				return "", err
+			}
 		}
 		// We build a JSON manifest because conversion to yaml is harder
 		// (and we've lost line numbers anyway if we applied any transforms)
@@ -237,7 +243,9 @@ func (os *Objects) JSONManifest() (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("error building json: %v", err)
 		}
-		b.Write(json)
+		if _, err := b.Write(json); err != nil {
+			return "", err
+		}
 	}
 
 	return b.String(), nil
