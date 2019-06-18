@@ -1,22 +1,34 @@
+// Copyright 2019 Istio Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 // Package translate defines translations from installer proto to values.yaml.
 package translate
 
 import (
 	"fmt"
-	"log"
 	"reflect"
 	"strings"
 
-	log2 "istio.io/pkg/log"
-
-	"github.com/ostromart/istio-installer/pkg/helm"
-
 	"github.com/ostromart/istio-installer/pkg/apis/istio/v1alpha2"
+	"github.com/ostromart/istio-installer/pkg/helm"
 	"github.com/ostromart/istio-installer/pkg/manifest"
 	"github.com/ostromart/istio-installer/pkg/name"
 	"github.com/ostromart/istio-installer/pkg/util"
 	"github.com/ostromart/istio-installer/pkg/version"
 	"gopkg.in/yaml.v2"
+
+	"istio.io/pkg/log"
 )
 
 // Translator is a set of mappings to translate between API paths, charts, values.yaml and k8s paths.
@@ -144,7 +156,7 @@ func (t *Translator) OverlayK8sSettings(objects *manifest.Objects, icp *v1alpha2
 			return err
 		}
 		if !found {
-			log.Printf("inPath %s not found in IstioControlPlaneSpec, skip map to output", v.inPath)
+			log.Infof("inPath %s not found in IstioControlPlaneSpec, skip map to output", v.inPath)
 			continue
 		}
 		path := util.PathFromString(v.outPath)
@@ -207,7 +219,7 @@ func (t *Translator) ValuesOverlaysToHelmValues(in map[string]interface{}, cname
 	out := make(map[string]interface{})
 	toPath, ok := t.ComponentToHelmValuesName[cname]
 	if !ok {
-		log2.Errorf("missing translation path for %s in ValuesOverlaysToHelmValues", cname)
+		log.Errorf("missing translation path for %s in ValuesOverlaysToHelmValues", cname)
 		return nil
 	}
 	pv := strings.Split(toPath, ".")

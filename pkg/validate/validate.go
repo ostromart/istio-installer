@@ -1,3 +1,17 @@
+// Copyright 2019 Istio Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package validate
 
 import (
@@ -19,6 +33,9 @@ var (
 		"CustomPackagePath":      validateInstallPackagePath,
 		"DefaultNamespacePrefix": validateDefaultNamespacePrefix,
 	}
+
+	// requiredValues lists all the values that must be non-empty.
+	requiredValues = map[string]bool{}
 )
 
 // CheckIstioControlPlaneSpec validates the values in the given Installer spec, using the field map defaultValidations to
@@ -88,6 +105,11 @@ func validate(validations map[string]ValidatorFunc, structPtr interface{}, path 
 func validateLeaf(validations map[string]ValidatorFunc, path util.Path, val interface{}) util.Errors {
 	pstr := path.String()
 	dbgPrintC("validate %s:%v(%T) ", pstr, val, val)
+	if !requiredValues[pstr] && (util.IsValueNil(val) || util.IsEmptyString(val)) {
+		// TODO(mostrowski): handle required fields.
+		dbgPrint("validate %s: OK (empty value)", pstr)
+		return nil
+	}
 
 	vf, ok := validations[pstr]
 	if !ok {

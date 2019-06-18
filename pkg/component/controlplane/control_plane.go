@@ -4,13 +4,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/ostromart/istio-installer/pkg/translate"
-
+	"github.com/ostromart/istio-installer/pkg/apis/istio/v1alpha2"
 	"github.com/ostromart/istio-installer/pkg/component/feature"
+	"github.com/ostromart/istio-installer/pkg/translate"
 	"github.com/ostromart/istio-installer/pkg/util"
-	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
-
-	installerv1alpha1 "github.com/ostromart/istio-installer/pkg/apis/istio/v1alpha2"
 )
 
 // IstioControlPlane is an installation of an Istio control plane.
@@ -20,7 +17,7 @@ type IstioControlPlane struct {
 }
 
 // NewIstioControlPlane creates a new IstioControlPlane and returns a pointer to it.
-func NewIstioControlPlane(installSpec *installerv1alpha1.IstioControlPlaneSpec, translator *translate.Translator) *IstioControlPlane {
+func NewIstioControlPlane(installSpec *v1alpha2.IstioControlPlaneSpec, translator *translate.Translator) *IstioControlPlane {
 	opts := &feature.FeatureOptions{
 		InstallSpec: installSpec,
 		Traslator:   translator,
