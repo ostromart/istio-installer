@@ -19,8 +19,10 @@ import (
 	"io/ioutil"
 	"log"
 
+	"github.com/ostromart/istio-installer/pkg/translate"
+	"github.com/ostromart/istio-installer/pkg/version"
+
 	"github.com/ostromart/istio-installer/pkg/apis/istio/v1alpha2"
-	"github.com/ostromart/istio-installer/pkg/component/component"
 	"github.com/ostromart/istio-installer/pkg/component/controlplane"
 	"github.com/ostromart/istio-installer/pkg/helm"
 	"github.com/ostromart/istio-installer/pkg/util"
@@ -97,7 +99,8 @@ func genManifest(args *rootArgs, printf, fatalf FormatFn) {
 		fatalf("Validated YAML differs from input: \n%s", yd)
 	}
 
-	cp := controlplane.NewIstioControlPlane(mergedcps, component.V12DirLayout)
+	// TODO: remove version hard coding.
+	cp := controlplane.NewIstioControlPlane(mergedcps, translate.Mappings[version.MinorVersion{1, 2}])
 	if err := cp.Run(); err != nil {
 		fatalf(err.Error())
 	}

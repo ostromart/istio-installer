@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"math/rand"
 	"reflect"
-	"regexp"
 	"strings"
 	"time"
 
@@ -22,12 +21,10 @@ func init() {
 }
 
 var (
-	letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
-	//
-	ValidKeyRegex = regexp.MustCompile("^[a-zA-Z0-9_-]*$")
-
 	// debugPackage controls verbose debugging in this package. Used for offline debugging.
 	debugPackage = false
+
+	letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 )
 
 // RandomString returns a random string of length n.

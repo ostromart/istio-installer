@@ -9,23 +9,40 @@ trafficManagement:
 
     pilot:
       common:
-        values:
-          autoscaleEnabled: true
-          autoscaleMin: 1
-          autoscaleMax: 5
+        k8s:
+#          env:
+#          - name: GODEBUG
+#            value: "gctrace=1"
+          hpaSpec:
+            maxReplicas: 5
+            minReplicas: 1
+            scaleTargetRef:
+              apiVersion: apps/v1
+              kind: Deployment
+              name: istio-pilot
+#            metrics:
+#              - type: Resource
+#                resource:
+#                  name: cpu
+#                  targetAverageUtilization: 80
           replicaCount: 1
-          image: pilot
-          traceSampling: 1.0
+#          readinessProbe:
+#            httpGet:
+#              path: /ready
+#              port: 8080
+#            initialDelaySeconds: 5
+#            periodSeconds: 30
+#            timeoutSeconds: 5
           resources:
             requests:
               cpu: 500m
               memory: 2048Mi
+
+        values:
+          image: pilot
+          traceSampling: 1.0
           configNamespace: istio-config
           appNamespaces: []
-          env:
-            GODEBUG: gctrace=1
-          cpu:
-            targetAverageUtilization: 80
           nodeSelector: {}
           tolerations: []
           podAntiAffinityLabelSelector: []
