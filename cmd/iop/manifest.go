@@ -100,7 +100,7 @@ func genManifest(args *rootArgs, printf, fatalf FormatFn) {
 	}
 
 	// TODO: remove version hard coding.
-	cp := controlplane.NewIstioControlPlane(mergedcps, translate.Mappings[version.MinorVersion{1, 2}])
+	cp := controlplane.NewIstioControlPlane(mergedcps, translate.Translators[version.MinorVersion{1, 2}])
 	if err := cp.Run(); err != nil {
 		fatalf(err.Error())
 	}

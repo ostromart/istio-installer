@@ -210,7 +210,7 @@ func (f *AutoInjectionFeature) RenderManifest() (string, util.Errors) {
 func newComponentOptions(cff *CommonFeatureFields, featureName name.FeatureName) *component.ComponentOptions {
 	return &component.ComponentOptions{
 		InstallSpec: cff.InstallSpec,
-		FeatureName: string(featureName),
+		FeatureName: featureName,
 		Translator:  cff.Traslator,
 	}
 }

@@ -51,12 +51,13 @@ func IsValidPathElement(pe string) bool {
 
 // IsKVPathElement report whether pe is a key/value path element.
 func IsKVPathElement(pe string) bool {
-	pe, ok := removeBrackets(pe)
+	pe, ok := RemoveBrackets(pe)
 	if !ok {
 		return false
 	}
 
 	kv := splitEscaped(pe, kvSeparatorRune)
+	fmt.Printf("pe %s kv is %v\n", pe, kv)
 	if len(kv) != 2 || len(kv[0]) == 0 || len(kv[1]) == 0 {
 		return false
 	}
@@ -65,7 +66,7 @@ func IsKVPathElement(pe string) bool {
 
 // IsVPathElement report whether pe is a value path element.
 func IsVPathElement(pe string) bool {
-	pe, ok := removeBrackets(pe)
+	pe, ok := RemoveBrackets(pe)
 	if !ok {
 		return false
 	}
@@ -79,7 +80,7 @@ func PathKV(pe string) (k, v string, err error) {
 	if !IsKVPathElement(pe) {
 		return "", "", fmt.Errorf("%s is not a valid key:value path element", pe)
 	}
-	pe, _ = removeBrackets(pe)
+	pe, _ = RemoveBrackets(pe)
 	kv := splitEscaped(pe, kvSeparatorRune)
 	return kv[0], kv[1], nil
 }
@@ -90,13 +91,13 @@ func PathV(pe string) (string, error) {
 	if !IsVPathElement(pe) {
 		return "", fmt.Errorf("%s is not a valid value path element", pe)
 	}
-	v, _ := removeBrackets(pe)
+	v, _ := RemoveBrackets(pe)
 	return v, nil
 }
 
 // Remove brackets removes the [] around pe and returns the resulting string. It returns false if pe is not surrounded
 // by [].
-func removeBrackets(pe string) (string, bool) {
+func RemoveBrackets(pe string) (string, bool) {
 	if !strings.HasPrefix(pe, "[") || !strings.HasSuffix(pe, "]") {
 		return "", false
 	}
@@ -106,12 +107,18 @@ func removeBrackets(pe string) (string, bool) {
 // splitEscaped splits a string using the rune r as a separator. It does not split on r if it's prefixed by \.
 func splitEscaped(s string, r rune) []string {
 	var prev rune
+	if len(s) == 0 {
+		return []string{}
+	}
 	prevIdx := 0
 	var out []string
 	for i, c := range s {
-		if c == r && i > 0 && prev != 0 {
+		if c == r && (i == 0 || (i > 0 && prev != '\\')) {
 			out = append(out, s[prevIdx:i])
+			prevIdx = i + 1
 		}
+		prev = c
 	}
+	out = append(out, s[prevIdx:])
 	return out
 }

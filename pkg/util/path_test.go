@@ -1,7 +1,6 @@
 package util
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -14,12 +13,22 @@ func TestSplitEscaped(t *testing.T) {
 		{
 			desc: "empty",
 			in:   "",
-			want: nil,
+			want: []string{},
 		},
 		{
 			desc: "no match",
 			in:   "foo",
 			want: []string{"foo"},
+		},
+		{
+			desc: "first",
+			in:   ":foo",
+			want: []string{"", "foo"},
+		},
+		{
+			desc: "last",
+			in:   "foo:",
+			want: []string{"foo", ""},
 		},
 		{
 			desc: "multiple",
@@ -34,8 +43,8 @@ func TestSplitEscaped(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			if got, want := splitEscaped(tt.in, kvSeparatorRune), tt.want; stringSlicesEqual(got, want) {
-				fmt.Errorf("%s: got:%v, want:%v", tt.desc, got, want)
+			if got, want := splitEscaped(tt.in, kvSeparatorRune), tt.want; !stringSlicesEqual(got, want) {
+				t.Errorf("%s: got:%v, want:%v", tt.desc, got, want)
 			}
 		})
 	}

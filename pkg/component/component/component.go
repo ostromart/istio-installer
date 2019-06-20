@@ -24,7 +24,7 @@ var ()
 
 // ComponentOptions defines options for a component.
 type ComponentOptions struct {
-	FeatureName string
+	FeatureName name.FeatureName
 	InstallSpec *v1alpha2.IstioControlPlaneSpec
 	Translator  *translate.Translator
 }
@@ -151,14 +151,22 @@ func renderManifest(c *CommonComponentFields) (string, error) {
 	}
 	my += helm.YAMLSeparator + "\n"
 
-	// Add the k8s resource overlays from IstioControlPlaneSpec.
+	// Add the k8s resources from IstioControlPlaneSpec.
+	my, err = c.Translator.OverlayK8sSettings(my, c.InstallSpec, c.FeatureName, c.name)
+	if err != nil {
+		return "", err
+	}
+	log.Infof("manifest after k8s API settings:\n%s\n", my)
 
+	// Add the k8s resource overlays from IstioControlPlaneSpec.
+	pathToK8sOverlay := fmt.Sprintf("%s.Components.%s.Common.K8S.Overlays", c.FeatureName, c.name)
 	var overlays []*v1alpha2.K8SObjectOverlay
-	found, err := name.SetFromPath(c.InstallSpec, "TrafficManagement.Components."+string(c.name)+".Common.K8S.Overlays", &overlays)
+	found, err := name.SetFromPath(c.InstallSpec, pathToK8sOverlay, &overlays)
 	if err != nil {
 		return "", err
 	}
 	if !found {
+		fmt.Printf("K8S.Overlays not found\n")
 		return my, nil
 	}
 	kyo, _ := yaml.Marshal(overlays)
@@ -212,7 +220,7 @@ func createHelmRenderer(c *CommonComponentFields) (helm.TemplateRenderer, error)
 		return nil, fmt.Errorf("compiled in CustomPackagePath not yet supported")
 	case util.IsFilePath(cp):
 		chartRoot := filepath.Join(util.GetLocalFilePath(cp))
-		chartSubdir = filepath.Join(chartRoot, c.Translator.ComponentDirLayout[c.name])
+		chartSubdir = filepath.Join(chartRoot, c.Translator.ComponentMaps[c.name].HelmSubdir)
 	default:
 		return nil, fmt.Errorf("unsupported CustomPackagePath type: %s", cp)
 	}

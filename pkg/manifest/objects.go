@@ -24,6 +24,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/ostromart/istio-installer/pkg/helm"
+
 	"github.com/ghodss/yaml"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -323,4 +325,24 @@ func (os *Objects) ToNameKindMap() map[string]*Object {
 		ret[oo.HashNameKind()] = oo
 	}
 	return ret
+}
+
+// YAML returns a YAML representation of o, using an internal cache.
+func (os *Objects) YAML() (string, error) {
+	var sb strings.Builder
+	for _, o := range os.Items {
+		oy, err := o.YAML()
+		if err != nil {
+			return "", err
+		}
+		_, err = sb.Write(oy)
+		if err != nil {
+			return "", err
+		}
+		_, err = sb.WriteString(helm.YAMLSeparator)
+		if err != nil {
+			return "", err
+		}
+	}
+	return sb.String(), nil
 }

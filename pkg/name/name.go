@@ -51,8 +51,8 @@ const (
 // 4. if the component disabled, it is reported disabled, else
 // 5. the component is enabled.
 // This follows the logic description in IstioControlPlane proto.
-func IsComponentEnabled(featureName string, componentName ComponentName, installSpec *v1alpha2.IstioControlPlaneSpec) bool {
-	featureNodeI, found, err := GetFromStructPath(installSpec, featureName+".Enabled")
+func IsComponentEnabled(featureName FeatureName, componentName ComponentName, installSpec *v1alpha2.IstioControlPlaneSpec) bool {
+	featureNodeI, found, err := GetFromStructPath(installSpec, string(featureName)+".Enabled")
 	if err != nil {
 		log.Error(err.Error())
 		return false
@@ -74,7 +74,7 @@ func IsComponentEnabled(featureName string, componentName ComponentName, install
 		return false
 	}
 
-	componentNodeI, found, err := GetFromStructPath(installSpec, featureName+".Components."+string(componentName)+".Common.Enabled")
+	componentNodeI, found, err := GetFromStructPath(installSpec, string(featureName)+".Components."+string(componentName)+".Common.Enabled")
 	if err != nil {
 		log.Error(err.Error())
 		return featureNode.Value
@@ -183,7 +183,7 @@ func getFromStructPath(node interface{}, path util.Path) (interface{}, bool, err
 		return nil, false, fmt.Errorf("GetFromStructPath path %s, unsupported type %T", path, node)
 	}
 	if len(path) == 0 {
-		return node, true, nil
+		return node, !util.IsValueNil(node), nil
 	}
 
 	if util.IsNilOrInvalidValue(structElems) {
@@ -200,7 +200,11 @@ func getFromStructPath(node interface{}, path util.Path) (interface{}, bool, err
 		fv := structElems.Field(i)
 		kind = structElems.Type().Field(i).Type.Kind()
 		if kind != reflect.Ptr && kind != reflect.Map && kind != reflect.Slice {
-			return nil, false, fmt.Errorf("struct field %s is %T, expect struct ptr, map or slice", fieldName, fv.Interface())
+			if len(path) != 1 {
+				// Interior nodes cannot be scalars.
+				return nil, false, fmt.Errorf("struct field %s is %T, expect struct ptr, map or slice", fieldName, fv.Interface())
+			}
+			return node, true, nil
 		}
 
 		return getFromStructPath(fv.Interface(), path[1:])
