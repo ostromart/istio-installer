@@ -17,7 +17,6 @@ package iop
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
 
 	"github.com/ostromart/istio-installer/pkg/translate"
 	"github.com/ostromart/istio-installer/pkg/version"
@@ -81,10 +80,6 @@ func genManifest(args *rootArgs, printf, fatalf FormatFn) {
 	if err != nil {
 		fatalf(err.Error())
 	}
-
-	log.Printf("Base YAML:\n%s", baseYAML)
-	log.Printf("Overlay YAML:\n%s", overlayYAML)
-	log.Printf("Merged YAML:\n%s", mergedYAML)
 
 	// Now unmarshal and validate the combined base profile and user CR overlay.
 	mergedcps := &v1alpha2.IstioControlPlaneSpec{}

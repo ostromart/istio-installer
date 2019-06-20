@@ -166,7 +166,7 @@ func renderManifest(c *CommonComponentFields) (string, error) {
 		return "", err
 	}
 	if !found {
-		fmt.Printf("K8S.Overlays not found\n")
+		log.Info("K8S.Overlays not found\n")
 		return my, nil
 	}
 	kyo, _ := yaml.Marshal(overlays)
@@ -199,7 +199,6 @@ func mergeTrees(apiValues string, globalVals, values, unvalidatedValues map[stri
 	if err != nil {
 		return "", err
 	}
-	//fmt.Printf("values:\n%s\n\npatch:\n%s\n", string(by), string(py))
 	yo, err := helm.OverlayYAML(apiValues, string(gy))
 	if err != nil {
 		return "", err

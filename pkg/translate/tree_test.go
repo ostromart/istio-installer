@@ -117,7 +117,7 @@ a:
             i1: val2
 `,
 		}}
-	debugPackage = true
+	DebugPackage = true
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			root := make(map[string]interface{})
@@ -127,7 +127,7 @@ a:
 				}
 			}
 			p := util.PathFromString(tt.path)
-			err := setTree(root, p, tt.value, nil, "")
+			err := setTree(root, p, tt.value)
 			fmt.Println(err)
 			if gotErr, wantErr := errToString(err), tt.wantErr; gotErr != wantErr {
 				t.Errorf("TestSetYAML()%s: gotErr:%s, wantErr:%s", tt.desc, gotErr, wantErr)

@@ -98,8 +98,8 @@ import (
 )
 
 var (
-	// debugPackage controls verbose debugging in this package. Used for offline debugging.
-	debugPackage = false
+	// DebugPackage controls verbose debugging in this package. Used for offline debugging.
+	DebugPackage = false
 )
 
 // pathContext provides a means for traversing a tree towards the root.
@@ -389,11 +389,11 @@ func isMapOrInterface(v interface{}) bool {
 	return vv.Kind() == reflect.Map
 }
 
-// dbgPrint prints v if the package global variable debugPackage is set.
+// dbgPrint prints v if the package global variable DebugPackage is set.
 // v has the same format as Printf. A trailing newline is added to the output.
 func dbgPrint(v ...interface{}) {
-	if !debugPackage {
+	if !DebugPackage {
 		return
 	}
-	fmt.Println(fmt.Sprintf(v[0].(string), v[1:]...))
+	log.Infof(fmt.Sprintf(v[0].(string), v[1:]...))
 }

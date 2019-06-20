@@ -16,7 +16,6 @@ package translate
 
 import (
 	"bytes"
-	"fmt"
 	"strings"
 	"testing"
 
@@ -39,25 +38,57 @@ func TestProtoToValuesV12(t *testing.T) {
 	}{
 		{
 			desc: "nil success",
-			want: "",
+			want: `
+certmanager:
+  enabled: false
+global:
+  istioNamespace: ""
+  policyNamespace: ""
+  telemetryNamespace: ""
+mixer:
+  policy:
+    enabled: false
+  telemetry:
+    enabled: false
+nodeagent:
+  enabled: false
+pilot:
+  enabled: false
+security:
+  enabled: false
+`,
 		},
 		{
-			desc: "IstioInstaller",
+			desc: "global",
 			yamlStr: `
 hub: docker.io/istio
 tag: 1.2.3
-k8sDefaults:
-  resources:
-    requests:
-      cpu: "250m"
+defaultNamespacePrefix: istio-system
+security:
+  components:
+    namespace: istio-security
 `,
 			want: `
+certmanager:
+  enabled: false
 global:
   hub: docker.io/istio
+  istioNamespace: istio-system
+  policyNamespace: istio-system
   tag: 1.2.3
-  defaultResources:
-    requests:
-      cpu: "250m"
+  telemetryNamespace: istio-system
+mixer:
+  policy:
+    enabled: false
+  telemetry:
+    enabled: false
+nodeagent:
+  enabled: false
+pilot:
+  enabled: false
+security:
+  enabled: false
+
 `,
 		},
 		{
@@ -90,7 +121,6 @@ sidecarInjectorWebhook:
 
 	tr := Translators[version.MinorVersion{1, 2}]
 	for _, tt := range tests {
-		fmt.Println(tt.desc)
 		t.Run(tt.desc, func(t *testing.T) {
 			ispec := &v1alpha2.IstioControlPlaneSpec{}
 			err := unmarshalWithJSONPB(tt.yamlStr, ispec)
@@ -102,8 +132,8 @@ sidecarInjectorWebhook:
 			if gotErr, wantErr := errToString(err), tt.wantErr; gotErr != wantErr {
 				t.Errorf("ProtoToValues(%s)(%v): gotErr:%s, wantErr:%s", tt.desc, tt.yamlStr, gotErr, wantErr)
 			}
-			if got, want := stripNL(got), stripNL(tt.want); err == nil && !util.IsYAMLEqual(got, want) {
-				t.Errorf("ProtoToValues(%s) got:\n%s\nwant:\n%s\n", tt.desc, got, want)
+			if want := tt.want; !util.IsYAMLEqual(got, want) {
+				t.Errorf("ProtoToValues(%s): got:\n%s\n\nwant:\n%s\nDiff:\n%s\n", tt.desc, got, want, util.YAMLDiff(got, want))
 			}
 		})
 	}

@@ -170,11 +170,6 @@ message IstioControlPlaneSpec {
     repeated IngressGatewaySpec ingress_gateway = 31;
     repeated EgressGatewaySpec egress_gateway = 32;
 
-    // Kustomize style overrides for default global values.yaml.
-    // Values map[string]interface{} `protobuf:"bytes,6,opt,name=data" json:"values,omitempty"`
-    // Global k8s defaults. Can be overridden per component.
-    KubernetesResourcesSpec k8s_defaults = 80;
-
     // URL for the base spec. e.g.
     //   istio-minimal.yaml (looks in default dir)
     //   file://var/istio/install/values/custom/custom-install.yaml

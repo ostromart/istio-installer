@@ -1,14 +1,5 @@
 --- pkg/apis/istio/v1alpha2/istiocontrolplane_types.pb.go.orig	2019-06-16 13:44:49.243371242 -0700
 +++ pkg/apis/istio/v1alpha2/istiocontrolplane_types.pb.go	2019-06-16 13:45:24.347245138 -0700
-@@ -251,7 +251,7 @@
- 	IngressGateway []*IngressGatewaySpec `protobuf:"bytes,31,rep,name=ingress_gateway,json=ingressGateway,proto3" json:"ingress_gateway,omitempty"`
- 	EgressGateway  []*EgressGatewaySpec  `protobuf:"bytes,32,rep,name=egress_gateway,json=egressGateway,proto3" json:"egress_gateway,omitempty"`
- 	// Kustomize style overrides for default global values.yaml.
--	// Values map[string]interface{} `protobuf:"bytes,6,opt,name=data" json:"values,omitempty"`
-+	Values map[string]interface{} `protobuf:"bytes,6,opt,name=values" json:"values,omitempty"`
- 	// Global k8s defaults. Can be overridden per component.
- 	K8SDefaults *KubernetesResourcesSpec `protobuf:"bytes,80,opt,name=k8s_defaults,json=k8sDefaults,proto3" json:"k8s_defaults,omitempty"`
- 	// URL for the base spec. e.g.
 @@ -1623,6 +1623,8 @@
  	Debug     CommonComponentSpec_LogLevel `protobuf:"varint,3,opt,name=debug,proto3,enum=v1alpha2.CommonComponentSpec_LogLevel" json:"debug,omitempty"`
  	// Kubernetes resource spec.

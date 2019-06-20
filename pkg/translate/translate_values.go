@@ -17,6 +17,7 @@ global:
 	}
 )
 
+// ValuesOverlayToValues translates value overlays in CRD to helm paths.
 func ValuesOverlayToValues(componentName string, componentStruct interface{}) (string, error) {
 	if templateMap[componentName] == nil {
 		return "", fmt.Errorf("component %s does not have a template", componentName)

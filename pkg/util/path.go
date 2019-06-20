@@ -57,7 +57,6 @@ func IsKVPathElement(pe string) bool {
 	}
 
 	kv := splitEscaped(pe, kvSeparatorRune)
-	fmt.Printf("pe %s kv is %v\n", pe, kv)
 	if len(kv) != 2 || len(kv[0]) == 0 || len(kv[1]) == 0 {
 		return false
 	}

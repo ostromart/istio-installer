@@ -10,6 +10,10 @@ import (
 	"istio.io/pkg/log"
 )
 
+var (
+	DebugPackage = false
+)
+
 // FeatureName is a feature name string, typed to constrain allowed values.
 type FeatureName string
 
@@ -102,9 +106,9 @@ func IsComponentEnabled(featureName FeatureName, componentName ComponentName, in
 // 3. If the feature namespace is set but component name is unset, return the feature namespace.
 // 4. Otherwise return the component namespace.
 func Namespace(featureName string, componentName ComponentName, installSpec *v1alpha2.IstioControlPlaneSpec) string {
-	defaultNamespaceI, found, err := GetFromStructPath(installSpec, "CustomPackagePath")
+	defaultNamespaceI, found, err := GetFromStructPath(installSpec, "DefaultNamespacePrefix")
 	if !found {
-		log.Error("can't find any default for CustomPackagePath")
+		log.Error("can't find any default for DefaultNamespacePrefix")
 		return ""
 	}
 	if err != nil {
@@ -114,7 +118,7 @@ func Namespace(featureName string, componentName ComponentName, installSpec *v1a
 	}
 	defaultNamespace, ok := defaultNamespaceI.(string)
 	if !ok {
-		log.Errorf("CustomPackagePath has bad type %T, expect string", defaultNamespaceI)
+		log.Errorf("DefaultNamespacePrefix has bad type %T, expect string", defaultNamespaceI)
 		return ""
 	}
 
@@ -167,6 +171,11 @@ func GetFromStructPath(node interface{}, path string) (interface{}, bool, error)
 // getFromStructPath is the internal implementation of GetFromStructPath which recurses through a tree of Go structs
 // given a path. It terminates when the end of the path is reached or a path element does not exist.
 func getFromStructPath(node interface{}, path util.Path) (interface{}, bool, error) {
+	dbgPrint("getFromStructPath path=%s, node(%T)", path, node)
+	if len(path) == 0 {
+		dbgPrint("getFromStructPath returning node(%T)%v", node, node)
+		return node, !util.IsValueNil(node), nil
+	}
 	kind := reflect.TypeOf(node).Kind()
 	var structElems reflect.Value
 	switch kind {
@@ -182,9 +191,6 @@ func getFromStructPath(node interface{}, path util.Path) (interface{}, bool, err
 	default:
 		return nil, false, fmt.Errorf("GetFromStructPath path %s, unsupported type %T", path, node)
 	}
-	if len(path) == 0 {
-		return node, !util.IsValueNil(node), nil
-	}
 
 	if util.IsNilOrInvalidValue(structElems) {
 		return nil, false, nil
@@ -199,13 +205,13 @@ func getFromStructPath(node interface{}, path util.Path) (interface{}, bool, err
 
 		fv := structElems.Field(i)
 		kind = structElems.Type().Field(i).Type.Kind()
-		if kind != reflect.Ptr && kind != reflect.Map && kind != reflect.Slice {
-			if len(path) != 1 {
-				// Interior nodes cannot be scalars.
-				return nil, false, fmt.Errorf("struct field %s is %T, expect struct ptr, map or slice", fieldName, fv.Interface())
-			}
-			return node, true, nil
-		}
+		/*		if kind != reflect.Ptr && kind != reflect.Map && kind != reflect.Slice {
+				if len(path) != 1 {
+					// Interior nodes cannot be scalars.
+					return nil, false, fmt.Errorf("struct field %s is %T, expect struct ptr, map or slice", fieldName, fv.Interface())
+				}
+				return node, true, nil
+			}*/
 
 		return getFromStructPath(fv.Interface(), path[1:])
 	}
@@ -253,4 +259,11 @@ func Set(val, out interface{}) error {
 	}
 	reflect.ValueOf(out).Set(reflect.ValueOf(val))
 	return nil
+}
+
+func dbgPrint(v ...interface{}) {
+	if !DebugPackage {
+		return
+	}
+	log.Infof(fmt.Sprintf(v[0].(string), v[1:]...))
 }

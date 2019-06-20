@@ -32,6 +32,11 @@ import (
 	"istio.io/pkg/log"
 )
 
+var (
+	// DebugPackage controls detailed debug output for this package.
+	DebugPackage = true
+)
+
 // Translator is a set of mappings to translate between API paths, charts, values.yaml and k8s paths.
 type Translator struct {
 	// Translations remain the same within a minor version.
@@ -44,9 +49,11 @@ type Translator struct {
 	KubernetesMapping map[string]*Translation
 	// FeatureComponentToValues maps from feature and component names to value paths in values.yaml schema.
 	FeatureComponentToValues map[name.FeatureName]map[name.ComponentName]componentValuePaths
-	ComponentMaps            map[name.ComponentName]*ComponentMaps
+	// ComponentMaps is a set of mappings for each Istio component.
+	ComponentMaps map[name.ComponentName]*ComponentMaps
 }
 
+// ComponentMaps is a set of mappings for an Istio component.
 type ComponentMaps struct {
 	// ResourceName maps a ComponentName to the name of the rendered k8s resource.
 	ResourceName string
@@ -61,7 +68,7 @@ type ComponentMaps struct {
 // TranslationFunc maps a yamlStr API path into a YAML values tree.
 type TranslationFunc func(t *Translation, root map[string]interface{}, valuesPath string, value interface{}) error
 
-// Translation is a mapping between paths.
+// Translation is a mapping to an output path using a translation function.
 type Translation struct {
 	outPath         string
 	translationFunc TranslationFunc
@@ -74,13 +81,14 @@ type componentValuePaths struct {
 }
 
 var (
-	debugPackage = false
-
+	// Translators is a map of minor versions to Translator for that version.
+	// TODO: this should probably be moved out to a config file that's versioned.
 	Translators = map[version.MinorVersion]*Translator{
-		version.MinorVersion{1, 2}: {
+		version.MinorVersion{Major: 1, Minor: 2}: {
 			APIMapping: map[string]*Translation{
-				"Hub": {"global.hub", nil},
-				"Tag": {"global.tag", nil},
+				"Hub":         {"global.hub", nil},
+				"Tag":         {"global.tag", nil},
+				"K8SDefaults": {"global.resources", nil},
 
 				"TrafficManagement.Components.Proxy.Common.Values": {"global.proxy", nil},
 
@@ -91,19 +99,17 @@ var (
 				"Security.DataPlaneMtlsStrict.Value": {"global.mtls.enabled", nil},
 			},
 			KubernetesMapping: map[string]*Translation{
-				/*
-					"{{.FeatureName}}.Components.{{.ComponentName}}.Common.K8S.Affinity":            {"[Deployment:{{.ResourceName}}].spec.template.spec.containers.[name:{{.ContainerName}}].affinity", nil},
-					"{{.FeatureName}}.Components.{{.ComponentName}}.Common.K8S.Env":                 {"[Deployment:{{.ResourceName}}].spec.template.spec.containers.[name:{{.ContainerName}}].env", nil},
-					"{{.FeatureName}}.Components.{{.ComponentName}}.Common.K8S.HpaSpec":             {"[HorizontalPodAutoscaler:{{.ResourceName}}].spec", nil},
-					"{{.FeatureName}}.Components.{{.ComponentName}}.Common.K8S.ImagePullPolicy":     {"[Deployment:{{.ResourceName}}].spec.template.spec.containers.[name:{{.ContainerName}}].imagePullPolicy", nil},
-					"{{.FeatureName}}.Components.{{.ComponentName}}.Common.K8S.NodeSelector":        {"[Deployment:{{.ResourceName}}].spec.template.spec.containers.[name:{{.ContainerName}}].nodeSelector", nil},
-					"{{.FeatureName}}.Components.{{.ComponentName}}.Common.K8S.PodDisruptionBudget": {"[PodDisruptionBudget:{{.ResourceName}}].spec", nil},
-					"{{.FeatureName}}.Components.{{.ComponentName}}.Common.K8S.PodAnnotations":      {"[Deployment:{{.ResourceName}}].spec.template.metadata.annotations", nil},
-					"{{.FeatureName}}.Components.{{.ComponentName}}.Common.K8S.PriorityClassName":   {"[Deployment:{{.ResourceName}}].spec.template.spec.priorityClassName.", nil},
-					"{{.FeatureName}}.Components.{{.ComponentName}}.Common.K8S.ReadinessProbe":      {"[Deployment:{{.ResourceName}}].spec.template.spec.containers.[name:{{.ContainerName}}].readinessProbe", nil},
-					"{{.FeatureName}}.Components.{{.ComponentName}}.Common.K8S.ReplicaCount":        {"[Deployment:{{.ResourceName}}].spec.replicas", nil},
-				*/
-				"{{.FeatureName}}.Components.{{.ComponentName}}.Common.K8S.Resources": {"[Deployment:{{.ResourceName}}].spec.template.spec.containers.[name:{{.ContainerName}}].resources", nil},
+				"{{.FeatureName}}.Components.{{.ComponentName}}.Common.K8S.Affinity":            {"[Deployment:{{.ResourceName}}].spec.template.spec.containers.[name:{{.ContainerName}}].affinity", nil},
+				"{{.FeatureName}}.Components.{{.ComponentName}}.Common.K8S.Env":                 {"[Deployment:{{.ResourceName}}].spec.template.spec.containers.[name:{{.ContainerName}}].env", nil},
+				"{{.FeatureName}}.Components.{{.ComponentName}}.Common.K8S.HpaSpec":             {"[HorizontalPodAutoscaler:{{.ResourceName}}].spec", nil},
+				"{{.FeatureName}}.Components.{{.ComponentName}}.Common.K8S.ImagePullPolicy":     {"[Deployment:{{.ResourceName}}].spec.template.spec.containers.[name:{{.ContainerName}}].imagePullPolicy", nil},
+				"{{.FeatureName}}.Components.{{.ComponentName}}.Common.K8S.NodeSelector":        {"[Deployment:{{.ResourceName}}].spec.template.spec.containers.[name:{{.ContainerName}}].nodeSelector", nil},
+				"{{.FeatureName}}.Components.{{.ComponentName}}.Common.K8S.PodDisruptionBudget": {"[PodDisruptionBudget:{{.ResourceName}}].spec", nil},
+				"{{.FeatureName}}.Components.{{.ComponentName}}.Common.K8S.PodAnnotations":      {"[Deployment:{{.ResourceName}}].spec.template.metadata.annotations", nil},
+				"{{.FeatureName}}.Components.{{.ComponentName}}.Common.K8S.PriorityClassName":   {"[Deployment:{{.ResourceName}}].spec.template.spec.priorityClassName.", nil},
+				"{{.FeatureName}}.Components.{{.ComponentName}}.Common.K8S.ReadinessProbe":      {"[Deployment:{{.ResourceName}}].spec.template.spec.containers.[name:{{.ContainerName}}].readinessProbe", nil},
+				"{{.FeatureName}}.Components.{{.ComponentName}}.Common.K8S.ReplicaCount":        {"[Deployment:{{.ResourceName}}].spec.replicas", nil},
+				"{{.FeatureName}}.Components.{{.ComponentName}}.Common.K8S.Resources":           {"[Deployment:{{.ResourceName}}].spec.template.spec.containers.[name:{{.ContainerName}}].resources", nil},
 			},
 			ComponentMaps: map[name.ComponentName]*ComponentMaps{
 				name.IstioBaseComponentName: &ComponentMaps{
@@ -184,6 +190,12 @@ var (
 						namespace: "global.policyNamespace",
 					},
 				},
+				name.ConfigManagementFeatureName: {
+					name.PolicyComponentName: {
+						enabled:   ".enabled",
+						namespace: "global.policyNamespace",
+					},
+				},
 				name.TelemetryFeatureName: {
 					name.TelemetryComponentName: {
 						enabled:   "mixer.telemetry.enabled",
@@ -210,71 +222,13 @@ var (
 	}
 )
 
-func featureComponentString(tmpl string, featureName name.FeatureName, componentName name.ComponentName) string {
-	type Temp struct {
-		FeatureName   name.FeatureName
-		ComponentName name.ComponentName
-	}
-	ts := Temp{
-		FeatureName:   featureName,
-		ComponentName: componentName,
-	}
-	t, err := template.New("").Parse(tmpl)
-	if err != nil {
-		log.Error(err.Error())
-		return err.Error()
-	}
-	buf := new(bytes.Buffer)
-	err = t.Execute(buf, ts)
-	if err != nil {
-		log.Error(err.Error())
-		return err.Error()
-	}
-	return buf.String()
-}
-
-func (t *Translator) resourceContainerString(tmpl string, componentName name.ComponentName) string {
-	ts := struct {
-		ResourceName  string
-		ContainerName string
-	}{
-		ResourceName:  t.ComponentMaps[componentName].ResourceName,
-		ContainerName: t.ComponentMaps[componentName].ContainerName,
-	}
-	tm, err := template.New("").Parse(tmpl)
-	if err != nil {
-		return err.Error()
-	}
-	buf := new(bytes.Buffer)
-	err = tm.Execute(buf, ts)
-	if err != nil {
-		return err.Error()
-	}
-	return buf.String()
-}
-
-func overlayK8s(baseYAML, overlayYAML []byte, path util.Path) ([]byte, error) {
-	root, m := make(map[string]interface{}), make(map[string]interface{})
-	if err := yaml.Unmarshal(baseYAML, &root); err != nil {
-		return nil, err
-	}
-	if err := yaml.Unmarshal(overlayYAML, &m); err != nil {
-		return nil, err
-	}
-	debugPackage = true
-	if err := setTree(root, path, m); err != nil {
-		return nil, err
-	}
-	debugPackage = false
-	return yaml.Marshal(root)
-}
-
 // OverlayK8sSettings overlays k8s settings from icp over the manifest objects, based on t's translation mappings.
 func (t *Translator) OverlayK8sSettings(yml string, icp *v1alpha2.IstioControlPlaneSpec, featureName name.FeatureName, componentName name.ComponentName) (string, error) {
 	objects, err := manifest.ParseObjectsFromYAMLManifest(yml)
 	if err != nil {
 		return "", err
 	}
+	// om is a map of kind:name string to Object ptr.
 	om := objects.ToNameKindMap()
 	for inPath, v := range t.KubernetesMapping {
 		inPath = featureComponentString(inPath, featureName, componentName)
@@ -284,7 +238,11 @@ func (t *Translator) OverlayK8sSettings(yml string, icp *v1alpha2.IstioControlPl
 			return "", err
 		}
 		if !found {
-			log.Infof("path %s not found in IstioControlPlaneSpec, skip mapping.", v.outPath)
+			log.Infof("path %s not found in IstioControlPlaneSpec, skip mapping.", inPath)
+			continue
+		}
+		if mstr, ok := m.(string); ok && mstr == "" {
+			log.Infof("path %s is empty string, skip mapping.", inPath)
 			continue
 		}
 		overlayYAML, err := yaml.Marshal(m)
@@ -292,39 +250,58 @@ func (t *Translator) OverlayK8sSettings(yml string, icp *v1alpha2.IstioControlPl
 			return "", err
 		}
 		outPath := t.resourceContainerString(v.outPath, componentName)
-		log.Infof("Mapping to output path %s", outPath)
+		log.Infof("path has value in IstioControlPlaneSpec, mapping to output path %s", outPath)
 		path := util.PathFromString(outPath)
 		pe := path[0]
+		// Output path must start with [kind:name], which is used to map to the object to overlay.
 		if !util.IsKVPathElement(pe) {
 			return "", fmt.Errorf("path %s has an unexpected first element %s in OverlayK8sSettings", path, pe)
 		}
+		// After brackets are removed, the remaining "kind:name" string maps to the right object in om.
 		pe, _ = util.RemoveBrackets(pe)
 		oo, ok := om[pe]
 		if !ok {
 			return "", fmt.Errorf("resource Kind:Name %s doesn't exist in output manifest", pe)
 		}
+
 		baseYAML, err := oo.YAML()
 		if err != nil {
 			return "", err
 		}
-
 		mergedYAML, err := overlayK8s(baseYAML, overlayYAML, path[1:])
 		if err != nil {
 			return "", err
 		}
-		log.Infof("baseYAML:\n%s\n, overlayYAML:\n%s\n, mergedYAML:\n%s\n", string(baseYAML), string(overlayYAML), string(mergedYAML))
+		dbgPrint("baseYAML:\n%s\n, overlayYAML:\n%s\n, mergedYAML:\n%s\n", string(baseYAML), string(overlayYAML), string(mergedYAML))
 
 		mergedObj, err := manifest.ParseYAMLToObject([]byte(mergedYAML))
 		if err != nil {
 			return "", err
 		}
-		om[pe] = mergedObj
-	}
-	for k := range om {
-		fmt.Printf("object key %s\n", k)
+		// Update the original object in objects slice, since the output should be ordered.
+		*(om[pe]) = *mergedObj
 	}
 
 	return objects.YAML()
+}
+
+// overlayK8s overlays overlayYAML over baseYAML at the given path in baseYAML.
+func overlayK8s(baseYAML, overlayYAML []byte, path util.Path) ([]byte, error) {
+	base, overlayMap := make(map[string]interface{}), make(map[string]interface{})
+	var overlay interface{} = overlayMap
+	if err := yaml.Unmarshal(baseYAML, &base); err != nil {
+		return nil, fmt.Errorf("overlayK8s: %s for baseYAML:\n%s", err, baseYAML)
+	}
+	if err := yaml.Unmarshal(overlayYAML, &overlayMap); err != nil {
+		// May be a scalar type, try to unmarshal into interface instead.
+		if err := yaml.Unmarshal(overlayYAML, &overlay); err != nil {
+			return nil, fmt.Errorf("overlayK8s: %s for overlayYAML:\n%s", err, overlayYAML)
+		}
+	}
+	if err := setTree(base, path, overlay); err != nil {
+		return nil, err
+	}
+	return yaml.Marshal(base)
 }
 
 // ProtoToValues traverses the supplied InstallerSpec and returns a values.yaml translation from it.
@@ -371,22 +348,6 @@ func (t *Translator) ValuesOverlaysToHelmValues(in map[string]interface{}, cname
 	return out
 }
 
-// setEnablementAndNamespaces translates the enablement and namespace value of each component in the baseYAML values tree,
-// based on feature/component inheritance relationship.
-func (t *Translator) setEnablementAndNamespaces(root map[string]interface{}, ii *v1alpha2.IstioControlPlaneSpec) error {
-	for fn, f := range t.FeatureComponentToValues {
-		for cn, c := range f {
-			if err := setTree(root, util.PathFromString(c.enabled), name.IsComponentEnabled(fn, cn, ii)); err != nil {
-				return err
-			}
-			if err := setTree(root, util.PathFromString(c.namespace), name.Namespace(string(fn), cn, ii)); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
 // protoToValues takes an interface which must be a struct ptr and recursively iterates through all its fields.
 // For each leaf, if looks for a mapping from the struct data path to the corresponding YAML path and if one is
 // found, it calls the associated mapping function if one is defined to populate the values YAML path.
@@ -430,8 +391,9 @@ func (t *Translator) protoToValues(structPtr interface{}, root map[string]interf
 			}
 		case reflect.Slice:
 			dbgPrint("Slice")
+			newPath := append(path, fieldName)
 			for i := 0; i < fieldValue.Len(); i++ {
-				errs = util.AppendErrs(errs, t.protoToValues(fieldValue.Index(i).Elem().Interface(), root, path))
+				errs = util.AppendErrs(errs, t.protoToValues(fieldValue.Index(i).Interface(), root, newPath))
 			}
 		case reflect.Ptr:
 			if util.IsNilOrInvalidValue(fieldValue.Elem()) {
@@ -442,7 +404,7 @@ func (t *Translator) protoToValues(structPtr interface{}, root map[string]interf
 				dbgPrint("Struct Ptr")
 				errs = util.AppendErrs(errs, t.protoToValues(fieldValue.Interface(), root, newPath))
 			} else {
-				fmt.Println("Leaf Ptr")
+				dbgPrint("Leaf Ptr")
 				errs = util.AppendErrs(errs, t.insertLeaf(root, newPath, fieldValue))
 			}
 		default:
@@ -455,14 +417,32 @@ func (t *Translator) protoToValues(structPtr interface{}, root map[string]interf
 	return errs
 }
 
-func (t *Translator) insertLeaf(root map[string]interface{}, newPath util.Path, fieldValue reflect.Value) (errs util.Errors) {
+// setEnablementAndNamespaces translates the enablement and namespace value of each component in the baseYAML values
+// tree, based on feature/component inheritance relationship.
+func (t *Translator) setEnablementAndNamespaces(root map[string]interface{}, ii *v1alpha2.IstioControlPlaneSpec) error {
+	for fn, f := range t.FeatureComponentToValues {
+		for cn, c := range f {
+			if err := setTree(root, util.PathFromString(c.enabled), name.IsComponentEnabled(fn, cn, ii)); err != nil {
+				return err
+			}
+			fmt.Printf("Namespace for %s:%s is %s\n", fn, cn, name.Namespace(string(fn), cn, ii))
+			if err := setTree(root, util.PathFromString(c.namespace), name.Namespace(string(fn), cn, ii)); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// insertLeaf inserts a leaf with value into root at path, which is first mapped using t.APIMapping.
+func (t *Translator) insertLeaf(root map[string]interface{}, path util.Path, value reflect.Value) (errs util.Errors) {
 	// Must be a scalar leaf. See if we have a mapping.
-	valuesPath, m := getValuesPathMapping(t.APIMapping, newPath)
+	valuesPath, m := getValuesPathMapping(t.APIMapping, path)
 	var v interface{}
-	if fieldValue.Kind() == reflect.Ptr {
-		v = fieldValue.Elem().Interface()
+	if value.Kind() == reflect.Ptr {
+		v = value.Elem().Interface()
 	} else {
-		v = fieldValue.Interface()
+		v = value.Interface()
 	}
 	switch {
 	case m == nil:
@@ -503,6 +483,53 @@ func getValuesPathMapping(mappings map[string]*Translation, path util.Path) (str
 	return out, m
 }
 
+// featureComponentString renders a template of the form <path>{{.FeatureName}}<path>{{.ComponentName}}<path> with
+// the supplied parameters.
+func featureComponentString(tmpl string, featureName name.FeatureName, componentName name.ComponentName) string {
+	type Temp struct {
+		FeatureName   name.FeatureName
+		ComponentName name.ComponentName
+	}
+	ts := Temp{
+		FeatureName:   featureName,
+		ComponentName: componentName,
+	}
+	t, err := template.New("").Parse(tmpl)
+	if err != nil {
+		log.Error(err.Error())
+		return err.Error()
+	}
+	buf := new(bytes.Buffer)
+	err = t.Execute(buf, ts)
+	if err != nil {
+		log.Error(err.Error())
+		return err.Error()
+	}
+	return buf.String()
+}
+
+// resourceContainerString renders a template of the form <path>{{.ResourceName}}<path>{{.ContainerName}}<path> with
+// the supplied parameters.
+func (t *Translator) resourceContainerString(tmpl string, componentName name.ComponentName) string {
+	ts := struct {
+		ResourceName  string
+		ContainerName string
+	}{
+		ResourceName:  t.ComponentMaps[componentName].ResourceName,
+		ContainerName: t.ComponentMaps[componentName].ContainerName,
+	}
+	tm, err := template.New("").Parse(tmpl)
+	if err != nil {
+		return err.Error()
+	}
+	buf := new(bytes.Buffer)
+	err = tm.Execute(buf, ts)
+	if err != nil {
+		return err.Error()
+	}
+	return buf.String()
+}
+
 // defaultTranslationFunc is the default translation to values. It maps a Go data path into a YAML path.
 func defaultTranslationFunc(m *Translation, root map[string]interface{}, valuesPath string, value interface{}) error {
 	var path []string
@@ -524,10 +551,10 @@ func defaultTranslationFunc(m *Translation, root map[string]interface{}, valuesP
 }
 
 func dbgPrint(v ...interface{}) {
-	if !debugPackage {
+	if !DebugPackage {
 		return
 	}
-	fmt.Println(fmt.Sprintf(v[0].(string), v[1:]...))
+	log.Infof(fmt.Sprintf(v[0].(string), v[1:]...))
 }
 
 func firstCharToLower(s string) string {

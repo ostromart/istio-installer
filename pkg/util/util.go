@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"istio.io/pkg/log"
+
 	"github.com/ghodss/yaml"
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/protobuf/jsonpb"
@@ -21,8 +23,8 @@ func init() {
 }
 
 var (
-	// debugPackage controls verbose debugging in this package. Used for offline debugging.
-	debugPackage = false
+	// DebugPackage controls verbose debugging in this package. Used for offline debugging.
+	DebugPackage = false
 
 	letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 )
@@ -273,11 +275,11 @@ func UnmarshalWithJSONPB(y string, out proto.Message) error {
 	return nil
 }
 
-// dbgPrint prints v if the package global variable debugPackage is set.
+// dbgPrint prints v if the package global variable DebugPackage is set.
 // v has the same format as Printf. A trailing newline is added to the output.
 func dbgPrint(v ...interface{}) {
-	if !debugPackage {
+	if !DebugPackage {
 		return
 	}
-	fmt.Println(fmt.Sprintf(v[0].(string), v[1:]...))
+	log.Infof(fmt.Sprintf(v[0].(string), v[1:]...))
 }
