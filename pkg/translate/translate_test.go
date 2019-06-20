@@ -16,7 +16,6 @@ package translate
 
 import (
 	"bytes"
-	"strings"
 	"testing"
 
 	"github.com/ostromart/istio-installer/pkg/apis/istio/v1alpha2"
@@ -40,6 +39,8 @@ func TestProtoToValuesV12(t *testing.T) {
 			desc: "nil success",
 			want: `
 certmanager:
+  enabled: false
+galley:
   enabled: false
 global:
   istioNamespace: ""
@@ -71,6 +72,8 @@ security:
 			want: `
 certmanager:
   enabled: false
+galley:
+  enabled: false
 global:
   hub: docker.io/istio
   istioNamespace: istio-system
@@ -92,29 +95,37 @@ security:
 `,
 		},
 		{
-			desc: "Security",
+			desc: "security",
 			yamlStr: `
+defaultNamespacePrefix: istio-system
 security:
+  enabled: true
   controlPlaneMtls: true
   dataPlaneMtlsStrict: false
 `,
 			want: `
+certmanager:
+  enabled: true
+galley:
+  enabled: false
 global:
+  istioNamespace: istio-system
+  policyNamespace: istio-system
+  telemetryNamespace: istio-system
   controlPlaneSecurityEnabled: true
   mtls:
     enabled: false
-`,
-		},
-		{
-			desc: "SidecarInjector",
-			yamlStr: `
-trafficManagement:
-  sidecarInjector:
-    enableNamespacesByDefault: false
-`,
-			want: `
-sidecarInjectorWebhook:
-  enableNamespacesByDefault: false
+mixer:
+  policy:
+    enabled: false
+  telemetry:
+    enabled: false
+nodeagent:
+  enabled: true
+pilot:
+  enabled: false
+security:
+  enabled: true
 `,
 		},
 	}
@@ -153,6 +164,11 @@ func unmarshalWithJSONPB(y string, out proto.Message) error {
 	return nil
 }
 
-func stripNL(s string) string {
-	return strings.Trim(s, "\n")
+// errToString returns the string representation of err and the empty string if
+// err is nil.
+func errToString(err error) string {
+	if err == nil {
+		return ""
+	}
+	return err.Error()
 }

@@ -49,7 +49,7 @@ func validate(validations map[string]ValidatorFunc, structPtr interface{}, path 
 	if structPtr == nil {
 		return nil
 	}
-	if reflect.TypeOf(structPtr).Kind() != reflect.Struct {
+	if reflect.TypeOf(structPtr).Kind() == reflect.Struct {
 		dbgPrint("validate path %s, skipping struct type %T", path, structPtr)
 		return nil
 	}

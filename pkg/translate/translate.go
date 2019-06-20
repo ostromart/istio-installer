@@ -34,7 +34,7 @@ import (
 
 var (
 	// DebugPackage controls detailed debug output for this package.
-	DebugPackage = true
+	DebugPackage = false
 )
 
 // Translator is a set of mappings to translate between API paths, charts, values.yaml and k8s paths.
@@ -63,6 +63,8 @@ type ComponentMaps struct {
 	HelmSubdir string
 	// ToHelmValuesNames is the baseYAML component name used in values YAML files in component charts.
 	ToHelmValuesNames string
+	// AlwaysEnabled controls whether a component can be turned off through IstioControlPlaneSpec.
+	AlwaysEnabled bool
 }
 
 // TranslationFunc maps a yamlStr API path into a YAML values tree.
@@ -114,6 +116,7 @@ var (
 			ComponentMaps: map[name.ComponentName]*ComponentMaps{
 				name.IstioBaseComponentName: &ComponentMaps{
 					ToHelmValuesNames: "global",
+					AlwaysEnabled:     true,
 				},
 				name.PilotComponentName: &ComponentMaps{
 					ResourceName:      "istio-pilot",
@@ -191,9 +194,8 @@ var (
 					},
 				},
 				name.ConfigManagementFeatureName: {
-					name.PolicyComponentName: {
-						enabled:   ".enabled",
-						namespace: "global.policyNamespace",
+					name.GalleyComponentName: {
+						enabled: "galley.enabled",
 					},
 				},
 				name.TelemetryFeatureName: {
@@ -422,12 +424,15 @@ func (t *Translator) protoToValues(structPtr interface{}, root map[string]interf
 func (t *Translator) setEnablementAndNamespaces(root map[string]interface{}, ii *v1alpha2.IstioControlPlaneSpec) error {
 	for fn, f := range t.FeatureComponentToValues {
 		for cn, c := range f {
-			if err := setTree(root, util.PathFromString(c.enabled), name.IsComponentEnabled(fn, cn, ii)); err != nil {
-				return err
+			if c.enabled != "" {
+				if err := setTree(root, util.PathFromString(c.enabled), name.IsComponentEnabled(fn, cn, ii)); err != nil {
+					return err
+				}
 			}
-			fmt.Printf("Namespace for %s:%s is %s\n", fn, cn, name.Namespace(string(fn), cn, ii))
-			if err := setTree(root, util.PathFromString(c.namespace), name.Namespace(string(fn), cn, ii)); err != nil {
-				return err
+			if c.namespace != "" {
+				if err := setTree(root, util.PathFromString(c.namespace), name.Namespace(string(fn), cn, ii)); err != nil {
+					return err
+				}
 			}
 		}
 	}

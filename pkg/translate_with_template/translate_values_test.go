@@ -1,4 +1,4 @@
-package translate
+package translate_with_template
 
 import (
 	"testing"

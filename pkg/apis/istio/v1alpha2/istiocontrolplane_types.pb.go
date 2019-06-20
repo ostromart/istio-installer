@@ -250,6 +250,8 @@ type IstioControlPlaneSpec struct {
 	// Ingress/egress gateway controlplane and configuration.
 	IngressGateway []*IngressGatewaySpec `protobuf:"bytes,31,rep,name=ingress_gateway,json=ingressGateway,proto3" json:"ingress_gateway,omitempty"`
 	EgressGateway  []*EgressGatewaySpec  `protobuf:"bytes,32,rep,name=egress_gateway,json=egressGateway,proto3" json:"egress_gateway,omitempty"`
+	// Kustomize style overrides for default global values.yaml.
+	Values map[string]interface{} `protobuf:"bytes,6,opt,name=values" json:"values,omitempty"`
 	// URL for the base spec. e.g.
 	//   istio-minimal.yaml (looks in default dir)
 	//   file://var/istio/install/values/custom/custom-install.yaml
