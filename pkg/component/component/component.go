@@ -1,3 +1,22 @@
+// Copyright 2017 Istio Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+/*
+Package component defines an in-memory representation of IstioControlPlane.<Feature>.<Component>. It provides functions
+for manipulating the component and rendering a manifest from it.
+See ../README.md for an architecture overview.
+*/
 package component
 
 import (
@@ -5,12 +24,14 @@ import (
 	"path/filepath"
 
 	"github.com/ghodss/yaml"
+
 	"github.com/ostromart/istio-installer/pkg/apis/istio/v1alpha2"
 	"github.com/ostromart/istio-installer/pkg/helm"
 	"github.com/ostromart/istio-installer/pkg/name"
 	"github.com/ostromart/istio-installer/pkg/patch"
 	"github.com/ostromart/istio-installer/pkg/translate"
 	"github.com/ostromart/istio-installer/pkg/util"
+
 	"istio.io/pkg/log"
 )
 
@@ -20,7 +41,6 @@ const (
 	yamlCommentStr       = "# "
 )
 
-var ()
 
 // ComponentOptions defines options for a component.
 type ComponentOptions struct {

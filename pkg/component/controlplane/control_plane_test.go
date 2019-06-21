@@ -8,14 +8,14 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ostromart/istio-installer/pkg/apis/istio/v1alpha2"
-	"github.com/ostromart/istio-installer/pkg/manifest"
-
 	"github.com/ghodss/yaml"
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/kylelemons/godebug/diff"
+
+	"github.com/ostromart/istio-installer/pkg/apis/istio/v1alpha2"
 	"github.com/ostromart/istio-installer/pkg/component/component"
+	"github.com/ostromart/istio-installer/pkg/manifest"
 )
 
 var (
@@ -144,7 +144,6 @@ trafficManagement:
 				t.Fatal(err)
 			}
 			if diff != "" {
-				//t.Errorf("got objects:\n%s\nwant objects:\n%s\n", ObjectsInManifest(got), ObjectsInManifest(want))
 				t.Errorf("%s: got:\n%s\nwant:\n%s\n(-got, +want)\n%s\n", tt.desc, "", "", diff)
 			}
 

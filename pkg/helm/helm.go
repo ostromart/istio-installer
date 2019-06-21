@@ -21,12 +21,13 @@ import (
 
 	jsonpatch "github.com/evanphx/json-patch"
 	"github.com/ghodss/yaml"
-	"github.com/ostromart/istio-installer/pkg/util/fswatch"
-	"istio.io/pkg/log"
 	"k8s.io/helm/pkg/chartutil"
 	"k8s.io/helm/pkg/engine"
 	"k8s.io/helm/pkg/proto/hapi/chart"
 	"k8s.io/helm/pkg/timeconv"
+
+	"github.com/ostromart/istio-installer/pkg/util/fswatch"
+	"istio.io/pkg/log"
 )
 
 const (

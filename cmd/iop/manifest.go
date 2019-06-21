@@ -18,15 +18,15 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/ostromart/istio-installer/pkg/translate"
-	"github.com/ostromart/istio-installer/pkg/version"
+	"github.com/spf13/cobra"
 
 	"github.com/ostromart/istio-installer/pkg/apis/istio/v1alpha2"
 	"github.com/ostromart/istio-installer/pkg/component/controlplane"
 	"github.com/ostromart/istio-installer/pkg/helm"
+	"github.com/ostromart/istio-installer/pkg/translate"
 	"github.com/ostromart/istio-installer/pkg/util"
 	"github.com/ostromart/istio-installer/pkg/validate"
-	"github.com/spf13/cobra"
+	"github.com/ostromart/istio-installer/pkg/version"
 )
 
 func manifestCmd(rootArgs *rootArgs, printf, fatalf FormatFn) *cobra.Command {

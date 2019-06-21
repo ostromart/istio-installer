@@ -23,9 +23,8 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/kylelemons/godebug/diff"
-	"github.com/ostromart/istio-installer/pkg/util"
 	"github.com/ostromart/istio-installer/pkg/apis/istio/v1alpha2"
-
+	"github.com/ostromart/istio-installer/pkg/util"
 )
 
 func TestUnmarshalKubernetes(t *testing.T) {

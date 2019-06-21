@@ -90,10 +90,12 @@ import (
 	"strings"
 
 	"github.com/kr/pretty"
+	"gopkg.in/yaml.v2"
+
 	"github.com/ostromart/istio-installer/pkg/apis/istio/v1alpha2"
 	"github.com/ostromart/istio-installer/pkg/manifest"
 	"github.com/ostromart/istio-installer/pkg/util"
-	"gopkg.in/yaml.v2"
+
 	"istio.io/istio/pkg/log"
 )
 

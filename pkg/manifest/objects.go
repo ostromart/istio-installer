@@ -24,12 +24,12 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/ostromart/istio-installer/pkg/helm"
-
 	"github.com/ghodss/yaml"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	k8syaml "k8s.io/apimachinery/pkg/util/yaml"
+
+	"github.com/ostromart/istio-installer/pkg/helm"
 
 	"istio.io/pkg/log"
 )

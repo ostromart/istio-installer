@@ -18,14 +18,14 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/ostromart/istio-installer/pkg/apis/istio/v1alpha2"
-	"github.com/ostromart/istio-installer/pkg/version"
-
 	"github.com/ghodss/yaml"
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/kr/pretty"
+
+	"github.com/ostromart/istio-installer/pkg/apis/istio/v1alpha2"
 	"github.com/ostromart/istio-installer/pkg/util"
+	"github.com/ostromart/istio-installer/pkg/version"
 )
 
 func TestProtoToValuesV12(t *testing.T) {
