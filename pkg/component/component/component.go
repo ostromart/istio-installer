@@ -41,7 +41,6 @@ const (
 	yamlCommentStr       = "# "
 )
 
-
 // ComponentOptions defines options for a component.
 type ComponentOptions struct {
 	FeatureName name.FeatureName
@@ -232,29 +231,8 @@ func mergeTrees(apiValues string, globalVals, values, unvalidatedValues map[stri
 
 // createHelmRenderer creates a helm renderer for the component defined by c and returns a ptr to it.
 func createHelmRenderer(c *CommonComponentFields) (helm.TemplateRenderer, error) {
-	cp := c.InstallSpec.CustomPackagePath
-	chartSubdir := ""
-	switch {
-	case cp == "":
-		return nil, fmt.Errorf("compiled in CustomPackagePath not yet supported")
-	case util.IsFilePath(cp):
-		chartRoot := filepath.Join(util.GetLocalFilePath(cp))
-		chartSubdir = filepath.Join(chartRoot, c.Translator.ComponentMaps[c.name].HelmSubdir)
-	default:
-		return nil, fmt.Errorf("unsupported CustomPackagePath type: %s", cp)
-	}
-	vp := c.InstallSpec.BaseProfilePath
-	valuesPath := ""
-	switch {
-	case vp == "":
-		return nil, fmt.Errorf("compiled in CustomPackagePath not yet supported")
-	case util.IsFilePath(vp):
-		valuesPath = util.GetLocalFilePath(vp)
-	default:
-		return nil, fmt.Errorf("unsupported BaseProfilePath type: %s", cp)
-	}
-	return helm.NewFileTemplateRenderer(valuesPath, chartSubdir, string(c.name), c.namespace), nil
-
+	icp := c.InstallSpec
+	return helm.NewHelmRenderer(filepath.Join(icp.CustomPackagePath, c.Translator.ComponentMaps[c.name].HelmSubdir), icp.BaseProfilePath, string(c.name), c.namespace)
 }
 
 // getValuesFilename returns the global values filename, given an IstioControlPlaneSpec.

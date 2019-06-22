@@ -61,13 +61,11 @@ func genManifest(args *rootArgs, printf, fatalf FormatFn) {
 	}
 
 	// Now read the base profile specified in the user spec.
-	b, err = ioutil.ReadFile(util.GetLocalFilePath(overlayICPS.BaseProfilePath))
+	baseYAML, err := helm.ReadValuesYAML(overlayICPS.CustomPackagePath, overlayICPS.BaseProfilePath)
 	if err != nil {
-		fmt.Printf("1")
 		fatalf(err.Error())
 	}
 	// Unmarshal and validate the base CR.
-	baseYAML := string(b)
 	baseICPS := &v1alpha2.IstioControlPlaneSpec{}
 	if err := util.UnmarshalWithJSONPB(baseYAML, baseICPS); err != nil {
 		fatalf(err.Error())

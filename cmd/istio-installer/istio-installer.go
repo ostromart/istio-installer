@@ -28,11 +28,12 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 
 	"github.com/ghodss/yaml"
+	"github.com/ostromart/istio-installer/pkg/apis"
 	installerv1alpha1 "github.com/ostromart/istio-installer/pkg/apis/istio/v1alpha2"
 	"github.com/ostromart/istio-installer/pkg/controller"
 	"github.com/ostromart/istio-installer/pkg/controller/istioinstaller"
 	"github.com/ostromart/istio-installer/pkg/webhook"
-	"github.com/ostromart/operator.old/pkg/apis"
+
 	"istio.io/istio/pkg/log"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"

@@ -374,6 +374,18 @@
   revision = "14fa7590c24d4615893b68e22fce3b3489689f65"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/shurcooL/httpfs"
+  packages = ["vfsutil"]
+  revision = "6a4d4a70508bfeac7afc814c5e4345e1c640b6b2"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/shurcooL/vfsgen"
+  packages = ["."]
+  revision = "6a9ea43bcacdf716a5c1b38efff722c07adf0069"
+
+[[projects]]
   name = "github.com/spf13/cobra"
   packages = ["."]
   revision = "ef82de70bb3f60c65fb8eebacbb2d122ef517385"
@@ -637,7 +649,10 @@
 [[projects]]
   branch = "master"
   name = "istio.io/pkg"
-  packages = ["log"]
+  packages = [
+    "log",
+    "version"
+  ]
   revision = "940899ee7e726f01745e4f275e6f647d13234a4e"
 
 [[projects]]
@@ -886,6 +901,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "9ff13b554508b5a29f6d798de42b6fbb070fc6f2dc5bb263279719976d3ed5f0"
+  inputs-digest = "d5eae0f3e15ffc5ed7c45f221182d46587c06aef1aff9bd59f5e3e891e6379cf"
   solver-name = "gps-cdcl"
   solver-version = 1
