@@ -60,8 +60,8 @@ func genManifest(args *rootArgs, printf, fatalf FormatFn) {
 		fatalf(errs.ToError().Error())
 	}
 
-	// Now read the base profile specified in the user spec.
-	baseYAML, err := helm.ReadValuesYAML(overlayICPS.CustomPackagePath, overlayICPS.BaseProfilePath)
+	// Now read the base profile specified in the user spec. If nothing specified, use default.
+	baseYAML, err := helm.ReadValuesYAML(overlayICPS.BaseProfilePath)
 	if err != nil {
 		fatalf(err.Error())
 	}
@@ -93,7 +93,7 @@ func genManifest(args *rootArgs, printf, fatalf FormatFn) {
 	}
 
 	// TODO: remove version hard coding.
-	cp := controlplane.NewIstioControlPlane(mergedcps, translate.Translators[version.MinorVersion{1, 2}])
+	cp := controlplane.NewIstioControlPlane(mergedcps, translate.Translators[version.MinorVersion{Major: 1, Minor: 2}])
 	if err := cp.Run(); err != nil {
 		fatalf(err.Error())
 	}
