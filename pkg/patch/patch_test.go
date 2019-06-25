@@ -19,12 +19,12 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/ostromart/istio-installer/pkg/apis/istio/v1alpha2"
-	"github.com/ostromart/istio-installer/pkg/util"
-
 	"github.com/ghodss/yaml"
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/protobuf/jsonpb"
+
+	"github.com/ostromart/istio-installer/pkg/apis/istio/v1alpha2"
+	"github.com/ostromart/istio-installer/pkg/util"
 )
 
 func TestPatchYAMLManifestSuccess(t *testing.T) {

@@ -16,12 +16,9 @@ package helm
 
 import (
 	"fmt"
+	"github.com/ostromart/istio-installer/pkg/util"
 	"io/ioutil"
 	"strings"
-
-	"istio.io/pkg/log"
-
-	"github.com/ostromart/istio-installer/pkg/util"
 
 	jsonpatch "github.com/evanphx/json-patch"
 	"github.com/ghodss/yaml"
@@ -29,6 +26,9 @@ import (
 	"k8s.io/helm/pkg/engine"
 	"k8s.io/helm/pkg/proto/hapi/chart"
 	"k8s.io/helm/pkg/timeconv"
+
+	"istio.io/operator/pkg/util/fswatch"
+	"istio.io/pkg/log"
 )
 
 const (

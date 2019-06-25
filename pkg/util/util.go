@@ -130,7 +130,6 @@ func UnmarshalWithJSONPB(y string, out proto.Message) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(string(PrettyJSON(jb)))
 
 	u := jsonpb.Unmarshaler{AllowUnknownFields: false}
 	err = u.Unmarshal(bytes.NewReader(jb), out)
