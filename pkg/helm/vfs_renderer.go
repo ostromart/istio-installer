@@ -78,7 +78,9 @@ func (h *VFSRenderer) RenderManifest(values string) (string, error) {
 
 // LoadValuesVFS loads the compiled in file corresponding to the given profile name.
 func LoadValuesVFS(profileName string) (string, error) {
-	b, err := vfsgen.ReadFile(filepath.Join(profilesRoot, profileToFilename(profileName)))
+	path := filepath.Join(profilesRoot, profileToFilename(profileName))
+	log.Infof("Loading values from compiled in VFS at path %s", path)
+	b, err := vfsgen.ReadFile(path)
 	return string(b), err
 }
 

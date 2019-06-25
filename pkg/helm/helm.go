@@ -19,6 +19,8 @@ import (
 	"io/ioutil"
 	"strings"
 
+	"istio.io/pkg/log"
+
 	"github.com/ostromart/istio-installer/pkg/util"
 
 	jsonpatch "github.com/evanphx/json-patch"
@@ -67,6 +69,7 @@ func NewHelmRenderer(helmBaseDir, profile, componentName, namespace string) (Tem
 func ReadValuesYAML(profile string) (string, error) {
 	var err error
 	var globalValues string
+	log.Infof("ReadValuesYAML for profile name: %s", profile)
 
 	// Get global values from profile.
 	switch {
@@ -75,7 +78,9 @@ func ReadValuesYAML(profile string) (string, error) {
 			return "", err
 		}
 	case util.IsFilePath(profile):
-		if globalValues, err = readFile(util.GetLocalFilePath(profile)); err != nil {
+		path := util.GetLocalFilePath(profile)
+		log.Infof("Loading values from local filesystem at path %s", path)
+		if globalValues, err = readFile(path); err != nil {
 			return "", err
 		}
 	default:
