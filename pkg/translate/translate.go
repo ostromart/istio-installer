@@ -231,6 +231,10 @@ func (t *Translator) OverlayK8sSettings(yml string, icp *v1alpha2.IstioControlPl
 	if err != nil {
 		return "", err
 	}
+	log.Infof("Manifest contains the following objects:")
+	for _, o := range objects {
+		log.Infof("%s", o.HashNameKind())
+	}
 	// om is a map of kind:name string to Object ptr.
 	om := objects.ToNameKindMap()
 	for inPath, v := range t.KubernetesMapping {
@@ -264,7 +268,7 @@ func (t *Translator) OverlayK8sSettings(yml string, icp *v1alpha2.IstioControlPl
 		pe, _ = util.RemoveBrackets(pe)
 		oo, ok := om[pe]
 		if !ok {
-			return "", fmt.Errorf("resource Kind:Name %s doesn't exist in output manifest", pe)
+			return "", fmt.Errorf("resource Kind:Name %s doesn't exist in the output manifest:\n%s\n", pe, yml)
 		}
 
 		baseYAML, err := oo.YAML()

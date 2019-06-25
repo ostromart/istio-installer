@@ -21,7 +21,7 @@ import (
 )
 
 func main() {
-	rootCmd := iop.GetRootCmd(os.Args[1:], iop.Printf, iop.Fatalf)
+	rootCmd := iop.GetRootCmd(os.Args[1:])
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
 	}

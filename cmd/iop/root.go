@@ -23,17 +23,25 @@ import (
 )
 
 type rootArgs struct {
-	// crPath is the path to the input IstioIstall CR.
-	crPath string
+	// inFilename is the path to the input IstioIstall CR.
+	inFilename string
+	// outFilename is the path to the generated output filename.
+	outFilename string
+	// logToStdErr controls whether logs are sent to stderr.
+	logToStdErr bool
 }
 
 func addFlags(cmd *cobra.Command, rootArgs *rootArgs) {
-	cmd.PersistentFlags().StringVarP(&rootArgs.crPath, "crpath", "p", "",
+	cmd.PersistentFlags().StringVarP(&rootArgs.inFilename, "filename", "f", "",
 		"The path to the input IstioIstall CR. Uses in cluster value with kubectl if unset.")
+	cmd.PersistentFlags().StringVarP(&rootArgs.outFilename, "output", "o",
+		"", "Manifest output path.")
+	cmd.PersistentFlags().BoolVarP(&rootArgs.logToStdErr, "logtostderr", "",
+		false, "Send logs to stderr.")
 }
 
 // GetRootCmd returns the root of the cobra command-tree.
-func GetRootCmd(args []string, printf, fatalf FormatFn) *cobra.Command {
+func GetRootCmd(args []string) *cobra.Command {
 	rootCmd := &cobra.Command{
 		Use:   "iop",
 		Short: "Command line Istio install utility.",
@@ -45,9 +53,9 @@ func GetRootCmd(args []string, printf, fatalf FormatFn) *cobra.Command {
 
 	rootArgs := &rootArgs{}
 
-	ic := installCmd(rootArgs, printf, fatalf)
-	mc := manifestCmd(rootArgs, printf, fatalf)
-	dpc := dumpProfileDefaultsCmd(rootArgs, printf, fatalf)
+	ic := installCmd(rootArgs)
+	mc := manifestCmd(rootArgs)
+	dpc := dumpProfileDefaultsCmd(rootArgs)
 
 	addFlags(ic, rootArgs)
 	addFlags(mc, rootArgs)

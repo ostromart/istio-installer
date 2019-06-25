@@ -16,18 +16,18 @@ package helm
 
 import (
 	"fmt"
-	"github.com/ostromart/istio-installer/pkg/util"
 	"io/ioutil"
 	"strings"
 
-	jsonpatch "github.com/evanphx/json-patch"
+	"github.com/evanphx/json-patch"
 	"github.com/ghodss/yaml"
 	"k8s.io/helm/pkg/chartutil"
 	"k8s.io/helm/pkg/engine"
 	"k8s.io/helm/pkg/proto/hapi/chart"
 	"k8s.io/helm/pkg/timeconv"
 
-	"istio.io/operator/pkg/util/fswatch"
+	"github.com/ostromart/istio-installer/pkg/util"
+
 	"istio.io/pkg/log"
 )
 
@@ -147,6 +147,21 @@ func OverlayYAML(base, overlay string) (string, error) {
 	}
 
 	return string(my), nil
+}
+
+func FilenameFromProfile(profile string) (string, error) {
+	switch {
+	case profile == "":
+		return DefaultProfileFilename, nil
+	case util.IsFilePath(profile):
+		return util.GetLocalFilePath(profile), nil
+	default:
+		if _, ok := ProfileNames[profile]; ok {
+			return BuiltinProfileToFilename(profile), nil
+		}
+	}
+
+	return "", fmt.Errorf("bad profile string: %s", profile)
 }
 
 func readFile(path string) (string, error) {

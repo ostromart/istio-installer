@@ -31,8 +31,6 @@ import (
 	k8syaml "k8s.io/apimachinery/pkg/util/yaml"
 
 	"github.com/ostromart/istio-installer/pkg/helm"
-
-	"istio.io/pkg/log"
 )
 
 // Object is an in-memory representation of a k8s object, used for moving between different representations
@@ -247,8 +245,7 @@ func ParseObjectsFromYAMLManifest(manifest string) (Objects, error) {
 		out := &unstructured.Unstructured{}
 		err := decoder.Decode(out)
 		if err != nil {
-			log.Infof("error decoding object: %s\n%s\n", err, yaml)
-			return nil, fmt.Errorf("error decoding object: %v", err)
+			return nil, fmt.Errorf("ParseObjectsFromYAMLManifest error decoding object: %v\n\nObject value:\n%s\n", err, yaml)
 		}
 
 		var json []byte

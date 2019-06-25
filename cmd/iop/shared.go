@@ -17,22 +17,33 @@
 package iop
 
 import (
-	"fmt"
 	"os"
+
+	"istio.io/pkg/log"
 )
 
-// FormatFn formats the supplied arguments according to the format string
-// provided and executes some set of operations with the result.
-type FormatFn func(format string, args ...interface{})
+const (
+	logFilePath = "./iop.log"
+)
 
-// Fatalf is a FormatFn that prints the formatted string to os.Stderr and then
-// calls os.Exit().
-var Fatalf = func(format string, args ...interface{}) {
-	_, _ = fmt.Fprintf(os.Stderr, format+"\n", args...) // #nosec
-	os.Exit(-1)
+func getWriter(args *rootArgs) (*os.File, error) {
+	writer := os.Stdout
+	if args.outFilename != "" {
+		file, err := os.Create(args.outFilename)
+		if err != nil {
+			log.Fatalf("Could not open output file: %s", err)
+		}
+
+		writer = file
+	}
+	return writer, nil
 }
 
-// Printf is a FormatFn that prints the formatted string to os.Stdout.
-var Printf = func(format string, args ...interface{}) {
-	fmt.Printf(format+"\n", args...)
+func configLogs(args *rootArgs) error {
+	opt := log.DefaultOptions()
+	if !args.logToStdErr {
+		opt.ErrorOutputPaths = []string{logFilePath}
+		opt.OutputPaths = []string{logFilePath}
+	}
+	return log.Configure(opt)
 }

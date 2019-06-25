@@ -69,4 +69,4 @@ proto_orig:
 	cp pkg/apis/istio/v1alpha2/istiocontrolplane_types.proto pkg/apis/istio/v1alpha2/istiocontrolplane_types.proto.orig
 
 vfsgen:
-	go generate ./cmd/main.go
+	go generate ./cmd/iop.go

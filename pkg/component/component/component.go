@@ -364,6 +364,7 @@ func renderManifest(c *CommonComponentFields) (string, error) {
 
 	my, err := c.renderer.RenderManifest(mergedYAML)
 	if err != nil {
+		log.Errorf("Error rendering the manifest: %s", err)
 		return "", err
 	}
 	my += helm.YAMLSeparator + "\n"
@@ -371,9 +372,10 @@ func renderManifest(c *CommonComponentFields) (string, error) {
 	// Add the k8s resources from IstioControlPlaneSpec.
 	my, err = c.Translator.OverlayK8sSettings(my, c.InstallSpec, c.FeatureName, c.name)
 	if err != nil {
+		log.Errorf("Error in OverlayK8sSettings: %s", err)
 		return "", err
 	}
-	log.Infof("manifest after k8s API settings:\n%s\n", my)
+	log.Infof("Manifest after k8s API settings:\n%s\n", my)
 
 	// Add the k8s resource overlays from IstioControlPlaneSpec.
 	pathToK8sOverlay := fmt.Sprintf("%s.Components.%s.Common.K8S.Overlays", c.FeatureName, c.name)
@@ -383,11 +385,10 @@ func renderManifest(c *CommonComponentFields) (string, error) {
 		return "", err
 	}
 	if !found {
-		log.Info("K8S.Overlays not found\n")
 		return my, nil
 	}
 	kyo, _ := yaml.Marshal(overlays)
-	log.Infof("kubernetes overlay: \n%s\n", kyo)
+	log.Infof("Applying kubernetes overlay: \n%s\n", kyo)
 	return patch.YAMLManifestPatch(my, c.namespace, overlays)
 }
 

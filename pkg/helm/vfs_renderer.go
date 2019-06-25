@@ -14,9 +14,11 @@ import (
 )
 
 const (
-	chartsRoot             = "/charts"
-	profilesRoot           = "/profiles"
-	defaultProfileFilename = "default.yaml"
+	// DefaultProfileFilename is the name of the default profile yaml file.
+	DefaultProfileFilename = "default.yaml"
+
+	chartsRoot   = "/charts"
+	profilesRoot = "/profiles"
 )
 
 var (
@@ -78,7 +80,7 @@ func (h *VFSRenderer) RenderManifest(values string) (string, error) {
 
 // LoadValuesVFS loads the compiled in file corresponding to the given profile name.
 func LoadValuesVFS(profileName string) (string, error) {
-	path := filepath.Join(profilesRoot, profileToFilename(profileName))
+	path := filepath.Join(profilesRoot, BuiltinProfileToFilename(profileName))
 	log.Infof("Loading values from compiled in VFS at path %s", path)
 	b, err := vfsgen.ReadFile(path)
 	return string(b), err
@@ -109,16 +111,16 @@ func (h *VFSRenderer) loadChart() error {
 			Data: b,
 		}
 		bfs = append(bfs, bf)
-		fmt.Printf("loaded %s\n", bf.Name)
+		log.Infof("loaded %s", bf.Name)
 	}
 
 	h.chart, err = chartutil.LoadFiles(bfs)
 	return err
 }
 
-func profileToFilename(name string) string {
+func BuiltinProfileToFilename(name string) string {
 	if name == "" {
-		return defaultProfileFilename
+		return DefaultProfileFilename
 	}
 	return name + ".yaml"
 }
