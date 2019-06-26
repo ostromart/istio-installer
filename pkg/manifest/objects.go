@@ -29,8 +29,11 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	k8syaml "k8s.io/apimachinery/pkg/util/yaml"
+)
 
-	"github.com/ostromart/istio-installer/pkg/helm"
+const (
+	// YAMLSeparator is a separator for multi-document YAML files.
+	YAMLSeparator = "\n---\n"
 )
 
 // Object is an in-memory representation of a k8s object, used for moving between different representations
@@ -245,7 +248,7 @@ func ParseObjectsFromYAMLManifest(manifest string) (Objects, error) {
 		out := &unstructured.Unstructured{}
 		err := decoder.Decode(out)
 		if err != nil {
-			return nil, fmt.Errorf("ParseObjectsFromYAMLManifest error decoding object: %v\n\nObject value:\n%s\n", err, yaml)
+			return nil, fmt.Errorf("ParseObjectsFromYAMLManifest error decoding object: %v\n\nObject value:\n%s", err, yaml)
 		}
 
 		var json []byte
@@ -331,7 +334,7 @@ func (os Objects) YAML() (string, error) {
 		if err != nil {
 			return "", err
 		}
-		_, err = sb.WriteString(helm.YAMLSeparator)
+		_, err = sb.WriteString(YAMLSeparator)
 		if err != nil {
 			return "", err
 		}

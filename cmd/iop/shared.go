@@ -17,8 +17,17 @@
 package iop
 
 import (
+	"io/ioutil"
 	"os"
 
+	"github.com/ostromart/istio-installer/pkg/apis/istio/v1alpha2"
+	"github.com/ostromart/istio-installer/pkg/component/controlplane"
+	"github.com/ostromart/istio-installer/pkg/helm"
+	"github.com/ostromart/istio-installer/pkg/name"
+	"github.com/ostromart/istio-installer/pkg/translate"
+	"github.com/ostromart/istio-installer/pkg/util"
+	"github.com/ostromart/istio-installer/pkg/validate"
+	"github.com/ostromart/istio-installer/pkg/version"
 	"istio.io/pkg/log"
 )
 
@@ -46,4 +55,66 @@ func configLogs(args *rootArgs) error {
 		opt.OutputPaths = []string{logFilePath}
 	}
 	return log.Configure(opt)
+}
+
+func genManifests(args *rootArgs) (name.ManifestMap, error) {
+	overlayYAML := ""
+	if args.inFilename != "" {
+		b, err := ioutil.ReadFile(args.inFilename)
+		if err != nil {
+			log.Fatalf("Could not open input file: %s", err)
+		}
+		overlayYAML = string(b)
+	}
+
+	// Start with unmarshaling and validating the user CR (which is an overlay on the base profile).
+	overlayICPS := &v1alpha2.IstioControlPlaneSpec{}
+	if err := util.UnmarshalWithJSONPB(overlayYAML, overlayICPS); err != nil {
+		log.Fatalf(err.Error())
+	}
+	if errs := validate.CheckIstioControlPlaneSpec(overlayICPS); len(errs) != 0 {
+		log.Fatalf(errs.ToError().Error())
+	}
+
+	// Now read the base profile specified in the user spec. If nothing specified, use default.
+	baseYAML, err := helm.ReadValuesYAML(overlayICPS.BaseProfilePath)
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+	// Unmarshal and validate the base CR.
+	baseICPS := &v1alpha2.IstioControlPlaneSpec{}
+	if err := util.UnmarshalWithJSONPB(baseYAML, baseICPS); err != nil {
+		log.Fatalf(err.Error())
+	}
+	if errs := validate.CheckIstioControlPlaneSpec(baseICPS); len(errs) != 0 {
+		log.Fatalf(errs.ToError().Error())
+	}
+
+	mergedYAML, err := helm.OverlayYAML(baseYAML, overlayYAML)
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+
+	// Now unmarshal and validate the combined base profile and user CR overlay.
+	mergedcps := &v1alpha2.IstioControlPlaneSpec{}
+	if err := util.UnmarshalWithJSONPB(mergedYAML, mergedcps); err != nil {
+		log.Fatalf(err.Error())
+	}
+	if errs := validate.CheckIstioControlPlaneSpec(mergedcps); len(errs) != 0 {
+		log.Fatalf(errs.ToError().Error())
+	}
+
+	if yd := util.YAMLDiff(mergedYAML, util.ToYAMLWithJSONPB(mergedcps)); yd != "" {
+		log.Fatalf("Validated YAML differs from input: \n%s", yd)
+	}
+
+	// TODO: remove version hard coding.
+	cp := controlplane.NewIstioControlPlane(mergedcps, translate.Translators[version.MinorVersion{Major: 1, Minor: 2}])
+	if err := cp.Run(); err != nil {
+		log.Fatalf(err.Error())
+	}
+
+	manifests, errs := cp.RenderManifest()
+
+	return manifests, errs.ToError()
 }

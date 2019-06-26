@@ -2252,7 +2252,7 @@ type K8SObjectOverlay struct {
 	ApiVersion string `protobuf:"bytes,1,opt,name=api_version,json=apiVersion,proto3" json:"api_version,omitempty"`
 	// Resource kind.
 	Kind string `protobuf:"bytes,2,opt,name=kind,proto3" json:"kind,omitempty"`
-	// Name of resource.
+	// name of resource.
 	// Namespace is always the component namespace.
 	Name string `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
 	// List of patches to apply to resource.
@@ -2327,11 +2327,11 @@ type K8SObjectOverlay_PathValue struct {
 	// Path of the form a.b:c.e.:f
 	// Where b:c is a list element selector of the form key:value and :f is a list selector of the form :value.
 	// All path intermediate nodes must exist.
-	Path                 string   `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
+	Path                 string      `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
 	Value                interface{} `protobuf:"bytes,4,opt,name=value,proto3" json:"value,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	XXX_NoUnkeyedLiteral struct{}    `json:"-"`
+	XXX_unrecognized     []byte      `json:"-"`
+	XXX_sizecache        int32       `json:"-"`
 }
 
 func (m *K8SObjectOverlay_PathValue) Reset()         { *m = K8SObjectOverlay_PathValue{} }
@@ -11083,7 +11083,7 @@ func (m *K8SObjectOverlay) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 3:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field name", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -12096,7 +12096,7 @@ func (m *ObjectMeta) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 5:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field name", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {

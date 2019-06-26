@@ -6,12 +6,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
-
-	"github.com/ostromart/istio-installer/pkg/translate"
-
-	"strings"
 
 	jsonpatch "github.com/evanphx/json-patch"
 	"github.com/ghodss/yaml"
@@ -19,6 +16,7 @@ import (
 	"github.com/ostromart/istio-installer/pkg/kube"
 	"github.com/ostromart/istio-installer/pkg/kubectlcmd"
 	"github.com/ostromart/istio-installer/pkg/manifest"
+	"github.com/ostromart/istio-installer/pkg/translate"
 	"github.com/ostromart/istio-installer/pkg/util"
 	"istio.io/istio/pkg/log"
 	appsv1 "k8s.io/api/apps/v1"
@@ -56,76 +54,6 @@ const (
 	// helmValuesFile is the default name of the values file.
 	helmValuesFile = "values.yaml"
 )
-
-type Component interface {
-	RenderManifest() (string, error)
-}
-
-type PilotComponent struct {
-}
-
-func (c *PilotComponent) RenderManifest() (string, error) {
-	return "", nil
-}
-
-func NewPilotComponent(installSpec *v1alpha2.InstallSpec) *PilotComponent {
-	return nil
-}
-
-type ProxyComponent struct {
-}
-
-func (c *ProxyComponent) RenderManifest() (string, error) {
-	return "", nil
-}
-
-func NewProxyComponent(installSpec *v1alpha2.InstallSpec) *ProxyComponent {
-	return nil
-}
-
-type SidecarComponent struct {
-}
-
-func (c *SidecarComponent) RenderManifest() (string, error) {
-	return "", nil
-}
-
-func NewSidecarComponent(installSpec *v1alpha2.InstallSpec) *SidecarComponent {
-	return nil
-}
-
-type CitadelComponent struct {
-}
-
-func (c *CitadelComponent) RenderManifest() (string, error) {
-	return "", nil
-}
-
-func NewCitadelComponent(installSpec *v1alpha2.InstallSpec) *CitadelComponent {
-	return nil
-}
-
-type CertManagerComponent struct {
-}
-
-func (c *CertManagerComponent) RenderManifest() (string, error) {
-	return "", nil
-}
-
-func NewCertManagerComponent(installSpec *v1alpha2.InstallSpec) *CertManagerComponent {
-	return nil
-}
-
-type NodeAgentComponent struct {
-}
-
-func (c *NodeAgentComponent) RenderManifest() (string, error) {
-	return "", nil
-}
-
-func NewNodeAgentComponent(installSpec *v1alpha2.InstallSpec) *NodeAgentComponent {
-	return nil
-}
 
 // ComponentDeploymentConfig is a configuration for a deployment component.
 type ComponentDeploymentConfig struct {
@@ -206,31 +134,6 @@ type DeploymentComponent struct {
 	updateDepsCh chan struct{}
 	notifyChs    map[string]map[chan<- struct{}]bool
 	notifyChsMu  sync.RWMutex
-}
-
-// Name is the name of the component.
-func (d *DeploymentComponent) Name() string {
-	return d.componentName
-}
-
-// State is the current state of the component.
-func (d *DeploymentComponent) State() ComponentState {
-	return d.state
-}
-
-// Manifest is the rendered YAML manifest of the component.
-func (d *DeploymentComponent) Manifest() string {
-	return d.currentManifest
-}
-
-// Version is the current Version of the component.
-func (d *DeploymentComponent) Version() string {
-	return d.version
-}
-
-// Dependencies returns the current dependencies of the component.
-func (d *DeploymentComponent) Dependencies() []*Dependency {
-	return d.dependencies
 }
 
 func (d *DeploymentComponent) setVersion(version string) {
@@ -690,7 +593,7 @@ func (d *DeploymentComponent) ensureWatches(ctx context.Context, name types.Name
 
 	labelSelector := fmt.Sprintf("component=%s", fields.EscapeValue(d.componentName))
 
-	notify := metav1.ObjectMeta{Name: name.Name, Namespace: name.Namespace}
+	notify := metav1.ObjectMeta{name: name.name, Namespace: name.Namespace}
 	filter := metav1.ListOptions{LabelSelector: labelSelector}
 
 	for _, gvk := range uniqueGroupVersionKind(objects) {

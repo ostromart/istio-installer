@@ -20,6 +20,7 @@ type FeatureName string
 const (
 	// IstioFeature names, must be the same as feature names defined in the IstioControlPlane proto, since these are
 	// used to reference structure paths.
+	IstioBaseFeatureName         FeatureName = "Base"
 	TrafficManagementFeatureName FeatureName = "TrafficManagement"
 	PolicyFeatureName            FeatureName = "Policy"
 	TelemetryFeatureName         FeatureName = "Telemetry"
@@ -46,6 +47,9 @@ const (
 	IngressComponentName         ComponentName = "Ingress"
 	EgressComponentName          ComponentName = "Egress"
 )
+
+// ManifestMap is a map of ComponentName to its manifest string.
+type ManifestMap map[ComponentName]string
 
 // IsComponentEnabled reports whether the given feature and component are enabled in the given spec. The logic is, in
 // order of evaluation:

@@ -16,19 +16,11 @@ package iop
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 
+	"github.com/ostromart/istio-installer/pkg/manifest"
 	"github.com/spf13/cobra"
 	"istio.io/pkg/log"
-
-	"github.com/ostromart/istio-installer/pkg/apis/istio/v1alpha2"
-	"github.com/ostromart/istio-installer/pkg/component/controlplane"
-	"github.com/ostromart/istio-installer/pkg/helm"
-	"github.com/ostromart/istio-installer/pkg/translate"
-	"github.com/ostromart/istio-installer/pkg/util"
-	"github.com/ostromart/istio-installer/pkg/validate"
-	"github.com/ostromart/istio-installer/pkg/version"
 )
 
 func manifestCmd(rootArgs *rootArgs) *cobra.Command {
@@ -38,87 +30,32 @@ func manifestCmd(rootArgs *rootArgs) *cobra.Command {
 		Long:  "The manifest subcommand is used to generate an Istio install manifest based on the input CR.",
 		Args:  cobra.ExactArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
-			genManifest(rootArgs)
+			writeManifests(rootArgs)
 		}}
 
 }
 
-func genManifest(args *rootArgs) {
+func writeManifests(args *rootArgs) {
 	if err := configLogs(args); err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "Could not configure logs: %s", err)
 		os.Exit(1)
 	}
 
-	writer, err := getWriter(args)
+	manifests, err := genManifests(args)
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
-	defer func() {
-		if err := writer.Close(); err != nil {
-			log.Errorf("Did not close output successfully: %v", err)
+
+	if args.outFilename == "" {
+		for _, m := range manifests {
+			fmt.Println(m)
 		}
-	}()
-
-	overlayYAML := ""
-	if args.inFilename != "" {
-		b, err := ioutil.ReadFile(args.inFilename)
-		if err != nil {
-			log.Fatalf("Could not open input file: %s", err)
+	} else {
+		if err := os.MkdirAll(args.outFilename, 0644); err != nil {
+			log.Fatalf(err.Error())
 		}
-		overlayYAML = string(b)
+		if err := manifest.RenderToDir(manifests, args.outFilename); err != nil {
+			log.Errorf(err.Error())
+		}
 	}
-
-	// Start with unmarshaling and validating the user CR (which is an overlay on the base profile).
-	overlayICPS := &v1alpha2.IstioControlPlaneSpec{}
-	if err := util.UnmarshalWithJSONPB(overlayYAML, overlayICPS); err != nil {
-		log.Fatalf(err.Error())
-	}
-	if errs := validate.CheckIstioControlPlaneSpec(overlayICPS); len(errs) != 0 {
-		log.Fatalf(errs.ToError().Error())
-	}
-
-	// Now read the base profile specified in the user spec. If nothing specified, use default.
-	baseYAML, err := helm.ReadValuesYAML(overlayICPS.BaseProfilePath)
-	if err != nil {
-		log.Fatalf(err.Error())
-	}
-	// Unmarshal and validate the base CR.
-	baseICPS := &v1alpha2.IstioControlPlaneSpec{}
-	if err := util.UnmarshalWithJSONPB(baseYAML, baseICPS); err != nil {
-		log.Fatalf(err.Error())
-	}
-	if errs := validate.CheckIstioControlPlaneSpec(baseICPS); len(errs) != 0 {
-		log.Fatalf(errs.ToError().Error())
-	}
-
-	mergedYAML, err := helm.OverlayYAML(baseYAML, overlayYAML)
-	if err != nil {
-		log.Fatalf(err.Error())
-	}
-
-	// Now unmarshal and validate the combined base profile and user CR overlay.
-	mergedcps := &v1alpha2.IstioControlPlaneSpec{}
-	if err := util.UnmarshalWithJSONPB(mergedYAML, mergedcps); err != nil {
-		log.Fatalf(err.Error())
-	}
-	if errs := validate.CheckIstioControlPlaneSpec(mergedcps); len(errs) != 0 {
-		log.Fatalf(errs.ToError().Error())
-	}
-
-	if yd := util.YAMLDiff(mergedYAML, util.ToYAMLWithJSONPB(mergedcps)); yd != "" {
-		log.Fatalf("Validated YAML differs from input: \n%s", yd)
-	}
-
-	// TODO: remove version hard coding.
-	cp := controlplane.NewIstioControlPlane(mergedcps, translate.Translators[version.MinorVersion{Major: 1, Minor: 2}])
-	if err := cp.Run(); err != nil {
-		log.Fatalf(err.Error())
-	}
-
-	y, errs := cp.RenderManifest()
-	err = errs.ToError()
-	if err != nil {
-		log.Fatalf(err.Error())
-	}
-	writer.WriteString(y)
 }

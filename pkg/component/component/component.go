@@ -24,14 +24,12 @@ import (
 	"path/filepath"
 
 	"github.com/ghodss/yaml"
-
 	"github.com/ostromart/istio-installer/pkg/apis/istio/v1alpha2"
 	"github.com/ostromart/istio-installer/pkg/helm"
 	"github.com/ostromart/istio-installer/pkg/name"
 	"github.com/ostromart/istio-installer/pkg/patch"
 	"github.com/ostromart/istio-installer/pkg/translate"
 	"github.com/ostromart/istio-installer/pkg/util"
-
 	"istio.io/pkg/log"
 )
 
@@ -53,6 +51,8 @@ type ComponentOptions struct {
 
 // IstioComponent defines the interface for a component.
 type IstioComponent interface {
+	// name returns the name of the component.
+	Name() name.ComponentName
 	// Run starts the component. Must me called before the component is used.
 	Run() error
 	// RenderManifest returns a string with the rendered manifest for the component.
@@ -67,6 +67,39 @@ type CommonComponentFields struct {
 	name      name.ComponentName
 	renderer  helm.TemplateRenderer
 	started   bool
+}
+
+// CRDComponent is the pilot component.
+type CRDComponent struct {
+	*CommonComponentFields
+}
+
+// NewCRDComponent creates a new CRDComponent and returns a pointer to it.
+func NewCRDComponent(opts *ComponentOptions) *CRDComponent {
+	return &CRDComponent{
+		&CommonComponentFields{
+			ComponentOptions: opts,
+			name:             name.IstioBaseComponentName,
+		},
+	}
+}
+
+// Run implements the IstioComponent interface.
+func (c *CRDComponent) Run() error {
+	return runComponent(c.CommonComponentFields)
+}
+
+// RenderManifest implements the IstioComponent interface.
+func (c *CRDComponent) RenderManifest() (string, error) {
+	if !c.started {
+		return "", fmt.Errorf("component %s not started in RenderManifest", c.Name)
+	}
+	return renderManifest(c.CommonComponentFields)
+}
+
+// name implements the IstioComponent interface.
+func (c *CRDComponent) Name() name.ComponentName {
+	return c.CommonComponentFields.name
 }
 
 // PilotComponent is the pilot component.
@@ -92,9 +125,14 @@ func (c *PilotComponent) Run() error {
 // RenderManifest implements the IstioComponent interface.
 func (c *PilotComponent) RenderManifest() (string, error) {
 	if !c.started {
-		return "", fmt.Errorf("component %s not started in RenderManifest", c.name)
+		return "", fmt.Errorf("component %s not started in RenderManifest", c.Name)
 	}
 	return renderManifest(c.CommonComponentFields)
+}
+
+// name implements the IstioComponent interface.
+func (c *PilotComponent) Name() name.ComponentName {
+	return c.CommonComponentFields.name
 }
 
 // CitadelComponent is the pilot component.
@@ -120,9 +158,14 @@ func (c *CitadelComponent) Run() error {
 // RenderManifest implements the IstioComponent interface.
 func (c *CitadelComponent) RenderManifest() (string, error) {
 	if !c.started {
-		return "", fmt.Errorf("component %s not started in RenderManifest", c.name)
+		return "", fmt.Errorf("component %s not started in RenderManifest", c.Name)
 	}
 	return renderManifest(c.CommonComponentFields)
+}
+
+// name implements the IstioComponent interface.
+func (c *CitadelComponent) Name() name.ComponentName {
+	return c.CommonComponentFields.name
 }
 
 // CertManagerComponent is the pilot component.
@@ -148,9 +191,14 @@ func (c *CertManagerComponent) Run() error {
 // RenderManifest implements the IstioComponent interface.
 func (c *CertManagerComponent) RenderManifest() (string, error) {
 	if !c.started {
-		return "", fmt.Errorf("component %s not started in RenderManifest", c.name)
+		return "", fmt.Errorf("component %s not started in RenderManifest", c.Name)
 	}
 	return renderManifest(c.CommonComponentFields)
+}
+
+// name implements the IstioComponent interface.
+func (c *CertManagerComponent) Name() name.ComponentName {
+	return c.CommonComponentFields.name
 }
 
 // NodeAgentComponent is the pilot component.
@@ -176,9 +224,14 @@ func (c *NodeAgentComponent) Run() error {
 // RenderManifest implements the IstioComponent interface.
 func (c *NodeAgentComponent) RenderManifest() (string, error) {
 	if !c.started {
-		return "", fmt.Errorf("component %s not started in RenderManifest", c.name)
+		return "", fmt.Errorf("component %s not started in RenderManifest", c.Name)
 	}
 	return renderManifest(c.CommonComponentFields)
+}
+
+// name implements the IstioComponent interface.
+func (c *NodeAgentComponent) Name() name.ComponentName {
+	return c.CommonComponentFields.name
 }
 
 // PolicyComponent is the pilot component.
@@ -204,9 +257,14 @@ func (c *PolicyComponent) Run() error {
 // RenderManifest implements the IstioComponent interface.
 func (c *PolicyComponent) RenderManifest() (string, error) {
 	if !c.started {
-		return "", fmt.Errorf("component %s not started in RenderManifest", c.name)
+		return "", fmt.Errorf("component %s not started in RenderManifest", c.Name)
 	}
 	return renderManifest(c.CommonComponentFields)
+}
+
+// name implements the IstioComponent interface.
+func (c *PolicyComponent) Name() name.ComponentName {
+	return c.CommonComponentFields.name
 }
 
 // TelemetryComponent is the pilot component.
@@ -232,9 +290,14 @@ func (c *TelemetryComponent) Run() error {
 // RenderManifest implements the IstioComponent interface.
 func (c *TelemetryComponent) RenderManifest() (string, error) {
 	if !c.started {
-		return "", fmt.Errorf("component %s not started in RenderManifest", c.name)
+		return "", fmt.Errorf("component %s not started in RenderManifest", c.Name)
 	}
 	return renderManifest(c.CommonComponentFields)
+}
+
+// name implements the IstioComponent interface.
+func (c *TelemetryComponent) Name() name.ComponentName {
+	return c.CommonComponentFields.name
 }
 
 // GalleyComponent is the pilot component.
@@ -260,9 +323,14 @@ func (c *GalleyComponent) Run() error {
 // RenderManifest implements the IstioComponent interface.
 func (c *GalleyComponent) RenderManifest() (string, error) {
 	if !c.started {
-		return "", fmt.Errorf("component %s not started in RenderManifest", c.name)
+		return "", fmt.Errorf("component %s not started in RenderManifest", c.Name)
 	}
 	return renderManifest(c.CommonComponentFields)
+}
+
+// name implements the IstioComponent interface.
+func (c *GalleyComponent) Name() name.ComponentName {
+	return c.CommonComponentFields.name
 }
 
 // SidecarInjectorComponent is the pilot component.
@@ -288,9 +356,14 @@ func (c *SidecarInjectorComponent) Run() error {
 // RenderManifest implements the IstioComponent interface.
 func (c *SidecarInjectorComponent) RenderManifest() (string, error) {
 	if !c.started {
-		return "", fmt.Errorf("component %s not started in RenderManifest", c.name)
+		return "", fmt.Errorf("component %s not started in RenderManifest", c.Name)
 	}
 	return renderManifest(c.CommonComponentFields)
+}
+
+// name implements the IstioComponent interface.
+func (c *SidecarInjectorComponent) Name() name.ComponentName {
+	return c.CommonComponentFields.name
 }
 
 // runComponent performs startup tasks for the component defined by the given CommonComponentFields.

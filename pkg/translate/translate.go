@@ -23,13 +23,11 @@ import (
 	"strings"
 
 	"github.com/ghodss/yaml"
-
 	"github.com/ostromart/istio-installer/pkg/apis/istio/v1alpha2"
 	"github.com/ostromart/istio-installer/pkg/manifest"
 	"github.com/ostromart/istio-installer/pkg/name"
 	"github.com/ostromart/istio-installer/pkg/util"
 	"github.com/ostromart/istio-installer/pkg/version"
-
 	"istio.io/pkg/log"
 )
 
@@ -117,6 +115,7 @@ var (
 			ComponentMaps: map[name.ComponentName]*ComponentMaps{
 				name.IstioBaseComponentName: &ComponentMaps{
 					ToHelmValuesNames: "global",
+					HelmSubdir:        "crds",
 					AlwaysEnabled:     true,
 				},
 				name.PilotComponentName: &ComponentMaps{
@@ -268,7 +267,7 @@ func (t *Translator) OverlayK8sSettings(yml string, icp *v1alpha2.IstioControlPl
 		pe, _ = util.RemoveBrackets(pe)
 		oo, ok := om[pe]
 		if !ok {
-			return "", fmt.Errorf("resource Kind:Name %s doesn't exist in the output manifest:\n%s\n", pe, yml)
+			return "", fmt.Errorf("resource Kind:name %s doesn't exist in the output manifest:\n%s\n", pe, yml)
 		}
 
 		baseYAML, err := oo.YAML()
