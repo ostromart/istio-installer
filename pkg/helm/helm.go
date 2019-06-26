@@ -19,7 +19,7 @@ import (
 	"io/ioutil"
 	"strings"
 
-	"github.com/evanphx/json-patch"
+	jsonpatch "github.com/evanphx/json-patch"
 	"github.com/ghodss/yaml"
 	"k8s.io/helm/pkg/chartutil"
 	"k8s.io/helm/pkg/engine"
@@ -135,6 +135,9 @@ func OverlayYAML(base, overlay string) (string, error) {
 	oj, err := yaml.YAMLToJSON([]byte(overlay))
 	if err != nil {
 		return "", fmt.Errorf("yamlToJSON error in overlay: %s\n%s\n", err, oj)
+	}
+	if overlay == "" {
+		oj = []byte("{}")
 	}
 
 	merged, err := jsonpatch.MergePatch(bj, oj)
