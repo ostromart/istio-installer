@@ -42,7 +42,7 @@ func addFlags(cmd *cobra.Command, rootArgs *rootArgs) {
 		"", "Manifest output path.")
 	cmd.PersistentFlags().BoolVarP(&rootArgs.logToStdErr, "logtostderr", "",
 		false, "Send logs to stderr.")
-	cmd.PersistentFlags().BoolVarP(&rootArgs.dryRun, "dryRun", "",
+	cmd.PersistentFlags().BoolVarP(&rootArgs.dryRun, "dry-run", "",
 		true, "Console/log output only, make no changes.")
 	cmd.PersistentFlags().BoolVarP(&rootArgs.verbose, "verbose", "",
 		false, "Verbose output.")
