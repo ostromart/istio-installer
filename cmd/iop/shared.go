@@ -109,7 +109,7 @@ func genManifests(args *rootArgs) (name.ManifestMap, error) {
 	}
 
 	// TODO: remove version hard coding.
-	cp := controlplane.NewIstioControlPlane(mergedcps, translate.Translators[version.MinorVersion{Major: 1, Minor: 2}])
+	cp := controlplane.NewIstioControlPlane(mergedcps, translate.Translators[version.NewMinorVersion(1, 2)])
 	if err := cp.Run(); err != nil {
 		log.Fatalf(err.Error())
 	}

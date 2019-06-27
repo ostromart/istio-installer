@@ -186,9 +186,9 @@ message IstioControlPlaneSpec {
     // Root for docker image paths e.g. docker.io/istio-release.
     // Releases are published to docker hub under 'istio' project.
     // Daily builds from prow are on gcr.io, and nightly builds from circle on docker.io/istionightly
-    string hub = 103;
+    string hub = 110;
     // Version tag for docker images e.g. 1.0.6
-    string tag = 104;
+    string tag = 111;
 }
 
 // Configuration options for traffic management.

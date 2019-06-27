@@ -10,6 +10,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ostromart/istio-installer/pkg/version"
+
 	v1 "k8s.io/api/core/v1"
 	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	apiextensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
@@ -32,6 +34,15 @@ const (
 	cRDPollInterval = 500 * time.Millisecond
 	// cRDPollTimeout is the maximum wait time for all CRDs to be created.
 	cRDPollTimeout = 60 * time.Second
+
+	// operatorLabelStr indicates Istio operator is managing this resource.
+	operatorLabelStr = "istio-operator-managed"
+	// operatorReconcileStr indicates that the operator will reconcile the resource.
+	operatorReconcileStr = "Reconcile"
+	// istioComponentLabelStr indicates which Istio component a resource belongs to.
+	istioComponentLabelStr = "istio-component"
+	// istioVersionLabelStr indicates which Istio version
+	istioVersionLabelStr = "istio-version"
 )
 
 type componentNameToListMap map[name.ComponentName][]name.ComponentName
@@ -71,29 +82,33 @@ func init() {
 
 }
 
-func RenderToDir(manifests name.ManifestMap, outputDir string) error {
-	log.Infof("Component dependencies tree: \n%s", installTreeString())
-	log.Infof("Rendering manifests to output dir %s", outputDir)
-	return renderRecursive(manifests, installTree, outputDir)
+func RenderToDir(manifests name.ManifestMap, outputDir string, dryRun, verbose bool) error {
+	logAndPrint("Component dependencies tree: \n%s", installTreeString())
+	logAndPrint("Rendering manifests to output dir %s", outputDir)
+	return renderRecursive(manifests, installTree, outputDir, dryRun, verbose)
 }
 
-func renderRecursive(manifests name.ManifestMap, installTree componentTree, outputDir string) error {
+func renderRecursive(manifests name.ManifestMap, installTree componentTree, outputDir string, dryRun, verbose bool) error {
 	for k, v := range installTree {
 		componentName := string(k)
 		ym := manifests[k]
 		if ym == "" {
-			log.Infof("Manifest for %s not found, skip.", componentName)
+			logAndPrint("Manifest for %s not found, skip.", componentName)
 			continue
 		}
-		log.Infof("Rendering: %s", componentName)
+		logAndPrint("Rendering: %s", componentName)
 		dirName := filepath.Join(outputDir, componentName)
-		if err := os.MkdirAll(dirName, os.ModePerm); err != nil {
-			return fmt.Errorf("could not create directory %s; %s", outputDir, err)
+		if !dryRun {
+			if err := os.MkdirAll(dirName, os.ModePerm); err != nil {
+				return fmt.Errorf("could not create directory %s; %s", outputDir, err)
+			}
 		}
 		fname := filepath.Join(dirName, componentName) + ".yaml"
-		log.Infof("Writing manifest to %s", fname)
-		if err := ioutil.WriteFile(fname, []byte(ym), 0644); err != nil {
-			return fmt.Errorf("could not write manifest config; %s", err)
+		logAndPrint("Writing manifest to %s", fname)
+		if !dryRun {
+			if err := ioutil.WriteFile(fname, []byte(ym), 0644); err != nil {
+				return fmt.Errorf("could not write manifest config; %s", err)
+			}
 		}
 
 		kt, ok := v.(componentTree)
@@ -101,44 +116,44 @@ func renderRecursive(manifests name.ManifestMap, installTree componentTree, outp
 			// Leaf
 			return nil
 		}
-		if err := renderRecursive(manifests, kt, dirName); err != nil {
+		if err := renderRecursive(manifests, kt, dirName, dryRun, verbose); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func ApplyAll(manifests name.ManifestMap) error {
-	log.Info("Apply manifests for these components:")
+func ApplyAll(manifests name.ManifestMap, version version.Version, dryRun, verbose bool) error {
+	logAndPrint("Applying manifests for these components:")
 	for c := range manifests {
 		log.Infof("- %s", c)
 	}
-	log.Infof("Component dependencies tree: \n%s", installTreeString())
+	logAndPrint("Component dependencies tree: \n%s", installTreeString())
 	if err := initK8SRestClient(); err != nil {
 		return err
 	}
-	applyRecursive(manifests)
+	applyRecursive(manifests, version, dryRun, verbose)
 	return nil
 }
 
-func applyRecursive(manifests name.ManifestMap) {
+func applyRecursive(manifests name.ManifestMap, version version.Version, dryRun, verbose bool) {
 	var wg sync.WaitGroup
 	for c, m := range manifests {
 		c := c
 		wg.Add(1)
 		go func() {
 			if s := dependencyWaitCh[c]; s != nil {
-				log.Infof("%s is waiting on parent dependency...", c)
+				logAndPrint("%s is waiting on parent dependency...", c)
 				<-s
-				log.Infof("parent dependency for %s has unblocked", c)
+				logAndPrint("Parent dependency for %s has unblocked, proceeding.", c)
 			}
-			if err := applyManifest(c, m); err != nil {
+			if err := applyManifest(c, m, version, dryRun, verbose); err != nil {
 				log.Error(err.Error())
 				return
 			}
 			// Signal all the components that depend on us.
 			for _, ch := range componentDependencies[c] {
-				log.Infof("signaling child %s", ch)
+				logAndPrint("unblocking child dependency %s.", ch)
 				dependencyWaitCh[ch] <- struct{}{}
 			}
 			wg.Done()
@@ -147,11 +162,11 @@ func applyRecursive(manifests name.ManifestMap) {
 	wg.Wait()
 }
 
-func applyManifest(componentName name.ComponentName, manifestStr string) error {
-	// REMOVE
-	log.Infof("applyManifest for %s", componentName)
-	return nil
+func versionString(version version.Version) string {
+	return version.String()
+}
 
+func applyManifest(componentName name.ComponentName, manifestStr string, version version.Version, dryRun, verbose bool) error {
 	objects, err := ParseObjectsFromYAMLManifest(manifestStr)
 	if err != nil {
 		return err
@@ -162,7 +177,9 @@ func applyManifest(componentName name.ComponentName, manifestStr string) error {
 
 	namespace := ""
 	for _, o := range objects {
-		o.AddLabels(map[string]string{"component": string(componentName)})
+		o.AddLabels(map[string]string{istioComponentLabelStr: string(componentName)})
+		o.AddLabels(map[string]string{operatorLabelStr: operatorReconcileStr})
+		o.AddLabels(map[string]string{istioVersionLabelStr: versionString(version)})
 		if o.Namespace != "" {
 			// All objects in a component have the same namespace.
 			namespace = o.Namespace
@@ -170,7 +187,7 @@ func applyManifest(componentName name.ComponentName, manifestStr string) error {
 	}
 	objects.Sort(defaultObjectOrder())
 
-	extraArgs := []string{"--force", "--prune", "--selector", fmt.Sprintf("component=%s", componentName)}
+	extraArgs := []string{"--force", "--prune", "--selector", fmt.Sprintf("%s=%s", operatorLabelStr, operatorReconcileStr)}
 
 	crdObjects := cRDKindObjects(objects)
 
@@ -179,11 +196,11 @@ func applyManifest(componentName name.ComponentName, manifestStr string) error {
 		return err
 	}
 	ctx := context.Background()
-	if err := kubectl.Apply(ctx, namespace, mcrd, extraArgs...); err != nil {
+	if err := kubectl.Apply(dryRun, verbose, ctx, namespace, mcrd, extraArgs...); err != nil {
 		return err
 	}
 	// Not all Istio components are robust to not yet created CRDs.
-	if err := waitForCRDs(objects); err != nil {
+	if err := waitForCRDs(objects, dryRun); err != nil {
 		return err
 	}
 
@@ -191,7 +208,7 @@ func applyManifest(componentName name.ComponentName, manifestStr string) error {
 	if err != nil {
 		return err
 	}
-	if err := kubectl.Apply(ctx, namespace, m, extraArgs...); err != nil {
+	if err := kubectl.Apply(dryRun, verbose, ctx, namespace, m, extraArgs...); err != nil {
 		return err
 	}
 
@@ -245,8 +262,13 @@ func cRDKindObjects(objects Objects) Objects {
 	return ret
 }
 
-func waitForCRDs(objects Objects) error {
-	log.Info("Waiting for CRDs to be applied.")
+func waitForCRDs(objects Objects, dryRun bool) error {
+	if dryRun {
+		logAndPrint("Not waiting for CRDs in dry run mode.")
+		return nil
+	}
+
+	logAndPrint("Waiting for CRDs to be applied.")
 	cs, err := apiextensionsclient.NewForConfig(k8sRESTConfig)
 	if err != nil {
 		return err
@@ -284,11 +306,11 @@ func waitForCRDs(objects Objects) error {
 	})
 
 	if errPoll != nil {
-		log.Error("failed to verify CRD creation")
+		logAndPrint("failed to verify CRD creation")
 		return errPoll
 	}
 
-	log.Info("CRDs applied.")
+	logAndPrint("CRDs applied.")
 	return nil
 }
 
@@ -378,4 +400,10 @@ func BuildClientConfig(kubeconfig, context string) (*rest.Config, error) {
 	}
 
 	return clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, configOverrides).ClientConfig()
+}
+
+func logAndPrint(v ...interface{}) {
+	s := fmt.Sprintf(v[0].(string), v[1:]...)
+	log.Infof(s)
+	fmt.Println(s)
 }

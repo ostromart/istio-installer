@@ -54,7 +54,7 @@ func writeManifests(args *rootArgs) {
 		if err := os.MkdirAll(args.outFilename, os.ModePerm); err != nil {
 			log.Fatalf(err.Error())
 		}
-		if err := manifest.RenderToDir(manifests, args.outFilename); err != nil {
+		if err := manifest.RenderToDir(manifests, args.outFilename, args.dryRun, args.verbose); err != nil {
 			log.Errorf(err.Error())
 		}
 	}

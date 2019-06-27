@@ -48,9 +48,7 @@ func (console) Run(c *exec.Cmd) error {
 }
 
 // Apply runs the kubectl apply with the provided manifest argument
-func (c *Client) Apply(ctx context.Context, namespace string, manifest string, extraArgs ...string) error {
-	log.Info("applying manifest")
-
+func (c *Client) Apply(dryRun, verbose bool, ctx context.Context, namespace string, manifest string, extraArgs ...string) error {
 	args := []string{"apply"}
 	if namespace != "" {
 		args = append(args, "-n", namespace)
@@ -66,13 +64,32 @@ func (c *Client) Apply(ctx context.Context, namespace string, manifest string, e
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
+	cmdStr := fmt.Sprintf("%s", strings.Join(cmd.Args, " "))
+	if verbose {
+		cmdStr += "\n" + manifest
+	} else {
+		cmdStr += " <use --verbose to see manifest string> \n"
+	}
+	if dryRun {
+		logAndPrint("Apply is in dry run mode, would be applying the following in namespace %s:\n%s\n", namespace, cmdStr)
+		return nil
+	}
+
+	log.Infof("applying to namespace %s:\n%s\n", namespace, cmdStr)
+
 	err := c.cmdSite.Run(cmd)
 	if err != nil {
-		log.Errorf("error from running kubectl apply: %s", err)
+		logAndPrint("error from running kubectl apply: %s", err)
 		return fmt.Errorf("error from running kubectl apply: %v", err)
 	}
 
-	log.Infof("ran kubectl apply")
+	logAndPrint("kubectl apply success")
 
 	return nil
+}
+
+func logAndPrint(v ...interface{}) {
+	s := fmt.Sprintf(v[0].(string), v[1:]...)
+	log.Infof(s)
+	fmt.Println(s)
 }

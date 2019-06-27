@@ -1,31 +1,67 @@
 package version
 
+import "fmt"
+
 type MajorVersion struct {
 	Major uint32
 }
 
 type MinorVersion struct {
-	Major uint32
+	MajorVersion
 	Minor uint32
 }
 
 type PatchVersion struct {
-	Major uint32
-	Minor uint32
+	MinorVersion
 	Patch uint32
 }
 
 type Version struct {
-	Major  uint32
-	Minor  uint32
-	Patch  uint32
+	PatchVersion
 	Prefix string
 	Suffix string
 }
 
-func (v *PatchVersion) IsEqual(other *PatchVersion) bool {
-	return *v == *other
+func NewMajorVersion(major uint32) MajorVersion {
+	return MajorVersion{
+		Major: major,
+	}
 }
-func (v *Version) IsEqual(other *Version) bool {
-	return *v == *other
+
+func NewMinorVersion(major, minor uint32) MinorVersion {
+	return MinorVersion{
+		MajorVersion: NewMajorVersion(major),
+		Minor:        minor,
+	}
+}
+
+func NewPatchVersion(major, minor, patch uint32) PatchVersion {
+	return PatchVersion{
+		MinorVersion: NewMinorVersion(major, minor),
+		Patch:        patch,
+	}
+}
+
+func NewVersion(prefix string, major, minor, patch uint32, suffix string) Version {
+	return Version{
+		PatchVersion: NewPatchVersion(major, minor, patch),
+		Prefix:       prefix,
+		Suffix:       suffix,
+	}
+}
+
+func (v MajorVersion) String() string {
+	return fmt.Sprintf("%d", v.Major)
+}
+
+func (v MinorVersion) String() string {
+	return fmt.Sprintf("%s.%d", v.MajorVersion, v.Minor)
+}
+
+func (v PatchVersion) String() string {
+	return fmt.Sprintf("%s.%d", v.MinorVersion, v.Minor)
+}
+
+func (v Version) String() string {
+	return fmt.Sprintf("%s%s%s", v.Prefix, v.PatchVersion, v.Suffix)
 }

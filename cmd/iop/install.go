@@ -18,6 +18,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/ostromart/istio-installer/pkg/version"
+
 	"github.com/ostromart/istio-installer/pkg/manifest"
 	"github.com/spf13/cobra"
 	"istio.io/pkg/log"
@@ -47,7 +49,7 @@ func installManifests(args *rootArgs) {
 		log.Fatalf(err.Error())
 	}
 
-	if err := manifest.ApplyAll(manifests); err != nil {
+	if err := manifest.ApplyAll(manifests, version.NewVersion("", 1, 2, 0, ""), args.dryRun, args.verbose); err != nil {
 		log.Fatalf(err.Error())
 	}
 }

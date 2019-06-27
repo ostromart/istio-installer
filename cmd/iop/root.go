@@ -29,6 +29,10 @@ type rootArgs struct {
 	outFilename string
 	// logToStdErr controls whether logs are sent to stderr.
 	logToStdErr bool
+	// Dry run performs all steps except actually applying the manifests or creating output dirs/files.
+	dryRun bool
+	// Verbose controls whether additional debug output is displayed and logged.
+	verbose bool
 }
 
 func addFlags(cmd *cobra.Command, rootArgs *rootArgs) {
@@ -38,6 +42,10 @@ func addFlags(cmd *cobra.Command, rootArgs *rootArgs) {
 		"", "Manifest output path.")
 	cmd.PersistentFlags().BoolVarP(&rootArgs.logToStdErr, "logtostderr", "",
 		false, "Send logs to stderr.")
+	cmd.PersistentFlags().BoolVarP(&rootArgs.dryRun, "dryRun", "",
+		true, "Console/log output only, make no changes.")
+	cmd.PersistentFlags().BoolVarP(&rootArgs.verbose, "verbose", "",
+		false, "Verbose output.")
 }
 
 // GetRootCmd returns the root of the cobra command-tree.
