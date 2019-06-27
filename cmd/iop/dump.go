@@ -75,12 +75,12 @@ func dumpProfile(args *rootArgs) {
 	}
 
 	// Now read the base profile specified in the user spec.
-	fname, err := helm.FilenameFromProfile(overlayICPS.BaseProfilePath)
+	fname, err := helm.FilenameFromProfile(overlayICPS.Profile)
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
 
-	baseYAML, err := helm.ReadValuesYAML(overlayICPS.BaseProfilePath)
+	baseYAML, err := helm.ReadValuesYAML(overlayICPS.Profile)
 	if err != nil {
 		log.Fatalf("Could not read the profile values for %s: %s", fname)
 	}

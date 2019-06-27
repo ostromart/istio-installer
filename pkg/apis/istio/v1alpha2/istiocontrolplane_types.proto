@@ -176,7 +176,7 @@ message IstioControlPlaneSpec {
     //   istio-minimal.yaml (looks in default dir)
     //   file://var/istio/install/values/custom/custom-install.yaml
     // Uses compiled in default install spec by default.
-    string base_profile_path = 100;
+    string profile = 100;
     // URL for the install package. e.g.
     //   http://github.com/istio/istio/releases/install/1.1.2
     //   http://github.com/istio/istio/releases/install/lts

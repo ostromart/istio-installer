@@ -77,7 +77,7 @@ func genManifests(args *rootArgs) (name.ManifestMap, error) {
 	}
 
 	// Now read the base profile specified in the user spec. If nothing specified, use default.
-	baseYAML, err := helm.ReadValuesYAML(overlayICPS.BaseProfilePath)
+	baseYAML, err := helm.ReadValuesYAML(overlayICPS.Profile)
 	if err != nil {
 		log.Fatalf(err.Error())
 	}

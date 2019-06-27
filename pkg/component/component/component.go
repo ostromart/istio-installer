@@ -499,15 +499,15 @@ func mergeTrees(apiValues string, globalVals, values, unvalidatedValues map[stri
 // createHelmRenderer creates a helm renderer for the component defined by c and returns a ptr to it.
 func createHelmRenderer(c *CommonComponentFields) (helm.TemplateRenderer, error) {
 	icp := c.InstallSpec
-	return helm.NewHelmRenderer(filepath.Join(icp.CustomPackagePath, c.Translator.ComponentMaps[c.name].HelmSubdir), icp.BaseProfilePath, string(c.name), c.namespace)
+	return helm.NewHelmRenderer(filepath.Join(icp.CustomPackagePath, c.Translator.ComponentMaps[c.name].HelmSubdir), icp.Profile, string(c.name), c.namespace)
 }
 
 // getValuesFilename returns the global values filename, given an IstioControlPlaneSpec.
 func getValuesFilename(i *v1alpha2.IstioControlPlaneSpec) string {
-	if i.BaseProfilePath == "" {
+	if i.Profile == "" {
 		return helm.DefaultGlobalValuesFilename
 	}
-	return i.BaseProfilePath
+	return i.Profile
 }
 
 // disabledYAMLStr returns the YAML comment string that the given component is disabled.
